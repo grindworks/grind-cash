@@ -1,4 +1,4 @@
-# GrindCash 💰
+# GrindCash
 
 **Input fast, connect to production. A fully offline, local-first accounting relay app.**
 
@@ -107,7 +107,7 @@ MIT License
 
 ---
 
-# GrindCash (日本語 / Japanese) 💰
+# GrindCash (日本語 / Japanese)
 
 **高速に入力し、本番システムへ繋ぐ。完全オフライン動作のローカルファースト会計中継アプリ**
 
