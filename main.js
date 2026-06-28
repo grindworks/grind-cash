@@ -12,7 +12,8 @@ let collapsedBlocks = new Set();
 let draftTimer = null;
 let statusTimeoutId = null;
 let isSaving = false;
-let lastSavedPasswordHash = '';
+let currentMasterKey = null; // CryptoKey (extractable: false)
+let currentMasterKeyHash = '';
 
 const isMac =
   typeof navigator.userAgentData !== 'undefined'
@@ -220,8 +221,65 @@ async function getPasswordHash(password) {
   const msgUint8 = new TextEncoder().encode(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
 
-  // セキュリティ強化 (Zeroization): メモリ上の平文パスワードのバイト配列をランダム値で上書きして破棄
-  // ※JSの仕様上、TextEncoderのコピーやGCにより完全な消去は保証されないベストエフォート処理
+
+
+// --- Secure password management (in-memory only) ---
+async function setMasterPassword(password) {
+  const pwInput = document.getElementById('file-password');
+  
+  if (!password) {
+    currentMasterKey = null;
+    currentMasterKeyHash = '';
+    if (pwInput) pwInput.value = '';
+    updatePasswordUI();
+    return;
+  }
+
+  const enc = new TextEncoder();
+  currentMasterKey = await window.crypto.subtle.importKey(
+    'raw',
+    enc.encode(password),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey']
+  );
+  currentMasterKeyHash = await getPasswordHash(password);
+  
+  if (pwInput) pwInput.value = '';
+  updatePasswordUI();
+}
+
+function updatePasswordUI() {
+  const container = document.getElementById('password-input-container');
+  const badge = document.getElementById('password-set-badge');
+  if (!container || !badge) return;
+
+  if (currentMasterKey) {
+    container.classList.add('hidden');
+    badge.classList.remove('hidden');
+    badge.classList.add('flex');
+  } else {
+    container.classList.remove('hidden');
+    badge.classList.remove('flex');
+    badge.classList.add('hidden');
+  }
+}
+
+const MAGIC_BYTES = new TextEncoder().encode('GRINDEN2');
+const MAGIC_BYTES_LEGACY = new TextEncoder().encode('GRINDENC');
+
+async function deriveKey(keyMaterial, salt, iterations = 600000) {
+  return window.crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: salt, iterations: iterations, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt'],
+  );
+}
+
+  // Security enhancement (Zeroization): Overwrite plaintext password buffer with random values
+  // *Note: Best effort zeroization due to JS GC and TextEncoder behavior
   crypto.getRandomValues(msgUint8);
 
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -297,16 +355,13 @@ function setDirty(state) {
         try {
           if (!isDirty) return;
           if (!db) return;
-          const password = document.getElementById('file-password').value;
-
-          if (lastSavedPasswordHash !== '' && password === '') {
+          if (currentMasterKeyHash !== '' && !currentMasterKey) {
             console.warn('Draft save aborted: Password removed from an encrypted session.');
             return;
           }
 
-          let data = db.export();
-          if (password) {
-            data = await encryptData(data, password);
+          if (currentMasterKey) {
+            data = await encryptData(data, currentMasterKey);
           }
           if (!isDirty) return;
           await saveDraft(data);
@@ -465,52 +520,46 @@ function handlePlainTextPaste(event) {
 const cryptoWorker = new Worker('./crypto-worker.js');
 let workerMsgId = 0;
 
-function execCryptoWorker(type, payload, transferables = []) {
-  return new Promise((resolve, reject) => {
-    const id = ++workerMsgId;
-    const handler = (e) => {
-      if (e.data.id === id) {
-        cryptoWorker.removeEventListener('message', handler);
-        if (e.data.success) {
-          resolve(e.data.result);
-        } else {
-          reject(new Error(e.data.error));
-        }
-      }
-    };
-    cryptoWorker.addEventListener('message', handler);
-    cryptoWorker.postMessage({ id, type, ...payload }, transferables);
-  });
+async function encryptData(data, keyMaterial) {
+  const salt = window.crypto.getRandomValues(new Uint8Array(16));
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(keyMaterial, salt, 600000);
+  const encrypted = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, data);
+
+  const result = new Uint8Array(
+    MAGIC_BYTES.length + salt.length + iv.length + encrypted.byteLength,
+  );
+  result.set(MAGIC_BYTES, 0);
+  result.set(salt, MAGIC_BYTES.length);
+  result.set(iv, MAGIC_BYTES.length + salt.length);
+  result.set(new Uint8Array(encrypted), MAGIC_BYTES.length + salt.length + iv.length);
+  return result;
 }
 
-async function encryptData(data, password) {
-  showToast(
-    window._t('status.encrypting') || 'Encrypting...',
-    '<span class="animate-spin text-blue-400">⏳</span>',
-    { duration: 0 },
-  );
-  let passwordBuffer = password;
-  const transferables = [data.buffer];
-  if (typeof password === 'string') {
-    passwordBuffer = new TextEncoder().encode(password);
-    transferables.push(passwordBuffer.buffer);
-  }
-  return await execCryptoWorker('encrypt', { data, password: passwordBuffer }, transferables);
-}
+async function decryptData(encryptedData, keyMaterial) {
+  const magic = encryptedData.slice(0, 8);
+  const magicStr = new TextDecoder().decode(magic);
+  const isEncryptedV2 = magicStr === 'GRINDEN2';
+  const isEncryptedLegacy = magicStr === 'GRINDENC';
+  if (!isEncryptedV2 && !isEncryptedLegacy) return encryptedData;
 
-async function decryptData(data, password) {
-  showToast(
-    window._t('status.decrypting') || 'Decrypting...',
-    '<span class="animate-spin text-blue-400">⏳</span>',
-    { duration: 0 },
-  );
-  let passwordBuffer = password;
-  const transferables = [data.buffer];
-  if (typeof password === 'string') {
-    passwordBuffer = new TextEncoder().encode(password);
-    transferables.push(passwordBuffer.buffer);
+  const salt = encryptedData.slice(8, 24);
+  const iv = encryptedData.slice(24, 36);
+  const data = encryptedData.slice(36);
+
+  try {
+    if (isEncryptedV2) {
+      const key = await deriveKey(keyMaterial, salt, 600000);
+      const decrypted = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, data);
+      return new Uint8Array(decrypted);
+    } else {
+      const legacyKey = await deriveKey(keyMaterial, salt, 100000);
+      const decrypted = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, legacyKey, data);
+      return new Uint8Array(decrypted);
+    }
+  } catch (e) {
+    throw new Error('パスワードが間違っているか、ファイルが破損しています。');
   }
-  return await execCryptoWorker('decrypt', { data, password: passwordBuffer }, transferables);
 }
 
 function migrateDatabase() {
@@ -622,30 +671,34 @@ async function initSQLite() {
           magicStr === 'GRINDENC' || magicStr === 'GRINDEN2' || magicStr !== 'SQLite f';
 
         if (isEncrypted) {
-          let password = document.getElementById('file-password').value;
+          let password = null;
           let success = false;
           let attemptCount = 0;
 
           while (!success) {
             try {
               let copy = new Uint8Array(Uints);
-              Uints = await decryptData(copy, password);
-              success = true;
-              if (password) {
-                document.getElementById('file-password').value = password;
-                lastSavedPasswordHash = await getPasswordHash(password);
+              if (attemptCount === 0 && currentMasterKey) {
+                // Try existing master key first
+                Uints = await decryptData(copy, currentMasterKey);
+                success = true;
+              } else {
+                // Show prompt if failed or missing key
+                let promptMsg = window._t('prompt.pw_backup') || 'File is encrypted. Please enter the password to decrypt:';
+                if (attemptCount > 0) {
+                  promptMsg = '❌ Incorrect password. Please try again:\n\n' + promptMsg;
+                }
+                password = await requestPasswordPrompt(promptMsg);
+                if (password === null) {
+                  await showAlert(window._t('alert.cancel_startup_desc') || 'Decryption canceled. Database startup aborted.');
+                  document.body.innerHTML = `<h1 style='text-align:center; margin-top:20vh;'>${window._t('error.security_stop_desc') || 'System halted. Reload page to restart.'}</h1>`;
+                  return;
+                }
+                await setMasterPassword(password);
+                Uints = await decryptData(copy, currentMasterKey);
+                success = true;
               }
             } catch (err) {
-              let promptMsg = window._t('prompt.pw_backup');
-              if (attemptCount > 0 || password) {
-                promptMsg = '❌ Incorrect password. Please try again:\n\n' + promptMsg;
-              }
-              password = await requestPasswordPrompt(promptMsg);
-              if (password === null) {
-                await showAlert(window._t('alert.cancel_startup_desc'));
-                document.body.innerHTML = `<h1 style='text-align:center; margin-top:20vh;'>${window._t('error.security_stop_desc')}</h1>`;
-                return;
-              }
               attemptCount++;
             }
           }
@@ -818,8 +871,8 @@ function roundAmount(amount, currency = 'USD') {
     rounded = sign * (Math.round((absAmount + Number.EPSILON) * 100) / 100);
   }
 
-  // 💎 最後の仕上げ (Gold-Rank Polish):
-  // Javascript特有の「マイナスゼロ(-0)」を検知し、純粋な「0」に正規化してノイズを排除する
+  // Final polish:
+  // Normalize negative zero (-0) to 0
   return rounded === -0 ? 0 : rounded;
 }
 
@@ -942,7 +995,7 @@ function evaluateMath(expr) {
     const result = evalStack[0];
 
     if (!isFinite(result) || isNaN(result)) return null;
-    // 負の数でも正確に四捨五入する
+    // Round accurately even for negative numbers
     const rounded =
       Math.sign(result) * (Math.round((Math.abs(result) + Number.EPSILON) * 100) / 100);
     if (rounded > 10000000000000 || rounded < -10000000000000) return null;
@@ -1218,7 +1271,7 @@ async function updateRecord(id, field, newValue, element) {
 
   let checkExportStmt;
   try {
-    // 自身のid、または自身を親(parent_id)に持つ子明細のどれか1つでもロックされていればブロックする
+    // Block if the record or any of its children are locked
     checkExportStmt = db.prepare(
       'SELECT COUNT(*) FROM records WHERE (id = ? OR parent_id = ?) AND is_exported = 1',
     );
@@ -1495,7 +1548,7 @@ function updateTotalsOnly() {
     const orConditions = window.currentActiveMonths
       .map((m) => {
         params.push(`${m}%`);
-        return 'c.created_at LIKE ?'; // テーブルエイリアス 'c.' を付ける
+        return 'c.created_at LIKE ?'; // Attach table alias "c."
       })
       .join(' OR ');
     whereClause = ` AND (${orConditions})`;
@@ -1520,10 +1573,10 @@ function updateTotalsOnly() {
     stmtTotal = db.prepare(queryTotal);
     stmtTotal.bind(params);
 
-    let currencyTotals = Object.create(null); // プロトタイプを持たない純粋な辞書として初期化
+    let currencyTotals = Object.create(null); // Initialize as pure dictionary without prototype
     while (stmtTotal.step()) {
       const [curr, total] = stmtTotal.get();
-      // __proto__ などの文字列が来ても prototype を汚染しない
+      // Prevent prototype pollution
       const safeCurr = curr || 'USD';
       currencyTotals[safeCurr] = (currencyTotals[safeCurr] || 0) + (total || 0);
     }
@@ -2461,7 +2514,7 @@ function updateOrCreateBlockElement(block, existingEl = null) {
     }
   }
 
-  // Tailwindの content-[attr(data-xxx)] を使用して動的にテキストを差し込む
+  // Dynamically insert text using Tailwind content-[attr(data-xxx)]
   const blockTitleEmptyClass = 'empty:before:content-[attr(data-empty)]';
   const untitledText = window._t('label.unnamed') || 'Untitled';
 
@@ -2496,7 +2549,7 @@ function updateOrCreateBlockElement(block, existingEl = null) {
 
   // 2. Build item list
   const memoEmptyClass = 'empty:before:content-[attr(data-empty)]';
-  const emptyMemoText = window._t('csv.memo') || 'Memo'; // "✎ Memo" のような表示にする
+  const emptyMemoText = window._t('csv.memo') || 'Memo'; // Display placeholder like "✎ Memo"
   const newItemsHtml = block.children
     .map((item) => {
       const isCollection = (item.memo || '').match(/(#Receipt|#Payment)(?=\s|$)/i);
@@ -2951,29 +3004,23 @@ async function saveGrindFile(isSaveAs = false) {
       console.warn('SQLite VACUUM skipped due to active statements:', vacuumError);
     }
     let data = db.export();
-    const currentPassword = document.getElementById('file-password').value;
-    const currentPasswordHash = await getPasswordHash(currentPassword);
-
-    if (lastSavedPasswordHash !== '' && currentPassword === '') {
-      if (!(await requestConfirm(window._t('confirm.pw_empty')))) {
-        await showAlert(window._t('alert.pw_empty_canceled'));
+    // Warning if password is removed
+    if (currentMasterKeyHash !== '' && !currentMasterKey) {
+      const confirmRemove = await showConfirm(
+        window._t('prompt.pw_remove') || 'Are you sure you want to remove the password? The file will be saved unencrypted.'
+      );
+      if (!confirmRemove) {
+        showToast(
+          window._t('status.pw_remove_cancel') || 'Save canceled to protect data.',
+          '<span class="text-blue-500 text-xl font-bold">🛡️</span>'
+        );
         return;
       }
+      currentMasterKeyHash = '';
     }
 
-    if (currentPassword !== '' && currentPasswordHash !== lastSavedPasswordHash) {
-      const confirmPw = await requestPasswordPrompt(window._t('prompt.pw_new'));
-      if (confirmPw === null) {
-        return;
-      }
-      if (confirmPw !== currentPassword) {
-        await showAlert(window._t('alert.pw_mismatch'));
-        return;
-      }
-    }
-
-    if (currentPassword) {
-      data = await encryptData(data, currentPassword);
+    if (currentMasterKey) {
+      data = await encryptData(data, currentMasterKey);
     }
 
     const showSaveSuccessFeedback = () => {
@@ -3034,7 +3081,7 @@ async function saveGrindFile(isSaveAs = false) {
         const a = document.createElement('a');
         a.href = url;
         a.download =
-          targetFileHandle && targetFileHandle.name ? targetFileHandle.name : 'database.cash';
+          targetFileHandle && targetFileHandle.name ? targetFileHandle.name : `GrindCash_${getTodayString().replace(/-/g, '')}.cash`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -3045,7 +3092,7 @@ async function saveGrindFile(isSaveAs = false) {
           '<span class="text-green-400">💾</span>',
         );
         showSaveSuccessFeedback();
-        lastSavedPasswordHash = currentPasswordHash;
+        
         return;
       }
     }
@@ -3074,7 +3121,7 @@ async function saveGrindFile(isSaveAs = false) {
     );
     showSaveSuccessFeedback();
     triggerHaptic();
-    lastSavedPasswordHash = currentPasswordHash;
+    
   } catch (err) {
     console.error('Save failed:', err);
     showToast(window._t('toast.save_error'), '<span class="text-red-400">❌</span>');
@@ -3124,32 +3171,34 @@ async function processFileHandle(handle, isDummy = false) {
       magicStr === 'GRINDENC' || magicStr === 'GRINDEN2' || magicStr !== 'SQLite f';
 
     if (isEncrypted) {
-      let password = document.getElementById('file-password').value;
       let success = false;
-      let attemptCount = 0;
-      while (!success) {
-        try {
-          let copy = new Uint8Array(Uints);
-          Uints = await decryptData(copy, password);
-          success = true;
-          if (password) {
-            document.getElementById('file-password').value = password;
-            lastSavedPasswordHash = await getPasswordHash(password);
+          let attemptCount = 0;
+          while (!success) {
+            try {
+              let copy = new Uint8Array(Uints);
+              if (attemptCount === 0 && currentMasterKey) {
+                Uints = await decryptData(copy, currentMasterKey);
+                success = true;
+              } else {
+                let promptMsg = window._t('prompt.pw_import') || 'Please enter the password to decrypt the current database:';
+                if (attemptCount > 0) {
+                  promptMsg = '❌ Incorrect password.\n\n' + promptMsg;
+                }
+                const password = await requestPasswordPrompt(promptMsg);
+                if (password === null) {
+                  throw new Error('Canceled');
+                }
+                await setMasterPassword(password);
+                Uints = await decryptData(copy, currentMasterKey);
+                success = true;
+              }
+            } catch (err) {
+              if (err.message === 'Canceled') {
+                return;
+              }
+              attemptCount++;
+            }
           }
-        } catch (err) {
-          let promptMsg =
-            window._t('prompt.pw_backup') || 'File is encrypted. Enter decryption password:';
-          if (attemptCount > 0 || password) {
-            promptMsg =
-              '❌ ' +
-              (window._t('alert.pw_incorrect') || 'Incorrect password. Please try again:\n\n') +
-              promptMsg;
-          }
-          password = await requestPasswordPrompt(promptMsg);
-          if (password === null) return;
-          attemptCount++;
-        }
-      }
     }
 
     if (!isEncrypted) {
@@ -4749,7 +4798,7 @@ function filterByTag(tagName) {
     const escapedTag = tagName.replace(/([\\_%])/g, '\\$1');
     stmt.bind([`%#${escapedTag}%`]);
 
-    let totals = Object.create(null); // 安全な辞書に置き換え
+    let totals = Object.create(null); // Replace with safe dictionary
     let items = [];
     while (stmt.step()) {
       const [date, memo, amount, currency] = stmt.get();
