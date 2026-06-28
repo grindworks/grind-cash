@@ -14,19 +14,21 @@ let statusTimeoutId = null;
 let isSaving = false;
 let lastSavedPasswordHash = '';
 
-const isMac = typeof navigator.userAgentData !== 'undefined'
-  ? navigator.userAgentData.platform.toUpperCase().indexOf('MAC') >= 0
-  : navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+const isMac =
+  typeof navigator.userAgentData !== 'undefined'
+    ? navigator.userAgentData.platform.toUpperCase().indexOf('MAC') >= 0
+    : navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 
-const _t = (key, ...params) => window.I18n ? window.I18n.get(key, params) : key;
-
+const _t = (key, ...params) => (window.I18n ? window.I18n.get(key, params) : key);
 
 function renderDataWithTransition() {
   if (document.startViewTransition) {
     try {
       document.startViewTransition(() => renderData());
       return;
-    } catch (e) { /* ignore and fallback */ }
+    } catch (e) {
+      /* ignore and fallback */
+    }
   }
   renderData();
 }
@@ -38,7 +40,7 @@ let customAccountDict = [];
 
 let currencySymbol = '$';
 
-const symbolMap = { 'USD': '$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'CAD': 'CA$', 'AUD': 'AU$' };
+const symbolMap = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CAD: 'CA$', AUD: 'AU$' };
 
 const formatterCache = {};
 
@@ -81,7 +83,8 @@ function formatCurrency(amount, currency) {
 }
 
 function updateCurrencySymbolAndFormatter() {
-  const baseCurrency = typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
+  const baseCurrency =
+    typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
   currencySymbol = symbolMap[baseCurrency] || '$';
 
   const selectEl = document.getElementById('base-currency-select');
@@ -102,6 +105,30 @@ const dictOptions = {
     { value: 'none', label: '科目サジェスト: オフ' },
     { value: 'marketer', label: '辞書: デジタルマーケター' },
     { value: 'general', label: '辞書: 一般ビジネス' },
+  ],
+  de: [
+    { value: 'custom', label: 'Wb: Benutzerdefiniert' },
+    { value: 'none', label: 'Vorschlag: Aus' },
+    { value: 'marketer', label: 'Wb: Digital Marketer' },
+    { value: 'general', label: 'Wb: Allgemeine Geschäfte' },
+  ],
+  fr: [
+    { value: 'custom', label: 'Dict : Personnalisé' },
+    { value: 'none', label: 'Suggestions : Désactivées' },
+    { value: 'marketer', label: 'Dict : Digital Marketer' },
+    { value: 'general', label: 'Dict : Affaires générales' },
+  ],
+  es: [
+    { value: 'custom', label: 'Dict: Personalizado' },
+    { value: 'none', label: 'Sugerencias: Apagado' },
+    { value: 'marketer', label: 'Dict: Digital Marketer' },
+    { value: 'general', label: 'Dict: Negocios generales' },
+  ],
+  it: [
+    { value: 'custom', label: 'Diz: Personalizzato' },
+    { value: 'none', label: 'Suggerimenti: Disattivati' },
+    { value: 'marketer', label: 'Diz: Digital Marketer' },
+    { value: 'general', label: 'Diz: Affari generali' },
   ],
 };
 
@@ -192,11 +219,11 @@ async function getPasswordHash(password) {
   if (!password) return '';
   const msgUint8 = new TextEncoder().encode(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-  
+
   // セキュリティ強化 (Zeroization): メモリ上の平文パスワードのバイト配列をランダム値で上書きして破棄
   // ※JSの仕様上、TextEncoderのコピーやGCにより完全な消去は保証されないベストエフォート処理
   crypto.getRandomValues(msgUint8);
-  
+
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
@@ -271,7 +298,7 @@ function setDirty(state) {
           if (!isDirty) return;
           if (!db) return;
           const password = document.getElementById('file-password').value;
-          
+
           if (lastSavedPasswordHash !== '' && password === '') {
             console.warn('Draft save aborted: Password removed from an encrypted session.');
             return;
@@ -404,7 +431,7 @@ function requestPasswordPrompt(message) {
 function handlePlainTextPaste(event) {
   event.preventDefault();
   const clipboard = event.clipboardData || window.clipboardData;
-  if (!clipboard) return; 
+  if (!clipboard) return;
 
   const text = clipboard.getData('text/plain');
   const cleanText = text.replace(/[\r\n\t]+/g, ' ').trim();
@@ -421,12 +448,12 @@ function handlePlainTextPaste(event) {
 
   const selection = window.getSelection();
   if (!selection.rangeCount) return;
-  
+
   const textNode = document.createTextNode(cleanText);
   const range = selection.getRangeAt(0);
   range.deleteContents();
   range.insertNode(textNode);
-  
+
   range.setStartAfter(textNode);
   range.setEndAfter(textNode);
   selection.removeAllRanges();
@@ -457,7 +484,11 @@ function execCryptoWorker(type, payload, transferables = []) {
 }
 
 async function encryptData(data, password) {
-  showToast(window._t('status.encrypting') || 'Encrypting...', '<span class="animate-spin text-blue-400">⏳</span>', { duration: 0 });
+  showToast(
+    window._t('status.encrypting') || 'Encrypting...',
+    '<span class="animate-spin text-blue-400">⏳</span>',
+    { duration: 0 },
+  );
   let passwordBuffer = password;
   const transferables = [data.buffer];
   if (typeof password === 'string') {
@@ -468,7 +499,11 @@ async function encryptData(data, password) {
 }
 
 async function decryptData(data, password) {
-  showToast(window._t('status.decrypting') || 'Decrypting...', '<span class="animate-spin text-blue-400">⏳</span>', { duration: 0 });
+  showToast(
+    window._t('status.decrypting') || 'Decrypting...',
+    '<span class="animate-spin text-blue-400">⏳</span>',
+    { duration: 0 },
+  );
   let passwordBuffer = password;
   const transferables = [data.buffer];
   if (typeof password === 'string') {
@@ -565,9 +600,9 @@ async function initSQLite() {
 
     if (typeof WebAssembly === 'object' && typeof WebAssembly.instantiate === 'function') {
       const isWasmSupported = await WebAssembly.validate(new Uint8Array(wasmBinary));
-      if (!isWasmSupported) throw new Error("WASM_INVALID");
+      if (!isWasmSupported) throw new Error('WASM_INVALID');
     } else {
-      throw new Error("WASM_BLOCKED");
+      throw new Error('WASM_BLOCKED');
     }
 
     const config = {
@@ -583,7 +618,8 @@ async function initSQLite() {
         let Uints = draft;
         const magic = Uints.slice(0, 8);
         const magicStr = new TextDecoder().decode(magic);
-        const isEncrypted = magicStr === 'GRINDENC' || magicStr === 'GRINDEN2' || magicStr !== 'SQLite f';
+        const isEncrypted =
+          magicStr === 'GRINDENC' || magicStr === 'GRINDEN2' || magicStr !== 'SQLite f';
 
         if (isEncrypted) {
           let password = document.getElementById('file-password').value;
@@ -686,8 +722,13 @@ async function initSQLite() {
     handleLaunchFiles();
   } catch (err) {
     let errMsg = window._t('error.fatal_desc');
-    if (err.message === "WASM_BLOCKED" || err.message.includes("WebAssembly") || err.message === "WASM_INVALID") {
-      errMsg = "WebAssembly is disabled or blocked by your browser/OS.<br>If you are using iOS Lockdown Mode, please exclude this site.";
+    if (
+      err.message === 'WASM_BLOCKED' ||
+      err.message.includes('WebAssembly') ||
+      err.message === 'WASM_INVALID'
+    ) {
+      errMsg =
+        'WebAssembly is disabled or blocked by your browser/OS.<br>If you are using iOS Lockdown Mode, please exclude this site.';
     }
 
     showToast(window._t('toast.sqlite_load_fail'), '<span>⚠️</span>');
@@ -711,7 +752,7 @@ function handleLaunchFiles() {
     window.launchQueue.setConsumer(async (launchParams) => {
       if (!launchParams.files || launchParams.files.length === 0) return;
       if (isDirty) {
-        if (!await requestConfirm(window._t('confirm.discard_changes'))) return;
+        if (!(await requestConfirm(window._t('confirm.discard_changes')))) return;
       }
       await processFileHandle(launchParams.files[0]);
     });
@@ -748,8 +789,13 @@ function addBlock() {
   const trimmedMemo = memoInput.value.trim();
   if (!trimmedMemo) return;
 
-  const baseCurrency = typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
-  db.run('INSERT INTO records (memo, amount, currency) VALUES (?, ?, ?)', [trimmedMemo, null, baseCurrency]);
+  const baseCurrency =
+    typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
+  db.run('INSERT INTO records (memo, amount, currency) VALUES (?, ?, ?)', [
+    trimmedMemo,
+    null,
+    baseCurrency,
+  ]);
   const res = db.exec('SELECT last_insert_rowid()');
   const newId = res[0].values[0][0];
 
@@ -765,13 +811,13 @@ function roundAmount(amount, currency = 'USD') {
   const sign = Math.sign(amount);
   const absAmount = Math.abs(amount);
   let rounded;
-  
+
   if (isZeroDecimal) {
     rounded = sign * Math.round(absAmount);
   } else {
     rounded = sign * (Math.round((absAmount + Number.EPSILON) * 100) / 100);
   }
-  
+
   // 💎 最後の仕上げ (Gold-Rank Polish):
   // Javascript特有の「マイナスゼロ(-0)」を検知し、純粋な「0」に正規化してノイズを排除する
   return rounded === -0 ? 0 : rounded;
@@ -850,8 +896,8 @@ function evaluateMath(expr) {
     for (const token of tokens) {
       if (!isNaN(parseFloat(token))) {
         const tokenStr = String(token);
-        if (tokenStr.includes('.') && (tokenStr.split('.').length - 1) > 1) {
-          return null; 
+        if (tokenStr.includes('.') && tokenStr.split('.').length - 1 > 1) {
+          return null;
         }
         outputQueue.push(parseFloat(token));
       } else if ('+-*/'.includes(token)) {
@@ -897,7 +943,8 @@ function evaluateMath(expr) {
 
     if (!isFinite(result) || isNaN(result)) return null;
     // 負の数でも正確に四捨五入する
-    const rounded = Math.sign(result) * (Math.round((Math.abs(result) + Number.EPSILON) * 100) / 100);
+    const rounded =
+      Math.sign(result) * (Math.round((Math.abs(result) + Number.EPSILON) * 100) / 100);
     if (rounded > 10000000000000 || rounded < -10000000000000) return null;
     return rounded;
   } catch (e) {
@@ -905,13 +952,21 @@ function evaluateMath(expr) {
   }
 }
 
-async function addItem(parentId, memo, amount, dateStr, accountStr, taxRate = '', currency = 'USD') {
+async function addItem(
+  parentId,
+  memo,
+  amount,
+  dateStr,
+  accountStr,
+  taxRate = '',
+  currency = 'USD',
+) {
   const safeMemo = (memo || '').trim();
   if (!safeMemo || amount === '' || amount === null) return;
   if (parentId) {
     if (dateStr) lastUsedDates[parentId] = dateStr;
     if (accountStr) lastUsedAccounts[parentId] = accountStr;
-    
+
     // Form inputs must be cleared manually because renderData no longer recreates the form
     const form = document.getElementById(`block-form-${parentId}`);
     if (form) {
@@ -948,7 +1003,15 @@ async function addItem(parentId, memo, amount, dateStr, accountStr, taxRate = ''
   renderData(parentId);
 }
 
-async function insertRecord(parentId, memo, amountExpr, dateStr = null, accountStr = null, taxRate = '', currency = 'USD') {
+async function insertRecord(
+  parentId,
+  memo,
+  amountExpr,
+  dateStr = null,
+  accountStr = null,
+  taxRate = '',
+  currency = 'USD',
+) {
   // Strip currency symbols for math evaluation
   let safeAmountExpr = amountExpr;
   if (typeof amountExpr === 'string') {
@@ -1064,7 +1127,9 @@ window.createCollectionRecord = function (id) {
   let stmt;
   let insertStmt = null;
   try {
-    stmt = db.prepare('SELECT parent_id, memo, amount, account, created_at, currency FROM records WHERE id = ?');
+    stmt = db.prepare(
+      'SELECT parent_id, memo, amount, account, created_at, currency FROM records WHERE id = ?',
+    );
     stmt.bind([id]);
     if (stmt.step()) {
       const [parent_id, memo, amount, account, parent_created_at, currency] = stmt.get();
@@ -1080,8 +1145,14 @@ window.createCollectionRecord = function (id) {
       let isIncome = safeAmount >= 0;
 
       // Guess simple expense accounts
-      const isDebitAccount =
-        !['Revenue', 'Sales', 'Accounts Receivable', '売上', '売上高', '売掛金'].includes(account);
+      const isDebitAccount = ![
+        'Revenue',
+        'Sales',
+        'Accounts Receivable',
+        '売上',
+        '売上高',
+        '売掛金',
+      ].includes(account);
 
       if (isDebitAccount) {
         isIncome = !isIncome;
@@ -1119,7 +1190,10 @@ window.createCollectionRecord = function (id) {
       setDirty(true);
       renderData();
 
-      showToast(window._t('toast.settlement_created') || 'Settlement record created.', '<span class="text-emerald-400">✅</span>');
+      showToast(
+        window._t('toast.settlement_created') || 'Settlement record created.',
+        '<span class="text-emerald-400">✅</span>',
+      );
 
       requestAnimationFrame(() => {
         const newDateEl = document.querySelector(
@@ -1145,15 +1219,20 @@ async function updateRecord(id, field, newValue, element) {
   let checkExportStmt;
   try {
     // 自身のid、または自身を親(parent_id)に持つ子明細のどれか1つでもロックされていればブロックする
-    checkExportStmt = db.prepare('SELECT COUNT(*) FROM records WHERE (id = ? OR parent_id = ?) AND is_exported = 1');
+    checkExportStmt = db.prepare(
+      'SELECT COUNT(*) FROM records WHERE (id = ? OR parent_id = ?) AND is_exported = 1',
+    );
     checkExportStmt.bind([id, id]);
     if (checkExportStmt.step() && checkExportStmt.get()[0] > 0) {
-      await showAlert(window._t('error.record_locked') || "Cannot modify. This block contains exported and locked records.");
+      await showAlert(
+        window._t('error.record_locked') ||
+          'Cannot modify. This block contains exported and locked records.',
+      );
       renderData();
       return;
     }
   } catch (e) {
-    console.error("Lock check error", e);
+    console.error('Lock check error', e);
   } finally {
     if (checkExportStmt) checkExportStmt.free();
   }
@@ -1165,7 +1244,10 @@ async function updateRecord(id, field, newValue, element) {
   }
 
   // Prevent crash if newValue is null/undefined
-  let val = (newValue || '').toString().replace(/\u00A0/g, ' ').trim();
+  let val = (newValue || '')
+    .toString()
+    .replace(/\u00A0/g, ' ')
+    .trim();
   let formattedAmountStr = '';
 
   if (field === 'amount') {
@@ -1212,12 +1294,12 @@ async function updateRecord(id, field, newValue, element) {
         await showAlert(window._t('alert.invalid_amount_or_formula'));
         return;
       }
-      
+
       if (element) {
         element.classList.remove('!bg-red-100', '!text-red-600');
       }
     }
-    
+
     let recordCurrency = 'USD';
     try {
       const curStmt = db.prepare('SELECT currency FROM records WHERE id = ?');
@@ -1226,8 +1308,8 @@ async function updateRecord(id, field, newValue, element) {
         recordCurrency = curStmt.get()[0] || 'USD';
       }
       curStmt.free();
-    } catch(e) {}
-    
+    } catch (e) {}
+
     if (val !== null) {
       val = roundAmount(val, recordCurrency);
       formattedAmountStr = formatCurrency(val, recordCurrency);
@@ -1242,14 +1324,14 @@ async function updateRecord(id, field, newValue, element) {
       if (element && element.hasAttribute('data-year')) {
         year = parseInt(element.getAttribute('data-year'), 10);
       }
-      
+
       const currentAppLang = (window.I18n && window.I18n.getLang()) || 'en';
       const isMonthFirst = currentAppLang === 'en' || currentAppLang === 'ja';
-      
+
       let firstNum = parseInt(match[1], 10);
       let secondNum = parseInt(match[2], 10);
       let m, d;
-      
+
       if (firstNum > 12 && secondNum <= 12) {
         d = firstNum;
         m = secondNum;
@@ -1272,7 +1354,10 @@ async function updateRecord(id, field, newValue, element) {
         dateObj.getMonth() !== m - 1 ||
         dateObj.getDate() !== d
       ) {
-        await showAlert(window._t('alert.invalid_date') + ` (Detected format: ${isMonthFirst ? 'MM/DD' : 'DD/MM'})`);
+        await showAlert(
+          window._t('alert.invalid_date') +
+            ` (Detected format: ${isMonthFirst ? 'MM/DD' : 'DD/MM'})`,
+        );
         renderData();
         return;
       }
@@ -1423,18 +1508,18 @@ function updateTotalsOnly() {
   let stmtBlock;
   try {
     const queryTotal = `
-      SELECT p.currency, SUM(c.amount) 
+      SELECT p.currency, SUM(c.amount)
       FROM records c
       JOIN records p ON c.parent_id = p.id
-      WHERE c.parent_id IS NOT NULL 
-        AND COALESCE(c.memo, '') NOT LIKE '%#Payment%' 
-        AND COALESCE(c.memo, '') NOT LIKE '%#Receipt%' 
+      WHERE c.parent_id IS NOT NULL
+        AND COALESCE(c.memo, '') NOT LIKE '%#Payment%'
+        AND COALESCE(c.memo, '') NOT LIKE '%#Receipt%'
         ${whereClause}
       GROUP BY p.currency
     `;
     stmtTotal = db.prepare(queryTotal);
     stmtTotal.bind(params);
-    
+
     let currencyTotals = Object.create(null); // プロトタイプを持たない純粋な辞書として初期化
     while (stmtTotal.step()) {
       const [curr, total] = stmtTotal.get();
@@ -1442,16 +1527,17 @@ function updateTotalsOnly() {
       const safeCurr = curr || 'USD';
       currencyTotals[safeCurr] = (currencyTotals[safeCurr] || 0) + (total || 0);
     }
-    
+
     if (Object.keys(currencyTotals).length === 0) {
-      const baseCurr = typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
+      const baseCurr =
+        typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
       currencyTotals[baseCurr] = 0;
     }
-    
+
     renderMultiTotals(currencyTotals);
 
     stmtBlock = db.prepare(
-      `SELECT SUM(amount) FROM records WHERE parent_id = ? AND COALESCE(memo, '') NOT LIKE '%#Payment%' AND COALESCE(memo, '') NOT LIKE '%#Receipt%' ${whereClause.replace(/c\./g, '')}`
+      `SELECT SUM(amount) FROM records WHERE parent_id = ? AND COALESCE(memo, '') NOT LIKE '%#Payment%' AND COALESCE(memo, '') NOT LIKE '%#Receipt%' ${whereClause.replace(/c\./g, '')}`,
     );
     const blocksRes = db.exec('SELECT id, currency FROM records WHERE parent_id IS NULL');
     if (blocksRes.length > 0) {
@@ -1460,7 +1546,7 @@ function updateTotalsOnly() {
         let blockTotal = 0;
         if (stmtBlock.step()) blockTotal = stmtBlock.get()[0] || 0;
         stmtBlock.reset();
-        
+
         const el = document.getElementById(`block-total-${blockId}`);
         if (el) {
           const safeCurr = blockCurrency || 'USD';
@@ -1505,11 +1591,11 @@ function updateTagsOnly() {
     SELECT p.memo AS p_memo, c.created_at, c.memo, c.amount, c.currency
     FROM records c
     JOIN records p ON c.parent_id = p.id
-    WHERE c.parent_id IS NOT NULL 
+    WHERE c.parent_id IS NOT NULL
       AND (c.memo LIKE '%#%' OR c.memo LIKE '%＃%' OR p.memo LIKE '%#%' OR p.memo LIKE '%＃%')
       ${whereClause}
   `;
-  
+
   let tagTotals = Object.create(null);
   let stmt;
   try {
@@ -1519,7 +1605,7 @@ function updateTagsOnly() {
       const row = stmt.getAsObject();
       const safeAmount = parseFloat(row.amount || 0);
       const isCollection = (row.memo || '').match(/(#Receipt|#Payment)(?=\s|$)/i);
-      
+
       const safeMemoStr = (row.memo || '').slice(0, 1000);
       const safeBlockMemoStr = (row.p_memo || '').slice(0, 1000);
       const tags = safeMemoStr.match(/[#＃][\p{L}\p{N}_\-ー]+/gu) || [];
@@ -1531,10 +1617,15 @@ function updateTagsOnly() {
         if (!tagTotals[tag]) tagTotals[tag] = { totals: {}, items: [] };
         const c = row.currency || 'USD';
         tagTotals[tag].totals[c] = (tagTotals[tag].totals[c] || 0) + safeAmount;
-        tagTotals[tag].items.push({ date: row.created_at, memo: row.memo, amount: safeAmount, currency: c });
+        tagTotals[tag].items.push({
+          date: row.created_at,
+          memo: row.memo,
+          amount: safeAmount,
+          currency: c,
+        });
       });
     }
-  } catch(e) {
+  } catch (e) {
     console.error('Tags update failed', e);
   } finally {
     if (stmt) stmt.free();
@@ -1546,26 +1637,30 @@ function updateTagsOnly() {
     const existingDivider = document.getElementById('toc-tag-divider');
     if (existingDivider) existingDivider.remove();
     const existingTags = tocList ? tocList.querySelectorAll('.toc-tag-item') : [];
-    existingTags.forEach(el => el.remove());
+    existingTags.forEach((el) => el.remove());
 
     if (Object.keys(tagTotals).length > 0) {
       const tagDivider = document.createElement('div');
       tagDivider.id = 'toc-tag-divider';
-      tagDivider.className = 'mt-8 font-bold text-slate-400 mb-2 px-2 uppercase text-[10px] tracking-widest flex items-center gap-1';
+      tagDivider.className =
+        'mt-8 font-bold text-slate-400 mb-2 px-2 uppercase text-[10px] tracking-widest flex items-center gap-1';
       tagDivider.innerHTML = `<svg aria-hidden="true" class="w-3 h-3"><use href="#icon-folder"></use></svg> PROJECTS`;
       tocContainer.appendChild(tagDivider);
 
       Object.entries(tagTotals)
         .sort((a, b) => {
-           const sumA = Object.values(a[1].totals).reduce((acc, v) => acc + (Math.abs(v) || 0), 0);
-           const sumB = Object.values(b[1].totals).reduce((acc, v) => acc + (Math.abs(v) || 0), 0);
-           return (sumB || 0) - (sumA || 0);
+          const sumA = Object.values(a[1].totals).reduce((acc, v) => acc + (Math.abs(v) || 0), 0);
+          const sumB = Object.values(b[1].totals).reduce((acc, v) => acc + (Math.abs(v) || 0), 0);
+          return (sumB || 0) - (sumA || 0);
         })
         .slice(0, 10)
         .forEach(([tag, data]) => {
-          const amountHtml = Object.entries(data.totals).map(([cur, amt]) => formatCurrencyAmount(amt, cur)).join(' / ');
+          const amountHtml = Object.entries(data.totals)
+            .map(([cur, amt]) => formatCurrencyAmount(amt, cur))
+            .join(' / ');
           const a = document.createElement('a');
-          a.className = 'toc-tag-item group block px-2 py-1.5 hover:bg-slate-100 rounded transition-colors cursor-pointer flex justify-between items-center';
+          a.className =
+            'toc-tag-item group block px-2 py-1.5 hover:bg-slate-100 rounded transition-colors cursor-pointer flex justify-between items-center';
           a.innerHTML = `<span class="text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors truncate">${escapeHtml(tag)}</span><span class="text-[10px] tabular-nums tracking-tight font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded group-hover:bg-white transition-colors">${amountHtml}</span>`;
           a.onclick = (e) => {
             e.preventDefault();
@@ -1583,21 +1678,25 @@ function updateTagsOnly() {
   if (Object.keys(tagTotals).length > 0 && blocksContainer) {
     mobileTagContainer = document.createElement('div');
     mobileTagContainer.id = 'mobile-tag-container';
-    mobileTagContainer.className = 'xl:hidden mt-12 mb-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm';
+    mobileTagContainer.className =
+      'xl:hidden mt-12 mb-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm';
     mobileTagContainer.innerHTML = `<h3 class="text-xs font-bold text-slate-400 mb-4 tracking-widest flex items-center gap-1"><svg aria-hidden="true" class="w-4 h-4"><use href="#icon-folder"></use></svg> PROJECTS (TAGS)</h3>`;
     const grid = document.createElement('div');
     grid.className = 'grid grid-cols-2 gap-3';
 
     Object.entries(tagTotals)
       .sort((a, b) => {
-         const sumA = Object.values(a[1].totals).reduce((acc, v) => acc + (Math.abs(v) || 0), 0);
-         const sumB = Object.values(b[1].totals).reduce((acc, v) => acc + (Math.abs(v) || 0), 0);
-         return (sumB || 0) - (sumA || 0);
+        const sumA = Object.values(a[1].totals).reduce((acc, v) => acc + (Math.abs(v) || 0), 0);
+        const sumB = Object.values(b[1].totals).reduce((acc, v) => acc + (Math.abs(v) || 0), 0);
+        return (sumB || 0) - (sumA || 0);
       })
       .forEach(([tag, data]) => {
-        const amountHtml = Object.entries(data.totals).map(([cur, amt]) => formatCurrencyAmount(amt, cur)).join(' / ');
+        const amountHtml = Object.entries(data.totals)
+          .map(([cur, amt]) => formatCurrencyAmount(amt, cur))
+          .join(' / ');
         const card = document.createElement('div');
-        card.className = 'bg-slate-50 p-3 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors border border-slate-100';
+        card.className =
+          'bg-slate-50 p-3 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors border border-slate-100';
         card.innerHTML = `<div class="text-sm font-bold text-blue-950 truncate mb-1">${escapeHtml(tag)}</div><div class="text-[11px] font-bold text-slate-500 tabular-nums">${amountHtml}</div>`;
         card.onclick = () => showTagModal(tag, data);
         grid.appendChild(card);
@@ -1648,38 +1747,42 @@ function checkFutureDate(input) {
 function renderMultiTotals(totalsMap) {
   const container = document.getElementById('multi-totals-container');
   if (!container) return;
-  
+
   container.innerHTML = '';
-  
+
   const entries = Object.entries(totalsMap).sort((a, b) => b[1] - a[1]);
-  
+
   entries.forEach(([currency, amount]) => {
     const isNegative = amount < 0;
     const absAmount = Math.abs(amount);
-    
+
     const wrapper = document.createElement('div');
     wrapper.className = 'flex items-baseline gap-2 justify-end w-full animate-fade-in';
-    
-    const flagMap = { 'USD': '🇺🇸', 'EUR': '🇪🇺', 'GBP': '🇬🇧', 'JPY': '🇯🇵', 'CAD': '🇨🇦', 'AUD': '🇦🇺' };
+
+    const flagMap = { USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧', JPY: '🇯🇵', CAD: '🇨🇦', AUD: '🇦🇺' };
     const flag = flagMap[currency] || '';
-    
+
     const badge = document.createElement('span');
-    badge.className = 'text-[11px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded flex items-center gap-1';
+    badge.className =
+      'text-[11px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded flex items-center gap-1';
     badge.textContent = flag ? `${flag} ${currency}` : currency;
-    
+
     const amountEl = document.createElement('p');
-    amountEl.className = 'text-3xl font-black tracking-tight text-blue-950 tabular-nums sm:text-4xl md:text-5xl';
-    
+    amountEl.className =
+      'text-3xl font-black tracking-tight text-blue-950 tabular-nums sm:text-4xl md:text-5xl';
+
     const symbolSpan = document.createElement('span');
     symbolSpan.className = 'mr-1 align-baseline font-sans text-lg font-bold text-slate-400';
-    symbolSpan.textContent = isNegative ? `-${getCurrencySymbol(currency)}` : getCurrencySymbol(currency);
-    
+    symbolSpan.textContent = isNegative
+      ? `-${getCurrencySymbol(currency)}`
+      : getCurrencySymbol(currency);
+
     const numSpan = document.createElement('span');
     numSpan.textContent = formatCurrency(absAmount, currency);
-    
+
     amountEl.appendChild(symbolSpan);
     amountEl.appendChild(numSpan);
-    
+
     wrapper.appendChild(badge);
     wrapper.appendChild(amountEl);
     container.appendChild(wrapper);
@@ -1774,10 +1877,17 @@ function updatePeriodDropdown() {
     });
   }
 
-  const isJapanese = window.I18n && window.I18n.getLang() === 'ja';
+  const lang = (window.I18n && window.I18n.getLang()) || 'en';
+  const isJapanese = lang === 'ja';
   const monthNames = isJapanese
     ? ['', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
-    : ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    : [''];
+  if (!isJapanese) {
+    for (let m = 1; m <= 12; m++) {
+      const date = new Date(2000, m - 1, 15);
+      monthNames.push(date.toLocaleDateString(lang, { month: 'short' }));
+    }
+  }
 
   let html = `<option value="all">${window._t('filter.all')}</option>`;
   if (years.size > 0) {
@@ -1926,8 +2036,12 @@ async function changeFiscalMonth() {
     if (month >= 1 && month <= 12) {
       setDbSetting('fiscalMonth', month.toString());
       updateFiscalYearButton();
-      const isFiscalActive = document.getElementById('fiscal-year-btn')?.classList.contains('!bg-purple-600');
-      const isPrevFiscalActive = document.getElementById('prev-fiscal-year-btn')?.classList.contains('!bg-purple-600');
+      const isFiscalActive = document
+        .getElementById('fiscal-year-btn')
+        ?.classList.contains('!bg-purple-600');
+      const isPrevFiscalActive = document
+        .getElementById('prev-fiscal-year-btn')
+        ?.classList.contains('!bg-purple-600');
       if (isFiscalActive) {
         setFiscalYearFilter();
       } else if (isPrevFiscalActive) {
@@ -1994,14 +2108,37 @@ function renderData(focusBlockId = null) {
   );
   const records =
     res.length > 0
-      ? res[0].values.map(([id, parent_id, memo, rawAmount, created_at, account, is_exported, tax_rate, currency]) => {
-          let safeAmount = null;
-          if (rawAmount !== null && rawAmount !== '') {
-            const num = Number(rawAmount);
-            safeAmount = Number.isFinite(num) ? num : null;
-          }
-          return { id, parent_id, memo, amount: safeAmount, created_at, account, is_exported: is_exported || 0, tax_rate: tax_rate || '', currency: currency || 'USD', children: [] };
-        })
+      ? res[0].values.map(
+          ([
+            id,
+            parent_id,
+            memo,
+            rawAmount,
+            created_at,
+            account,
+            is_exported,
+            tax_rate,
+            currency,
+          ]) => {
+            let safeAmount = null;
+            if (rawAmount !== null && rawAmount !== '') {
+              const num = Number(rawAmount);
+              safeAmount = Number.isFinite(num) ? num : null;
+            }
+            return {
+              id,
+              parent_id,
+              memo,
+              amount: safeAmount,
+              created_at,
+              account,
+              is_exported: is_exported || 0,
+              tax_rate: tax_rate || '',
+              currency: currency || 'USD',
+              children: [],
+            };
+          },
+        )
       : [];
 
   const recordMap = records.reduce((acc, record) => {
@@ -2233,7 +2370,8 @@ function generateBlockFormHtml(blockId, defaultDate, defaultAccount) {
   const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   if (defaultDate > todayStr) dateInputClass += ' text-red-600 font-bold bg-red-50 rounded';
   else dateInputClass += ' text-slate-600 bg-transparent';
-  const baseCurrency = typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
+  const baseCurrency =
+    typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
   return `
     <form id="block-form-${blockId}" data-action="addItem" data-id="${blockId}" class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 px-3 py-2 -mx-3 rounded-md transition-all focus-within:bg-slate-50 focus-within:ring-1 focus-within:ring-slate-200">
       <span class="text-blue-600 text-xl leading-none font-light hidden sm:inline">+</span>
@@ -2324,7 +2462,7 @@ function updateOrCreateBlockElement(block, existingEl = null) {
   }
 
   // Tailwindの content-[attr(data-xxx)] を使用して動的にテキストを差し込む
-  const blockTitleEmptyClass = "empty:before:content-[attr(data-empty)]";
+  const blockTitleEmptyClass = 'empty:before:content-[attr(data-empty)]';
   const untitledText = window._t('label.unnamed') || 'Untitled';
 
   const headerHtml = `
@@ -2332,11 +2470,11 @@ function updateOrCreateBlockElement(block, existingEl = null) {
       <div class="flex items-center gap-3 overflow-hidden min-w-0 flex-1">
         <svg aria-hidden="true" id="block-icon-${block.id}" class="w-5 h-5 text-slate-400 transition-transform duration-200" style="transform: ${iconRotation};"><use href="#icon-chevron-down"></use></svg>
         <h2 data-id="${block.id}" data-empty="✎ ${escapeHtml(untitledText)}" data-field="memo" contenteditable="true" data-action-input="setDirtyContentEditable" data-action-paste="handlePlainTextPaste" data-stop-propagation="true" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="select-text text-xl font-extrabold text-blue-950 tracking-tight outline-none focus:bg-white focus:ring-2 focus:ring-blue-600/30 px-1 rounded cursor-text truncate transition-colors empty:inline-block empty:min-w-20 empty:bg-slate-100 empty:before:text-slate-400 empty:before:text-sm empty:before:font-normal empty:before:pointer-events-none empty:focus:before:opacity-50 ${blockTitleEmptyClass}">${formatMemoHtml(block.memo)}</h2>
-        
+
         <select data-id="${block.id}" data-field="currency" data-action-change="updateRecord" data-stop-propagation="true" class="text-xs px-2 py-1 rounded bg-white border border-slate-200 text-slate-500 outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer ml-2 shadow-sm font-bold">
           ${getCurrencyOptionsHtml(block.currency)}
         </select>
-        
+
         ${blockBadgeHtml}
       </div>
       <div class="flex items-center shrink-0">
@@ -2357,104 +2495,109 @@ function updateOrCreateBlockElement(block, existingEl = null) {
   `;
 
   // 2. Build item list
-  const memoEmptyClass = "empty:before:content-[attr(data-empty)]";
+  const memoEmptyClass = 'empty:before:content-[attr(data-empty)]';
   const emptyMemoText = window._t('csv.memo') || 'Memo'; // "✎ Memo" のような表示にする
-  const newItemsHtml = block.children.map((item) => {
-    const isCollection = (item.memo || '').match(/(#Receipt|#Payment)(?=\s|$)/i);
-    const isLocked = item.is_exported === 1;
-    
-    let dateDisp = '';
-    let badgeHtml = '';
-    let itemYyyy = yyyy;
-    
-    if (item.created_at) {
-      const dStr = item.created_at.split(' ')[0];
-      const parts = dStr.split('-');
-      if (parts.length === 3) {
-        itemYyyy = escapeHtml(parts[0]);
-        const imm = escapeHtml(parts[1]);
-        const idd = escapeHtml(parts[2]);
-        const itemYear = parseInt(itemYyyy, 10);
-        const itemMonth = parseInt(imm, 10);
-        let itemFiscalYear = itemYear;
-        if (itemMonth < startMonth) itemFiscalYear--;
+  const newItemsHtml = block.children
+    .map((item) => {
+      const isCollection = (item.memo || '').match(/(#Receipt|#Payment)(?=\s|$)/i);
+      const isLocked = item.is_exported === 1;
 
-        const diff = currentFiscalYear - itemFiscalYear;
-        if (diff === 1) {
-          badgeHtml = `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 mr-1.5 shrink-0 select-none" title="Record from prior year">Prior</span>`;
-        } else if (diff >= 2) {
-          badgeHtml = `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 mr-1.5 shrink-0 select-none" title="Record from older years">Older</span>`;
+      let dateDisp = '';
+      let badgeHtml = '';
+      let itemYyyy = yyyy;
+
+      if (item.created_at) {
+        const dStr = item.created_at.split(' ')[0];
+        const parts = dStr.split('-');
+        if (parts.length === 3) {
+          itemYyyy = escapeHtml(parts[0]);
+          const imm = escapeHtml(parts[1]);
+          const idd = escapeHtml(parts[2]);
+          const itemYear = parseInt(itemYyyy, 10);
+          const itemMonth = parseInt(imm, 10);
+          let itemFiscalYear = itemYear;
+          if (itemMonth < startMonth) itemFiscalYear--;
+
+          const diff = currentFiscalYear - itemFiscalYear;
+          if (diff === 1) {
+            badgeHtml = `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 mr-1.5 shrink-0 select-none" title="Record from prior year">Prior</span>`;
+          } else if (diff >= 2) {
+            badgeHtml = `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 mr-1.5 shrink-0 select-none" title="Record from older years">Older</span>`;
+          }
+
+          const dateEditable = isLocked ? 'false' : 'true';
+          let dateClasses =
+            'text-xs font-mono mr-2 sm:mr-3 border px-1.5 py-0.5 rounded outline-none focus:ring-2 cursor-text transition-colors';
+
+          if (isLocked) {
+            dateClasses +=
+              ' text-slate-400 bg-slate-100 border-slate-100 cursor-not-allowed opacity-70';
+          } else if (dStr > todayStr) {
+            dateClasses +=
+              ' text-red-600 bg-red-50 border-red-200 focus:ring-red-300 hover:bg-red-100 font-bold';
+          } else {
+            dateClasses += isCollection
+              ? ' text-slate-400 bg-transparent border-transparent hover:bg-slate-100'
+              : ' text-slate-500 bg-slate-100 border-slate-200 focus:ring-blue-200 hover:bg-slate-200';
+          }
+
+          const currentAppLang = (window.I18n && window.I18n.getLang()) || 'en';
+          const isMonthFirst = currentAppLang === 'en' || currentAppLang === 'ja';
+          const dateText = isMonthFirst ? `${imm}/${idd}` : `${idd}/${imm}`;
+          const editDateTooltip =
+            window._t('tooltip.edit_date') || 'Click to edit date (Supports YYYY/MM/DD)';
+          const tooltipText = isLocked ? 'Exported & Locked' : editDateTooltip;
+          dateDisp = `${badgeHtml}<span data-id="${item.id}" data-field="created_at" data-year="${itemYyyy}" contenteditable="${dateEditable}" data-action-input="setDirtyContentEditable" data-action-paste="handlePlainTextPaste" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="${dateClasses}" title="${tooltipText}">${dateText}</span>`;
         }
-    
-        const dateEditable = isLocked ? 'false' : 'true';
-        let dateClasses = 'text-xs font-mono mr-2 sm:mr-3 border px-1.5 py-0.5 rounded outline-none focus:ring-2 cursor-text transition-colors';
-        
-        if (isLocked) {
-          dateClasses += ' text-slate-400 bg-slate-100 border-slate-100 cursor-not-allowed opacity-70';
-        } else if (dStr > todayStr) {
-          dateClasses += ' text-red-600 bg-red-50 border-red-200 focus:ring-red-300 hover:bg-red-100 font-bold';
-        } else {
-          dateClasses += isCollection
-            ? ' text-slate-400 bg-transparent border-transparent hover:bg-slate-100'
-            : ' text-slate-500 bg-slate-100 border-slate-200 focus:ring-blue-200 hover:bg-slate-200';
-        }
-        
-        const currentAppLang = (window.I18n && window.I18n.getLang()) || 'en';
-        const isMonthFirst = currentAppLang === 'en' || currentAppLang === 'ja';
-        const dateText = isMonthFirst ? `${imm}/${idd}` : `${idd}/${imm}`;
-        const editDateTooltip = window._t('tooltip.edit_date') || 'Click to edit date (Supports YYYY/MM/DD)';
-        const tooltipText = isLocked ? 'Exported & Locked' : editDateTooltip;
-        dateDisp = `${badgeHtml}<span data-id="${item.id}" data-field="created_at" data-year="${itemYyyy}" contenteditable="${dateEditable}" data-action-input="setDirtyContentEditable" data-action-paste="handlePlainTextPaste" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="${dateClasses}" title="${tooltipText}">${dateText}</span>`;
       }
-    }
 
-    const accStr = item.account || '';
-    let accClasses = '';
-    if (isLocked) {
-      accClasses = 'text-slate-400 bg-slate-50 border-slate-100 cursor-not-allowed opacity-70';
-    } else {
-      accClasses = isCollection
-        ? 'text-slate-400 bg-transparent border-transparent hover:bg-slate-100 focus:bg-slate-100'
-        : 'text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100 focus:bg-blue-100';
-    }
-    
-    const accDisabled = isLocked ? 'disabled' : '';
-    const taxStr = item.tax_rate || '';
-    const taxDisabled = isLocked ? 'disabled' : '';
-    const taxClasses = isLocked 
-      ? 'text-slate-400 bg-slate-50 border-slate-100 cursor-not-allowed opacity-70'
-      : 'text-emerald-600 bg-emerald-50 border-emerald-200 hover:bg-emerald-100 focus:bg-emerald-100';
-      
-    const taxDisp = `<select data-id="${item.id}" data-field="tax_rate" ${taxDisabled} data-action-change="updateRecord" class="text-xs px-1 py-0.5 rounded mr-2 outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer transition-colors w-[70px] sm:w-[85px] shrink-0 text-left border ${taxClasses}">${getTaxOptionsHtml(taxStr)}</select>`;
+      const accStr = item.account || '';
+      let accClasses = '';
+      if (isLocked) {
+        accClasses = 'text-slate-400 bg-slate-50 border-slate-100 cursor-not-allowed opacity-70';
+      } else {
+        accClasses = isCollection
+          ? 'text-slate-400 bg-transparent border-transparent hover:bg-slate-100 focus:bg-slate-100'
+          : 'text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100 focus:bg-blue-100';
+      }
 
-    const accPlaceholder = window._t('placeholder.account');
-    let accountDisp = `<input type="text" data-id="${item.id}" data-field="account" list="account-suggestions" value="${escapeHtml(accStr)}" placeholder="${accPlaceholder}" ${accDisabled} data-action-focus="select" data-action-input="setDirty" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="text-xs px-1.5 py-0.5 rounded mr-2 outline-none focus:ring-2 focus:ring-blue-400 cursor-text transition-colors w-[84px] sm:w-[100px] shrink-0 text-left placeholder-blue-300 border ${accClasses}">`;
+      const accDisabled = isLocked ? 'disabled' : '';
+      const taxStr = item.tax_rate || '';
+      const taxDisabled = isLocked ? 'disabled' : '';
+      const taxClasses = isLocked
+        ? 'text-slate-400 bg-slate-50 border-slate-100 cursor-not-allowed opacity-70'
+        : 'text-emerald-600 bg-emerald-50 border-emerald-200 hover:bg-emerald-100 focus:bg-emerald-100';
 
-    let actionButtonsHtml = '';
-    if (isLocked) {
-      actionButtonsHtml = `
+      const taxDisp = `<select data-id="${item.id}" data-field="tax_rate" ${taxDisabled} data-action-change="updateRecord" class="text-xs px-1 py-0.5 rounded mr-2 outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer transition-colors w-[70px] sm:w-[85px] shrink-0 text-left border ${taxClasses}">${getTaxOptionsHtml(taxStr)}</select>`;
+
+      const accPlaceholder = window._t('placeholder.account');
+      let accountDisp = `<input type="text" data-id="${item.id}" data-field="account" list="account-suggestions" value="${escapeHtml(accStr)}" placeholder="${accPlaceholder}" ${accDisabled} data-action-focus="select" data-action-input="setDirty" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="text-xs px-1.5 py-0.5 rounded mr-2 outline-none focus:ring-2 focus:ring-blue-400 cursor-text transition-colors w-[84px] sm:w-[100px] shrink-0 text-left placeholder-blue-300 border ${accClasses}">`;
+
+      let actionButtonsHtml = '';
+      if (isLocked) {
+        actionButtonsHtml = `
         <span class="text-slate-400 p-1.5" title="Exported & Locked">
           <svg aria-hidden="true" class="w-4 h-4"><use href="#icon-lock"></use></svg>
         </span>
       `;
-    } else {
-      let checkBtnHtml = '';
-      if (!isCollection) {
-        checkBtnHtml = `<button data-action="createCollectionRecord" data-id="${item.id}" aria-label="Create settlement" class="text-slate-300 hover:text-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 rounded p-1.5 sm:p-2 -m-1 transition-colors cursor-pointer" title="Auto-generate settlement record"><svg aria-hidden="true" class="w-4 h-4 pointer-events-none"><use href="#icon-check-circle"></use></svg></button>`;
-      }
-      actionButtonsHtml = `
+      } else {
+        let checkBtnHtml = '';
+        if (!isCollection) {
+          checkBtnHtml = `<button data-action="createCollectionRecord" data-id="${item.id}" aria-label="Create settlement" class="text-slate-300 hover:text-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 rounded p-1.5 sm:p-2 -m-1 transition-colors cursor-pointer" title="Auto-generate settlement record"><svg aria-hidden="true" class="w-4 h-4 pointer-events-none"><use href="#icon-check-circle"></use></svg></button>`;
+        }
+        actionButtonsHtml = `
         <div class="flex items-center space-x-0.5 sm:space-x-1 md:opacity-0 md:group-hover/item:opacity-100 focus-within:opacity-100 transition-opacity">
           ${checkBtnHtml}
           <button data-action="duplicateRecord" data-id="${item.id}" aria-label="Duplicate" class="text-slate-300 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/30 rounded p-1.5 sm:p-2 -m-1 transition-colors cursor-pointer" title="Duplicate"><svg aria-hidden="true" class="w-4 h-4 pointer-events-none"><use href="#icon-copy"></use></svg></button>
           <button data-action="deleteRecord" data-id="${item.id}" aria-label="Delete" class="text-slate-300 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 rounded transition-colors text-xl sm:text-2xl leading-none p-1.5 sm:p-2 -m-1 cursor-pointer" title="Delete">&times;</button>
         </div>
       `;
-    }
+      }
 
-    const memoEditable = isLocked ? 'false' : 'true';
-    const amountDisabled = isLocked ? 'disabled' : '';
+      const memoEditable = isLocked ? 'false' : 'true';
+      const amountDisabled = isLocked ? 'disabled' : '';
 
-    return `
+      return `
       <div class="flex justify-between items-center px-4 sm:px-8 py-3 sm:py-3.5 border-b border-slate-50 group/item transition-colors ${isLocked ? 'bg-slate-100/30 opacity-75' : isCollection ? 'bg-slate-50/60' : 'hover:bg-slate-50/80'}">
         <div class="flex items-center flex-1 min-w-0">
           ${dateDisp}
@@ -2468,7 +2611,8 @@ function updateOrCreateBlockElement(block, existingEl = null) {
         </div>
       </div>
     `;
-  }).join('');
+    })
+    .join('');
 
   if (isNew) {
     blockEl.innerHTML = `
@@ -2492,12 +2636,12 @@ function updateOrCreateBlockElement(block, existingEl = null) {
     if (headerContainer && headerContainer.innerHTML !== headerHtml) {
       headerContainer.innerHTML = headerHtml;
     }
-    
+
     const itemsContainer = blockEl.querySelector('.items-container');
     if (itemsContainer && itemsContainer.innerHTML !== newItemsHtml) {
       itemsContainer.innerHTML = newItemsHtml;
     }
-    
+
     const bodyEl = blockEl.querySelector(`#block-body-${block.id}`);
     if (bodyEl) {
       bodyEl.style.maxHeight = maxH;
@@ -2530,7 +2674,13 @@ async function saveTemplate(blockId) {
     itemsStmt.bind([blockId]);
     while (itemsStmt.step()) {
       const row = itemsStmt.get();
-      items.push({ memo: row[0], account: row[1], amount: row[2], tax_rate: row[3], currency: row[4] });
+      items.push({
+        memo: row[0],
+        account: row[1],
+        amount: row[2],
+        tax_rate: row[3],
+        currency: row[4],
+      });
     }
   } finally {
     if (itemsStmt) itemsStmt.free();
@@ -2580,8 +2730,13 @@ async function insertTemplate(templateId) {
     return;
   }
 
-  const baseCurrency = typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
-  db.run('INSERT INTO records (memo, amount, currency) VALUES (?, ?, ?)', [tplName, null, baseCurrency]);
+  const baseCurrency =
+    typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
+  db.run('INSERT INTO records (memo, amount, currency) VALUES (?, ?, ?)', [
+    tplName,
+    null,
+    baseCurrency,
+  ]);
   const parentRes = db.exec('SELECT last_insert_rowid()');
   const parentId = parentRes[0].values[0][0];
 
@@ -2625,14 +2780,19 @@ async function insertTemplate(templateId) {
 }
 
 async function deleteRecord(id) {
-  if (!await requestConfirm(window._t('confirm.delete_record'))) return;
+  if (!(await requestConfirm(window._t('confirm.delete_record')))) return;
 
   let checkStmt;
   try {
-    checkStmt = db.prepare('SELECT COUNT(*) FROM records WHERE (id = ? OR parent_id = ?) AND is_exported = 1');
+    checkStmt = db.prepare(
+      'SELECT COUNT(*) FROM records WHERE (id = ? OR parent_id = ?) AND is_exported = 1',
+    );
     checkStmt.bind([id, id]);
     if (checkStmt.step() && checkStmt.get()[0] > 0) {
-      await showAlert(window._t('alert.cannot_delete_locked') || "Cannot delete. This block contains records that have already been exported and locked.");
+      await showAlert(
+        window._t('alert.cannot_delete_locked') ||
+          'Cannot delete. This block contains records that have already been exported and locked.',
+      );
       return;
     }
   } finally {
@@ -2654,7 +2814,7 @@ async function deleteRecord(id) {
 
 async function sortBlockByDate(blockId) {
   if (!db) return;
-  if (!await requestConfirm(window._t('confirm.sort_by_date'))) return;
+  if (!(await requestConfirm(window._t('confirm.sort_by_date')))) return;
   let stmt;
   let items = [];
   try {
@@ -2700,17 +2860,30 @@ function duplicateRecord(id) {
     );
     stmt.bind([id]);
     if (stmt.step()) {
-      const [parent_id, memo, amount, account, created_at, sort_order, tax_rate, currency] = stmt.get();
+      const [parent_id, memo, amount, account, created_at, sort_order, tax_rate, currency] =
+        stmt.get();
       insertStmt = db.prepare(
         'INSERT INTO records (parent_id, memo, amount, account, created_at, sort_order, tax_rate, currency, is_exported) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)',
       );
-      insertStmt.run([parent_id, memo, amount, account, created_at, sort_order, tax_rate, currency]);
+      insertStmt.run([
+        parent_id,
+        memo,
+        amount,
+        account,
+        created_at,
+        sort_order,
+        tax_rate,
+        currency,
+      ]);
       const res = db.exec('SELECT last_insert_rowid()');
       const newId = res[0].values[0][0];
 
       setDirty(true);
       renderData();
-      showToast(window._t('toast.copied') || 'Record duplicated', '<span class="text-green-400">📋</span>');
+      showToast(
+        window._t('toast.copied') || 'Record duplicated',
+        '<span class="text-green-400">📋</span>',
+      );
 
       requestAnimationFrame(() => {
         const newDateEl = document.querySelector(
@@ -2782,7 +2955,7 @@ async function saveGrindFile(isSaveAs = false) {
     const currentPasswordHash = await getPasswordHash(currentPassword);
 
     if (lastSavedPasswordHash !== '' && currentPassword === '') {
-      if (!await requestConfirm(window._t('confirm.pw_empty'))) {
+      if (!(await requestConfirm(window._t('confirm.pw_empty')))) {
         await showAlert(window._t('alert.pw_empty_canceled'));
         return;
       }
@@ -2806,7 +2979,7 @@ async function saveGrindFile(isSaveAs = false) {
     const showSaveSuccessFeedback = () => {
       const saveBtn = document.getElementById('btn-save');
       const floatingSaveBtn = document.getElementById('floating-save-btn');
-      
+
       const animateBtn = (btn) => {
         if (!btn) return;
         const iconSvg = btn.querySelector('svg');
@@ -2816,7 +2989,7 @@ async function saveGrindFile(isSaveAs = false) {
           iconSvg.innerHTML = `<use href="#icon-check"></use>`;
           iconSvg.classList.add('text-green-500', 'scale-125');
           btn.classList.add('ring-2', 'ring-green-500/20', 'bg-green-50');
-          
+
           if (btn.id === 'floating-save-btn') {
             btn.classList.remove('opacity-0', 'pointer-events-none');
             btn.classList.add('opacity-100', 'pointer-events-auto');
@@ -2827,7 +3000,7 @@ async function saveGrindFile(isSaveAs = false) {
             iconSvg.classList.remove('text-green-500', 'scale-125');
             btn.classList.remove('ring-2', 'ring-green-500/20', 'bg-green-50');
             iconSvg.removeAttribute('data-animating');
-            
+
             if (btn.id === 'floating-save-btn' && !isDirty) {
               btn.classList.add('opacity-0', 'pointer-events-none');
               btn.classList.remove('opacity-100', 'pointer-events-auto');
@@ -2860,7 +3033,8 @@ async function saveGrindFile(isSaveAs = false) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = targetFileHandle && targetFileHandle.name ? targetFileHandle.name : 'database.cash';
+        a.download =
+          targetFileHandle && targetFileHandle.name ? targetFileHandle.name : 'database.cash';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -2946,7 +3120,8 @@ async function processFileHandle(handle, isDummy = false) {
 
     const magic = Uints.slice(0, 8);
     const magicStr = new TextDecoder().decode(magic);
-    const isEncrypted = magicStr === 'GRINDENC' || magicStr === 'GRINDEN2' || magicStr !== 'SQLite f';
+    const isEncrypted =
+      magicStr === 'GRINDENC' || magicStr === 'GRINDEN2' || magicStr !== 'SQLite f';
 
     if (isEncrypted) {
       let password = document.getElementById('file-password').value;
@@ -2962,9 +3137,13 @@ async function processFileHandle(handle, isDummy = false) {
             lastSavedPasswordHash = await getPasswordHash(password);
           }
         } catch (err) {
-          let promptMsg = window._t('prompt.pw_backup') || 'File is encrypted. Enter decryption password:';
+          let promptMsg =
+            window._t('prompt.pw_backup') || 'File is encrypted. Enter decryption password:';
           if (attemptCount > 0 || password) {
-            promptMsg = '❌ ' + (window._t('alert.pw_incorrect') || 'Incorrect password. Please try again:\n\n') + promptMsg;
+            promptMsg =
+              '❌ ' +
+              (window._t('alert.pw_incorrect') || 'Incorrect password. Please try again:\n\n') +
+              promptMsg;
           }
           password = await requestPasswordPrompt(promptMsg);
           if (password === null) return;
@@ -2989,8 +3168,8 @@ async function processFileHandle(handle, isDummy = false) {
     if (db) {
       try {
         db.close();
-      } catch(e) {}
-      db = null; 
+      } catch (e) {}
+      db = null;
     }
     db = newDb;
     migrateDatabase();
@@ -3022,7 +3201,7 @@ async function processFileHandle(handle, isDummy = false) {
 
 async function loadGrindFile() {
   if (isDirty) {
-    if (!await requestConfirm(window._t('confirm.discard_changes'))) return;
+    if (!(await requestConfirm(window._t('confirm.discard_changes')))) return;
   }
 
   if ('showOpenFilePicker' in window) {
@@ -3069,8 +3248,11 @@ function showExportModal() {
     } else if (filterEl && filterEl.value !== 'all') {
       periodText = filterEl.options[filterEl.selectedIndex].text;
     }
-    const isAll = (periodText === 'All Periods' || periodText === window._t('period.all') || periodText === 'すべての期間');
-    infoEl.innerHTML = isAll 
+    const isAll =
+      periodText === 'All Periods' ||
+      periodText === window._t('period.all') ||
+      periodText === 'すべての期間';
+    infoEl.innerHTML = isAll
       ? window._t('label.period_info_all')
       : window._t('label.period_info_filtered', escapeHtml(periodText));
   }
@@ -3103,7 +3285,7 @@ async function exportCSV(format = 'generic') {
 
   const filterVal = document.getElementById('period-filter')?.value || 'all';
   const unexportedOnly = document.getElementById('export-unexported-only')?.checked || false;
-  
+
   let whereClause = '';
   let params = [];
 
@@ -3146,7 +3328,7 @@ async function exportCSV(format = 'generic') {
   }
 
   let csvRows = [];
-  
+
   // 1. Output header based on format
   if (format === 'xero') {
     // Xero standard Bank Statement header
@@ -3156,7 +3338,9 @@ async function exportCSV(format = 'generic') {
     csvRows.push('"Date","Description","Amount"');
   } else {
     // Generic format
-    const genericHeaders = window._t('export.generic_headers') || '"ID","Date","Account","Amount","Currency","Tax Rate","Memo","Block Name"';
+    const genericHeaders =
+      window._t('export.generic_headers') ||
+      '"ID","Date","Account","Amount","Currency","Tax Rate","Memo","Block Name"';
     csvRows.push(genericHeaders);
   }
 
@@ -3199,14 +3383,11 @@ async function exportCSV(format = 'generic') {
       );
     } else if (format === 'qb') {
       // QuickBooks: Concatenate info into Description (reads only 3 columns)
-      const qbDescription = sanitizeCSV(`[${account}] ${memo} (${parentMemo})`.trim()).replace(/"/g, '""');
-      csvRows.push(
-        [
-          `"${dateStr}"`,
-          `"${qbDescription}"`,
-          amount.toString()
-        ].join(','),
+      const qbDescription = sanitizeCSV(`[${account}] ${memo} (${parentMemo})`.trim()).replace(
+        /"/g,
+        '""',
       );
+      csvRows.push([`"${dateStr}"`, `"${qbDescription}"`, amount.toString()].join(','));
     } else {
       // Generic
       csvRows.push(
@@ -3228,21 +3409,24 @@ async function exportCSV(format = 'generic') {
 
   // 2. Mark records as exported after successful CSV export
   if (unexportedOnly) {
-    const exportedIds = values.map(row => row[0]); // Array of c.id
+    const exportedIds = values.map((row) => row[0]); // Array of c.id
     if (exportedIds.length > 0) {
       db.run('BEGIN TRANSACTION;');
       let updateStmt;
       try {
         updateStmt = db.prepare('UPDATE records SET is_exported = 1 WHERE id = ?');
-        exportedIds.forEach(id => {
+        exportedIds.forEach((id) => {
           updateStmt.run([id]);
         });
         db.run('COMMIT;');
         setDirty(true);
-        
+
         // Update UI to lock state
         renderData();
-        showToast(`Exported ${exportedIds.length} items & Locked.`, '<span class="text-green-400">🔒</span>');
+        showToast(
+          `Exported ${exportedIds.length} items & Locked.`,
+          '<span class="text-green-400">🔒</span>',
+        );
       } catch (e) {
         db.run('ROLLBACK;');
         console.error('Failed to update export status:', e);
@@ -3251,7 +3435,7 @@ async function exportCSV(format = 'generic') {
       }
     }
   }
-  
+
   let blob;
   if (format === 'xero' || format === 'qb') {
     // Output without BOM for Xero/QuickBooks
@@ -3261,7 +3445,7 @@ async function exportCSV(format = 'generic') {
     const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
     blob = new Blob([bom, csvContent], { type: 'text/csv' });
   }
-  
+
   const url = URL.createObjectURL(blob);
 
   const today = new Date();
@@ -3308,7 +3492,7 @@ function showCSVModal() {
   modal.classList.add('flex');
   document.body.style.overflow = 'hidden';
   setAppInert(true);
-  
+
   loadCSVPresets();
   updateCSVPreview();
 }
@@ -3407,7 +3591,6 @@ function updateCSVPreview() {
   const skipRows = skipRowsInput ? Math.max(0, parseInt(skipRowsInput.value, 10) || 0) : 0;
   const firstRow = pendingCSVData.length > skipRows ? pendingCSVData[skipRows] : [];
 
-  
   const presetSelect = document.getElementById('csv-preset-select');
   const selectedPreset = presetSelect ? presetSelect.value : 'default';
 
@@ -3428,11 +3611,15 @@ function updateCSVPreview() {
       defaultAccount = accIdx !== -1 ? accIdx.toString() : '3';
     }
     if (maxCols >= 2) {
-      const memoIdx = firstRow.findIndex((c) => c && c.match(/摘要|メモ|内容|店名|利用先|memo|description/i));
+      const memoIdx = firstRow.findIndex(
+        (c) => c && c.match(/摘要|メモ|内容|店名|利用先|memo|description/i),
+      );
       defaultMemo = memoIdx !== -1 ? memoIdx.toString() : '1';
     }
     if (maxCols >= 3) {
-      const amountIdx = firstRow.findIndex((c) => c && c.match(/金額|支払|出金|入金|利用額|amount/i));
+      const amountIdx = firstRow.findIndex(
+        (c) => c && c.match(/金額|支払|出金|入金|利用額|amount/i),
+      );
       defaultAmount = amountIdx !== -1 ? amountIdx.toString() : '2';
     }
     document.getElementById('csv-preset-delete-btn').disabled = true;
@@ -3470,7 +3657,6 @@ function updateCSVPreview() {
   mapMemo.value = defaultMemo;
   mapAmount.value = defaultAmount;
   document.getElementById('csv-skip-rows').value = defaultSkip;
-  
 
   renderCSVPreview();
 }
@@ -3583,8 +3769,13 @@ async function executeCSVImport() {
 
   db.run('BEGIN TRANSACTION;');
   try {
-    const baseCurrency = typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
-    db.run('INSERT INTO records (memo, amount, currency) VALUES (?, ?, ?)', ['CSV Import', null, baseCurrency]);
+    const baseCurrency =
+      typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
+    db.run('INSERT INTO records (memo, amount, currency) VALUES (?, ?, ?)', [
+      'CSV Import',
+      null,
+      baseCurrency,
+    ]);
     const parentRes = db.exec('SELECT last_insert_rowid()');
     const parentId = parentRes[0].values[0][0];
     const startIndex = Math.max(0, skipRows);
@@ -3629,8 +3820,8 @@ async function executeCSVImport() {
       }
       // Fix: Force truncate amount field to max 50 chars before evaluation to prevent ReDoS (browser freeze)
       const rawAmount =
-        mapAmount !== -1 && cols[mapAmount] !== undefined 
-          ? String(cols[mapAmount]).substring(0, 50) 
+        mapAmount !== -1 && cols[mapAmount] !== undefined
+          ? String(cols[mapAmount]).substring(0, 50)
           : '';
 
       let normalizedAmount = rawAmount
@@ -3640,19 +3831,23 @@ async function executeCSVImport() {
       if (/^\([\d,.]+\)$/.test(trimmedAmount))
         normalizedAmount = '-' + trimmedAmount.replace(/[()]/g, '');
       let amountStr = normalizedAmount;
-      amountStr = amountStr.replace(/(?:\d+[.,])+\d+/g, (match) => {
-        const lastComma = match.lastIndexOf(',');
-        const lastDot = match.lastIndexOf('.');
-        if (lastComma > lastDot && lastDot !== -1) return match.replace(/\./g, '').replace(/,/g, '.');
-        else if (lastDot > lastComma && lastComma !== -1) return match.replace(/,/g, '');
-        else if (lastComma !== -1) {
-          if (/,\d{3}$/.test(match)) return match.replace(/,/g, '');
-          else return match.replace(/,/g, '.');
-        } else {
-          if (match.match(/\./g) && match.match(/\./g).length > 1) return match.replace(/\./g, '');
-          return match;
-        }
-      }).replace(/[^\d.\-]/g, '');
+      amountStr = amountStr
+        .replace(/(?:\d+[.,])+\d+/g, (match) => {
+          const lastComma = match.lastIndexOf(',');
+          const lastDot = match.lastIndexOf('.');
+          if (lastComma > lastDot && lastDot !== -1)
+            return match.replace(/\./g, '').replace(/,/g, '.');
+          else if (lastDot > lastComma && lastComma !== -1) return match.replace(/,/g, '');
+          else if (lastComma !== -1) {
+            if (/,\d{3}$/.test(match)) return match.replace(/,/g, '');
+            else return match.replace(/,/g, '.');
+          } else {
+            if (match.match(/\./g) && match.match(/\./g).length > 1)
+              return match.replace(/\./g, '');
+            return match;
+          }
+        })
+        .replace(/[^\d.\-]/g, '');
       const isInvalidHyphen =
         (amountStr.match(/-/g) || []).length > 1 ||
         (amountStr.includes('-') && !amountStr.startsWith('-') && !amountStr.endsWith('-'));
@@ -3667,26 +3862,34 @@ async function executeCSVImport() {
       if (!isNaN(amount)) {
         let parsedDate = new Date(dateStr);
         const trimmedDate = dateStr ? dateStr.trim() : '';
-        
+
         if (trimmedDate) {
           if (/^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}$/.test(trimmedDate)) {
             const parts = trimmedDate.split(/[\/\-]/);
-            parsedDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            parsedDate = new Date(
+              parseInt(parts[0], 10),
+              parseInt(parts[1], 10) - 1,
+              parseInt(parts[2], 10),
+            );
           } else if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(trimmedDate)) {
             const parts = trimmedDate.split(/[\/\-]/);
             let m, d;
             let firstNum = parseInt(parts[0], 10);
             let secondNum = parseInt(parts[1], 10);
-            
+
             if (firstNum > 12 && secondNum <= 12) {
-              d = firstNum; m = secondNum;
+              d = firstNum;
+              m = secondNum;
             } else if (secondNum > 12 && firstNum <= 12) {
-              m = firstNum; d = secondNum;
+              m = firstNum;
+              d = secondNum;
             } else {
               if (isMonthFirst) {
-                m = firstNum; d = secondNum;
+                m = firstNum;
+                d = secondNum;
               } else {
-                d = firstNum; m = secondNum;
+                d = firstNum;
+                m = secondNum;
               }
             }
             parsedDate = new Date(parseInt(parts[2], 10), m - 1, d);
@@ -3698,12 +3901,19 @@ async function executeCSVImport() {
             let secondNum = parseInt(parts[1], 10);
             let m, d;
             if (firstNum > 12 && secondNum <= 12) {
-              d = firstNum; m = secondNum;
+              d = firstNum;
+              m = secondNum;
             } else if (secondNum > 12 && firstNum <= 12) {
-              m = firstNum; d = secondNum;
+              m = firstNum;
+              d = secondNum;
             } else {
-              if (isMonthFirst) { m = firstNum; d = secondNum; } 
-              else { d = firstNum; m = secondNum; }
+              if (isMonthFirst) {
+                m = firstNum;
+                d = secondNum;
+              } else {
+                d = firstNum;
+                m = secondNum;
+              }
             }
             parsedDate = new Date(currentYear, m - 1, d);
           }
@@ -3729,9 +3939,13 @@ async function executeCSVImport() {
         } else {
           if (dateStr.trim() !== '') {
             db.run('ROLLBACK;');
-            const errMsg = window._t('error.csv_invalid_date', i + 1, dateStr) 
-                           || `Invalid date format at Row ${i + 1}: "${dateStr}".`;
-            await showAlert(`${errMsg}\n` + (window._t('error.csv_abort') || 'Import aborted to prevent data corruption.'));
+            const errMsg =
+              window._t('error.csv_invalid_date', i + 1, dateStr) ||
+              `Invalid date format at Row ${i + 1}: "${dateStr}".`;
+            await showAlert(
+              `${errMsg}\n` +
+                (window._t('error.csv_abort') || 'Import aborted to prevent data corruption.'),
+            );
             return;
           }
           const today = new Date();
@@ -3759,12 +3973,11 @@ async function executeCSVImport() {
     setActiveQuickPeriodButton(null);
     let msg = window._t('toast.import_success', successCount) || `Imported ${successCount} items`;
     if (skipCount > 0) {
-      msg += window._t('toast.import_skip', skipCount) || ` (${skipCount} skipped due to invalid amount)`;
+      msg +=
+        window._t('toast.import_skip', skipCount) ||
+        ` (${skipCount} skipped due to invalid amount)`;
     }
-    showToast(
-      msg,
-      '<span class="text-green-400">✨</span>',
-    );
+    showToast(msg, '<span class="text-green-400">✨</span>');
     triggerHaptic();
   } catch (err) {
     db.run('ROLLBACK;');
@@ -3852,7 +4065,10 @@ document.addEventListener('DOMContentLoaded', () => {
       installBtn.removeAttribute('data-i18n');
       installBtn.textContent = window._t('prompt.ios_install_btn') || 'Add to Home Screen';
       installBtn.onclick = () => {
-        showAlert(window._t('prompt.ios_install') || "To install this app, tap the Share icon at the bottom of Safari and select 'Add to Home Screen'.");
+        showAlert(
+          window._t('prompt.ios_install') ||
+            "To install this app, tap the Share icon at the bottom of Safari and select 'Add to Home Screen'.",
+        );
       };
     }
   }
@@ -3868,7 +4084,7 @@ function getCommandsList() {
       id: 'split_stripe',
       icon: '<svg aria-hidden="true" class="w-5 h-5 text-indigo-500"><use href="#icon-cash"></use></svg>',
       title: window._t('cmd.split_stripe') || 'Split Stripe Fee (2.9% + $0.30) on Active Row',
-      action: () => applyFeeSplit(0.029, 0.30, 'Stripe Fee'),
+      action: () => applyFeeSplit(0.029, 0.3, 'Stripe Fee'),
     },
     {
       id: 'split_paypal',
@@ -4021,18 +4237,17 @@ function getDynamicCommands() {
 function getFilteredCommands(query) {
   const q = query.toLowerCase();
   const dynamicCommands = getDynamicCommands();
-  let filtered = dynamicCommands.filter(
-    (c) => {
-      const searchTarget = c.rawSearchText ? c.rawSearchText.toLowerCase() : c.title.toLowerCase();
-      return searchTarget.includes(q) || c.id.includes(q);
-    }
-  );
+  let filtered = dynamicCommands.filter((c) => {
+    const searchTarget = c.rawSearchText ? c.rawSearchText.toLowerCase() : c.title.toLowerCase();
+    return searchTarget.includes(q) || c.id.includes(q);
+  });
 
   if (q.match(/[0-9]/) && q.match(/[+\-*/×÷ー−]/)) {
     try {
       const calcResult = evaluateMath(q);
       if (calcResult !== null) {
-        const baseCurrency = typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
+        const baseCurrency =
+          typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
         filtered.unshift({
           id: 'calculator',
           icon: '<svg aria-hidden="true" class="w-5 h-5 text-green-500"><use href="#icon-sparkles"></use></svg>',
@@ -4043,19 +4258,22 @@ function getFilteredCommands(query) {
             if (prePaletteActiveElement) {
               if (
                 prePaletteActiveElement.tagName === 'INPUT' &&
-                (prePaletteActiveElement.getAttribute('data-field') === 'amount' || prePaletteActiveElement.id.includes('amount'))
+                (prePaletteActiveElement.getAttribute('data-field') === 'amount' ||
+                  prePaletteActiveElement.id.includes('amount'))
               ) {
                 prePaletteActiveElement.value = resultStr;
                 prePaletteActiveElement.focus();
                 setDirty(true);
-                
+
                 const id = prePaletteActiveElement.getAttribute('data-id');
                 if (id) {
                   updateRecord(id, 'amount', resultStr, prePaletteActiveElement);
                 } else {
-                  prePaletteActiveElement.dispatchEvent(new CustomEvent('input', { bubbles: true, detail: 'custom-paste' }));
+                  prePaletteActiveElement.dispatchEvent(
+                    new CustomEvent('input', { bubbles: true, detail: 'custom-paste' }),
+                  );
                 }
-                
+
                 showToast(`Applied ${resultStr}`, '<span class="text-green-400">✨</span>');
                 return;
               }
@@ -4104,7 +4322,11 @@ document.addEventListener('keydown', (e) => {
     toggleCommandPalette();
     return;
   }
-  if ((e.metaKey || e.ctrlKey) && e.shiftKey && (key === 'n' || key === 'ｎ' || e.code === 'KeyN')) {
+  if (
+    (e.metaKey || e.ctrlKey) &&
+    e.shiftKey &&
+    (key === 'n' || key === 'ｎ' || e.code === 'KeyN')
+  ) {
     e.preventDefault();
     document.getElementById('new-block-memo').focus();
     return;
@@ -4202,8 +4424,7 @@ if (typeof BroadcastChannel !== 'undefined') {
     bc.onmessage = async (e) => {
       if (e.data === 'ping') {
         if (!hasAlerted) bc.postMessage('pong');
-      }
-      else if (e.data === 'pong') {
+      } else if (e.data === 'pong') {
         if (!hasAlerted) {
           hasAlerted = true;
           await showAlert(
@@ -4228,7 +4449,7 @@ document.getElementById('cmd-input')?.addEventListener('input', (e) => {
 function togglePasswordVisibility(btn) {
   let container = btn ? btn.closest('form, .relative') : null;
   let pwInput, iconOpen, iconClosed;
-  
+
   if (container) {
     pwInput = container.querySelector('input[type="password"], input[type="text"]');
     iconOpen = btn.querySelector('.icon-eye-open') || btn.querySelector('#icon-eye-open');
@@ -4301,8 +4522,16 @@ const generalDictEn = [
 ];
 
 const generalDictJa = [
-  '売上高', '現金', '売掛金', '買掛金', '仕入高', 
-  '給料手当', '地代家賃', '水道光熱費', '租税公課', '雑費'
+  '売上高',
+  '現金',
+  '売掛金',
+  '買掛金',
+  '仕入高',
+  '給料手当',
+  '地代家賃',
+  '水道光熱費',
+  '租税公課',
+  '雑費',
 ];
 
 const accountDictionaries = {
@@ -4341,15 +4570,17 @@ function loadCustomDict() {
     try {
       const parsed = JSON.parse(savedDict);
       if (Array.isArray(parsed)) {
-        customAccountDict = parsed.map((item) => {
-          if (typeof item === 'string') {
-            return { name: item, hidden: false };
-          }
-          if (item && typeof item === 'object' && item.name) {
-            return { name: String(item.name), hidden: !!item.hidden };
-          }
-          return null;
-        }).filter(Boolean);
+        customAccountDict = parsed
+          .map((item) => {
+            if (typeof item === 'string') {
+              return { name: item, hidden: false };
+            }
+            if (item && typeof item === 'object' && item.name) {
+              return { name: String(item.name), hidden: !!item.hidden };
+            }
+            return null;
+          })
+          .filter(Boolean);
       } else throw new Error('Invalid format');
     } catch (e) {
       customAccountDict = defaultBase.map((name) => ({ name, hidden: false }));
@@ -4475,7 +4706,9 @@ function moveCustomDictItem(index, direction) {
 }
 
 async function deleteCustomDictItem(index) {
-  if (await requestConfirm(window._t('confirm.delete_custom_account', customAccountDict[index].name))) {
+  if (
+    await requestConfirm(window._t('confirm.delete_custom_account', customAccountDict[index].name))
+  ) {
     customAccountDict.splice(index, 1);
     renderCustomDictEditor();
   }
@@ -4501,7 +4734,7 @@ function formatMemoHtml(memo) {
   // to match worldwide languages flawlessly without noise (requires 'u' flag)
   return escaped.replace(
     /(#|＃)([\p{L}\p{N}_\-ー]+)/gu,
-    '<span class="text-blue-500 bg-blue-50 px-1 rounded cursor-pointer hover:bg-blue-100 transition-colors" data-action="filterByTag" data-tag="$2">$1$2</span>'
+    '<span class="text-blue-500 bg-blue-50 px-1 rounded cursor-pointer hover:bg-blue-100 transition-colors" data-action="filterByTag" data-tag="$2">$1$2</span>',
   );
 }
 
@@ -4509,11 +4742,13 @@ function filterByTag(tagName) {
   if (!db) return;
   let stmt;
   try {
-    stmt = db.prepare("SELECT created_at, memo, amount, currency FROM records WHERE parent_id IS NOT NULL AND memo LIKE ? ESCAPE '\\'");
+    stmt = db.prepare(
+      "SELECT created_at, memo, amount, currency FROM records WHERE parent_id IS NOT NULL AND memo LIKE ? ESCAPE '\\'",
+    );
     // Fix: Add backslash itself to escape targets to prevent SQL crashes
     const escapedTag = tagName.replace(/([\\_%])/g, '\\$1');
     stmt.bind([`%#${escapedTag}%`]);
-    
+
     let totals = Object.create(null); // 安全な辞書に置き換え
     let items = [];
     while (stmt.step()) {
@@ -4523,7 +4758,7 @@ function filterByTag(tagName) {
       totals[c] = (totals[c] || 0) + safeAmount;
       items.push({ date, memo, amount: safeAmount, currency: c });
     }
-    
+
     if (items.length > 0) {
       showTagModal('#' + tagName, { totals: totals, items: items });
     }
@@ -4534,7 +4769,6 @@ function filterByTag(tagName) {
   }
 }
 
-
 function showTagModal(tag, data) {
   window.isSystemModalOpen = true;
   const modal = document.getElementById('tag-modal');
@@ -4543,10 +4777,12 @@ function showTagModal(tag, data) {
     tag,
     data.items.length,
   );
-  
-  const amountHtml = Object.entries(data.totals).map(([cur, amt]) => formatCurrencyAmount(amt, cur)).join(' / ');
+
+  const amountHtml = Object.entries(data.totals)
+    .map(([cur, amt]) => formatCurrencyAmount(amt, cur))
+    .join(' / ');
   document.getElementById('tag-modal-total').innerHTML = amountHtml;
-  
+
   const tbody = document.getElementById('tag-modal-body');
   tbody.innerHTML = '';
   const sortedItems = [...data.items].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
@@ -4661,7 +4897,8 @@ document.addEventListener('drop', async (e) => {
   if (!hasFiles(e)) return;
   if (window.isSystemModalOpen || isSaving) {
     e.preventDefault();
-    if (isSaving) showToast(window._t('alert.drop_while_saving') || 'Cannot open file while saving.', '⚠️');
+    if (isSaving)
+      showToast(window._t('alert.drop_while_saving') || 'Cannot open file while saving.', '⚠️');
     return;
   }
   e.preventDefault();
@@ -4709,7 +4946,7 @@ document.addEventListener('drop', async (e) => {
     lowerName.endsWith('.sqlite')
   ) {
     if (isDirty) {
-      if (!await requestConfirm(window._t('confirm.discard_changes'))) return;
+      if (!(await requestConfirm(window._t('confirm.discard_changes')))) return;
     }
     if (handle && handle.kind === 'file') await processFileHandle(handle);
     else {
@@ -4734,50 +4971,53 @@ if (btnSaveTooltip) btnSaveTooltip.title = `${window._t('btn.save')} (${isMac ? 
 const btnOpenTooltip = document.querySelector('button[data-action="loadGrindFile"]');
 if (btnOpenTooltip) btnOpenTooltip.title = `${window._t('btn.open')} (${isMac ? '⌘O' : 'Ctrl+O'})`;
 
-
 async function applyFeeSplit(rate, fixed, label) {
   if (!db) return;
-  
+
   // Get focused element before opening palette
   const activeEl = prePaletteActiveElement;
   if (!activeEl) {
-    await showAlert(window._t('error.split_no_focus') || "Please click or focus on an Amount field first to apply the fee split.");
+    await showAlert(
+      window._t('error.split_no_focus') ||
+        'Please click or focus on an Amount field first to apply the fee split.',
+    );
     return;
   }
 
-  let amountVal = "";
+  let amountVal = '';
   let id = null;
   let isNewForm = false;
   let blockId = null;
 
   // Determine if input is new form or existing row
-  if (activeEl.classList.contains("item-amount")) {
+  if (activeEl.classList.contains('item-amount')) {
     amountVal = activeEl.value.trim();
-    const form = activeEl.closest("form");
+    const form = activeEl.closest('form');
     if (form) {
-      blockId = parseInt(form.id.replace("block-form-", ""), 10);
+      blockId = parseInt(form.id.replace('block-form-', ''), 10);
       isNewForm = true;
     }
-  } else if (activeEl.getAttribute("data-field") === "amount") {
-    amountVal = activeEl.tagName === "INPUT" ? activeEl.value.trim() : activeEl.innerText.trim();
-    id = parseInt(activeEl.getAttribute("data-id"), 10);
+  } else if (activeEl.getAttribute('data-field') === 'amount') {
+    amountVal = activeEl.tagName === 'INPUT' ? activeEl.value.trim() : activeEl.innerText.trim();
+    id = parseInt(activeEl.getAttribute('data-id'), 10);
   }
 
   if (!amountVal) {
-    await showAlert(window._t('error.split_no_amount') || "Please enter an amount first.");
+    await showAlert(window._t('error.split_no_amount') || 'Please enter an amount first.');
     return;
   }
 
   // Strip commas and evaluate math expression
-  const cleanVal = amountVal.replace(/[,$€£¥]/g, "").trim();
+  const cleanVal = amountVal.replace(/[,$€£¥]/g, '').trim();
   const gross = evaluateMath(cleanVal);
   if (gross === null || isNaN(gross)) {
-    await showAlert(window._t('error.split_invalid') || "Invalid amount value.");
+    await showAlert(window._t('error.split_invalid') || 'Invalid amount value.');
     return;
   }
 
   // Calculate fee
-  let recordCurrency = typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
+  let recordCurrency =
+    typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
   if (db) {
     try {
       const targetId = id || blockId;
@@ -4785,72 +5025,91 @@ async function applyFeeSplit(rate, fixed, label) {
       curStmt.bind([targetId]);
       if (curStmt.step()) recordCurrency = curStmt.get()[0] || recordCurrency;
       curStmt.free();
-    } catch(e) {}
+    } catch (e) {}
   }
 
-  let fee = (gross * rate) + fixed;
-  
+  let fee = gross * rate + fixed;
+
   // Fix: Unify logic using the existing roundAmount helper (DRY principle)
-  fee = roundAmount(fee, recordCurrency); 
+  fee = roundAmount(fee, recordCurrency);
   const netFee = -Math.abs(fee);
 
   if (isNewForm && blockId) {
     // Pattern A: Execute in new addition form
-    const form = activeEl.closest("form");
-    const memoInput = form.querySelector(".item-memo");
-    const accountInput = form.querySelector(".item-account");
-    const dateInput = form.querySelector(".item-date");
+    const form = activeEl.closest('form');
+    const memoInput = form.querySelector('.item-memo');
+    const accountInput = form.querySelector('.item-account');
+    const dateInput = form.querySelector('.item-date');
 
-    const grossMemo = memoInput.value.trim() || "Sales";
-    const grossAccount = accountInput.value.trim() || "Revenue";
+    const grossMemo = memoInput.value.trim() || 'Sales';
+    const grossAccount = accountInput.value.trim() || 'Revenue';
     const dateVal = dateInput.value;
 
     // 1. Insert Gross
-    await insertRecord(blockId, grossMemo, gross.toString(), dateVal, grossAccount, '', recordCurrency);
+    await insertRecord(
+      blockId,
+      grossMemo,
+      gross.toString(),
+      dateVal,
+      grossAccount,
+      '',
+      recordCurrency,
+    );
     // 2. Insert Fee
-    await insertRecord(blockId, `${grossMemo} (${label})`, netFee.toString(), dateVal, "Transaction Fees", '', recordCurrency);
+    await insertRecord(
+      blockId,
+      `${grossMemo} (${label})`,
+      netFee.toString(),
+      dateVal,
+      'Transaction Fees',
+      '',
+      recordCurrency,
+    );
 
     // Clean up form
-    memoInput.value = "";
-    activeEl.value = "";
-    
+    memoInput.value = '';
+    activeEl.value = '';
+
     setDirty(true);
     renderData();
     let msg = (window._t('toast.split_added') || `Added Gross ({0}) & {1} ({2})`)
       .replace('{0}', `${formatCurrencyAmount(gross, recordCurrency)}`)
       .replace('{1}', label)
       .replace('{2}', `${formatCurrencyAmount(netFee, recordCurrency)}`);
-    showToast(msg, "✨");
+    showToast(msg, '✨');
   } else if (id) {
     // Pattern B: Execute on existing row
     let isExported = 0;
     let stmtCheck;
     try {
-      stmtCheck = db.prepare("SELECT is_exported FROM records WHERE id = ?");
+      stmtCheck = db.prepare('SELECT is_exported FROM records WHERE id = ?');
       stmtCheck.bind([id]);
       if (stmtCheck.step()) isExported = stmtCheck.get()[0];
     } finally {
       if (stmtCheck) stmtCheck.free();
     }
-    
+
     if (isExported === 1) {
       // Fix: Multilingual support
-      await showAlert(window._t('error.split_locked') || "Cannot apply split fees on a record that has already been exported and locked.");
+      await showAlert(
+        window._t('error.split_locked') ||
+          'Cannot apply split fees on a record that has already been exported and locked.',
+      );
       return;
     }
 
     let parentId = null;
     let createdAt = null;
-    let memo = "";
+    let memo = '';
     let stmt;
     try {
-      stmt = db.prepare("SELECT parent_id, created_at, memo FROM records WHERE id = ?");
+      stmt = db.prepare('SELECT parent_id, created_at, memo FROM records WHERE id = ?');
       stmt.bind([id]);
       if (stmt.step()) {
         const row = stmt.get();
         parentId = row[0];
         createdAt = row[1];
-        memo = row[2] || "";
+        memo = row[2] || '';
       }
     } finally {
       if (stmt) stmt.free();
@@ -4858,17 +5117,25 @@ async function applyFeeSplit(rate, fixed, label) {
 
     if (parentId) {
       // 1. Update original amount to Gross
-      updateRecord(id, "amount", gross.toString(), activeEl);
+      updateRecord(id, 'amount', gross.toString(), activeEl);
       // 2. Insert new fee row
-      const dateStr = createdAt ? createdAt.split(" ")[0] : null;
-      await insertRecord(parentId, `${memo} (${label})`, netFee.toString(), dateStr, "Transaction Fees", '', recordCurrency);
-      
+      const dateStr = createdAt ? createdAt.split(' ')[0] : null;
+      await insertRecord(
+        parentId,
+        `${memo} (${label})`,
+        netFee.toString(),
+        dateStr,
+        'Transaction Fees',
+        '',
+        recordCurrency,
+      );
+
       setDirty(true);
       renderData();
       let msg = (window._t('toast.split_applied') || `Split applied: Gross {0} & Fee {1}`)
         .replace('{0}', `${formatCurrencyAmount(gross, baseCurrency)}`)
         .replace('{1}', `${formatCurrencyAmount(netFee, baseCurrency)}`);
-      showToast(msg, "✨");
+      showToast(msg, '✨');
     }
   }
 }
@@ -4881,7 +5148,7 @@ function loadCSVPresets() {
   if (!select) return;
 
   select.innerHTML = '';
-  
+
   // Add default auto-detect option
   const defaultOpt = document.createElement('option');
   defaultOpt.value = 'default';
@@ -4893,7 +5160,7 @@ function loadCSVPresets() {
   try {
     presets = JSON.parse(savedJson);
   } catch (e) {
-    console.error("Failed to parse presets:", e);
+    console.error('Failed to parse presets:', e);
   }
 
   if (Array.isArray(presets)) {
@@ -4923,7 +5190,9 @@ async function saveCurrentPreset() {
   }
 
   const mapDate = document.getElementById('map-date').value;
-  const mapAccount = document.getElementById('map-account') ? document.getElementById('map-account').value : '-1';
+  const mapAccount = document.getElementById('map-account')
+    ? document.getElementById('map-account').value
+    : '-1';
   const mapMemo = document.getElementById('map-memo').value;
   const mapAmount = document.getElementById('map-amount').value;
   const skipRows = parseInt(document.getElementById('csv-skip-rows').value, 10) || 0;
@@ -4942,11 +5211,11 @@ async function saveCurrentPreset() {
     memo: mapMemo,
     amount: mapAmount,
     skipRows: skipRows,
-    encoding: encoding
+    encoding: encoding,
   };
 
   // Overwrite if same name, else add new
-  const existingIdx = presets.findIndex(p => p.name === trimmed);
+  const existingIdx = presets.findIndex((p) => p.name === trimmed);
   if (existingIdx !== -1) {
     presets[existingIdx] = newPreset;
   } else {
@@ -4960,7 +5229,7 @@ async function saveCurrentPreset() {
 
   // Select saved preset
   const select = document.getElementById('csv-preset-select');
-  const newIdx = presets.findIndex(p => p.name === trimmed);
+  const newIdx = presets.findIndex((p) => p.name === trimmed);
   if (select && newIdx !== -1) {
     select.value = newIdx.toString();
     document.getElementById('csv-preset-delete-btn').disabled = false;
@@ -4983,7 +5252,7 @@ async function deleteCurrentPreset() {
   const target = presets[idx];
   if (!target) return;
 
-  if (!await requestConfirm(window._t('confirm.delete_preset', target.name))) return;
+  if (!(await requestConfirm(window._t('confirm.delete_preset', target.name)))) return;
 
   presets.splice(idx, 1);
   setDbSetting('csv_presets', JSON.stringify(presets));
@@ -5000,9 +5269,14 @@ function getTaxOptionsHtml(selectedRate) {
     { value: '8%', label: window._t('tax.reduced_8') || '8%' },
     { value: '20%', label: window._t('tax.standard_20') || '20%' },
     { value: '5%', label: window._t('tax.vat_5') || '5%' },
-    { value: 'Exempt', label: window._t('tax.exempt') || 'Exempt' }
+    { value: 'Exempt', label: window._t('tax.exempt') || 'Exempt' },
   ];
-  return rates.map(r => `<option value="${r.value}" ${r.value === selectedRate ? 'selected' : ''}>${r.label}</option>`).join('');
+  return rates
+    .map(
+      (r) =>
+        `<option value="${r.value}" ${r.value === selectedRate ? 'selected' : ''}>${r.label}</option>`,
+    )
+    .join('');
 }
 
 function getCurrencyOptionsHtml(selected) {
@@ -5012,9 +5286,14 @@ function getCurrencyOptionsHtml(selected) {
     { value: 'GBP', symbol: '£', flag: '🇬🇧' },
     { value: 'JPY', symbol: '¥', flag: '🇯🇵' },
     { value: 'CAD', symbol: 'CA$', flag: '🇨🇦' },
-    { value: 'AUD', symbol: 'A$', flag: '🇦🇺' }
+    { value: 'AUD', symbol: 'A$', flag: '🇦🇺' },
   ];
-  return currencies.map(c => `<option value="${c.value}" ${c.value === selected ? 'selected' : ''}>${c.flag} ${c.value}</option>`).join('');
+  return currencies
+    .map(
+      (c) =>
+        `<option value="${c.value}" ${c.value === selected ? 'selected' : ''}>${c.flag} ${c.value}</option>`,
+    )
+    .join('');
 }
 
 // ==========================================
@@ -5026,30 +5305,30 @@ document.addEventListener('click', (e) => {
     location.reload();
   }
   const target = e.target.closest('[data-action]');
-  
-  
+
   if (target) {
     const stopProp = e.target.closest('[data-stop-propagation="true"]');
     if (stopProp && !stopProp.contains(target)) {
       return;
     }
     const action = target.getAttribute('data-action');
-    
+
     // UI toggles & modals
     if (action === 'togglePasswordVisibility') togglePasswordVisibility(target);
     else if (action === 'loadGrindFile') loadGrindFile();
     else if (action === 'saveGrindFile') saveGrindFile();
     else if (action === 'toggleCommandPalette') toggleCommandPalette();
-    else if (action === 'setPeriodFilter') setPeriodFilter(target.getAttribute('data-period'), target);
+    else if (action === 'setPeriodFilter')
+      setPeriodFilter(target.getAttribute('data-period'), target);
     else if (action === 'setMultiMonthFilter') {
       const months = target.getAttribute('data-months').split(',').map(Number);
       setMultiMonthFilter(months, target);
-    }
-    else if (action === 'setCalendarYearFilter') setCalendarYearFilter(target);
+    } else if (action === 'setCalendarYearFilter') setCalendarYearFilter(target);
     else if (action === 'setPreviousFiscalYearFilter') setPreviousFiscalYearFilter(target);
     else if (action === 'setFiscalYearFilter') setFiscalYearFilter(target);
     else if (action === 'changeFiscalMonth') changeFiscalMonth();
-    else if (action === 'toggleAllBlocks') toggleAllBlocks(target.getAttribute('data-collapse') === 'true');
+    else if (action === 'toggleAllBlocks')
+      toggleAllBlocks(target.getAttribute('data-collapse') === 'true');
     else if (action === 'reload') location.reload();
     else if (action === 'closeCSVModal') closeCSVModal();
     else if (action === 'saveCurrentPreset') saveCurrentPreset();
@@ -5060,7 +5339,8 @@ document.addEventListener('click', (e) => {
     else if (action === 'closeTagModal') closeTagModal();
     else if (action === 'closeAccountDictEditor') closeAccountDictEditor();
     else if (action === 'triggerCsvInputClick') document.getElementById('csv-input').click();
-    else if (action === 'setAllCustomAccountsHidden') setAllCustomAccountsHidden(target.getAttribute('data-hidden') === 'true');
+    else if (action === 'setAllCustomAccountsHidden')
+      setAllCustomAccountsHidden(target.getAttribute('data-hidden') === 'true');
     else if (action === 'saveCustomDictAndClose') saveCustomDictAndClose();
     else if (action === 'focusCmdInput') document.getElementById('cmd-input').focus();
     else if (action === 'closeDropOverlay') {
@@ -5078,24 +5358,30 @@ document.addEventListener('click', (e) => {
         }
       }
       filterByTag(target.getAttribute('data-tag'));
-    }
-    else if (action === 'focusNewBlockMemo') {
+    } else if (action === 'focusNewBlockMemo') {
       const el = document.getElementById('new-block-memo');
       if (el) {
         el.focus();
-        el.scrollIntoView({behavior: 'smooth', block: 'center'});
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    }
-    else if (action === 'createCollectionRecord') createCollectionRecord(target.getAttribute('data-id'));
+    } else if (action === 'createCollectionRecord')
+      createCollectionRecord(target.getAttribute('data-id'));
     else if (action === 'duplicateRecord') duplicateRecord(target.getAttribute('data-id'));
     else if (action === 'deleteRecord') deleteRecord(target.getAttribute('data-id'));
     else if (action === 'saveTemplate') saveTemplate(target.getAttribute('data-id'));
     else if (action === 'toggleBlock') toggleBlock(target.getAttribute('data-id'));
     else if (action === 'sortBlockByDate') sortBlockByDate(target.getAttribute('data-id'));
-    else if (action === 'adjustDate') adjustDate(target, parseInt(target.getAttribute('data-delta'), 10));
-    else if (action === 'moveCustomDictItem') moveCustomDictItem(parseInt(target.getAttribute('data-index'), 10), parseInt(target.getAttribute('data-delta'), 10));
-    else if (action === 'toggleCustomAccountHidden') toggleCustomAccountHidden(parseInt(target.getAttribute('data-index'), 10));
-    else if (action === 'deleteCustomDictItem') deleteCustomDictItem(parseInt(target.getAttribute('data-index'), 10));
+    else if (action === 'adjustDate')
+      adjustDate(target, parseInt(target.getAttribute('data-delta'), 10));
+    else if (action === 'moveCustomDictItem')
+      moveCustomDictItem(
+        parseInt(target.getAttribute('data-index'), 10),
+        parseInt(target.getAttribute('data-delta'), 10),
+      );
+    else if (action === 'toggleCustomAccountHidden')
+      toggleCustomAccountHidden(parseInt(target.getAttribute('data-index'), 10));
+    else if (action === 'deleteCustomDictItem')
+      deleteCustomDictItem(parseInt(target.getAttribute('data-index'), 10));
   }
 });
 
@@ -5103,21 +5389,25 @@ document.addEventListener('change', (e) => {
   const target = e.target.closest('[data-action], [data-action-change]');
   if (target) {
     const action = target.getAttribute('data-action') || target.getAttribute('data-action-change');
-    
+
     if (action === 'changeAppLanguage') changeAppLanguage(target.value);
     else if (action === 'changeBaseCurrency') {
       setDbSetting('baseCurrency', target.value);
       updateCurrencySymbolAndFormatter();
       renderData();
-    }
-    else if (action === 'changeAccountDict') changeAccountDict();
+    } else if (action === 'changeAccountDict') changeAccountDict();
     else if (action === 'importCSV') importCSV(e);
     else if (action === 'handleDropdownChange') handleDropdownChange();
     else if (action === 'handlePresetChange') handlePresetChange();
     else if (action === 'renderCSVPreview') renderCSVPreview();
     else if (action === 'updateCSVPreview') updateCSVPreview();
     else if (action === 'updateRecord') {
-      updateRecord(target.getAttribute('data-id'), target.getAttribute('data-field'), target.value, target);
+      updateRecord(
+        target.getAttribute('data-id'),
+        target.getAttribute('data-field'),
+        target.value,
+        target,
+      );
     }
   }
 });
@@ -5126,7 +5416,7 @@ document.addEventListener('submit', (e) => {
   const target = e.target.closest('[data-action], [data-action-submit]');
   if (target) {
     const action = target.getAttribute('data-action') || target.getAttribute('data-action-submit');
-    
+
     if (action === 'submitSaveGrindFile') {
       e.preventDefault();
       saveGrindFile();
@@ -5142,8 +5432,9 @@ document.addEventListener('submit', (e) => {
       const amount = target.querySelector('.item-amount').value;
       const date = target.querySelector('.item-date').value;
       const account = target.querySelector('.item-account').value;
-      
-      let blockCurrency = typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
+
+      let blockCurrency =
+        typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
       if (db) {
         try {
           const stmt = db.prepare('SELECT currency FROM records WHERE id = ?');
@@ -5152,7 +5443,7 @@ document.addEventListener('submit', (e) => {
             blockCurrency = stmt.get()[0] || blockCurrency;
           }
           stmt.free();
-        } catch(e) {}
+        } catch (e) {}
       }
       addItem(blockId, memo, amount, date, account, '', blockCurrency);
     }
@@ -5164,15 +5455,13 @@ document.addEventListener('input', (e) => {
   const target = e.target.closest('[data-action], [data-action-input]');
   if (target) {
     const action = target.getAttribute('data-action') || target.getAttribute('data-action-input');
-    
+
     if (action === 'setDirty') setDirty(true);
     else if (action === 'renderCSVPreview') renderCSVPreview();
-    
     else if (action === 'setDirtyContentEditable') {
-      if(target.innerText.trim() === '') target.innerHTML = ''; 
+      if (target.innerText.trim() === '') target.innerHTML = '';
       setDirty(true);
-    }
-    else if (action === 'setDirtyAndCheckFutureDate') {
+    } else if (action === 'setDirtyAndCheckFutureDate') {
       setDirty(true);
       checkFutureDate(target);
     }
@@ -5183,7 +5472,7 @@ document.addEventListener('keydown', (e) => {
   const target = e.target.closest('[data-action], [data-action-keydown]');
   if (target) {
     const action = target.getAttribute('data-action') || target.getAttribute('data-action-keydown');
-    
+
     if (action === 'keydownAddBlock') {
       if (e.key === 'Enter' && e.isComposing) {
         e.preventDefault();
@@ -5194,32 +5483,38 @@ document.addEventListener('keydown', (e) => {
         addBlock();
       }
     } else if (action === 'blurOnEnter') {
-      if(e.key === 'Enter' && !e.isComposing) {
+      if (e.key === 'Enter' && !e.isComposing) {
         e.preventDefault();
         target.blur();
       }
     } else if (action === 'focusNextMemo') {
-      if(e.key === 'Enter'){ 
-        if(e.isComposing){ e.preventDefault(); return false; } 
+      if (e.key === 'Enter') {
+        if (e.isComposing) {
+          e.preventDefault();
+          return false;
+        }
         e.preventDefault();
         const form = target.closest('form');
         if (form) form.querySelector('.item-memo').focus();
       }
     } else if (action === 'focusNextAmount') {
-      if(e.key === 'Enter'){ 
-        if(e.isComposing){ e.preventDefault(); return false; } 
+      if (e.key === 'Enter') {
+        if (e.isComposing) {
+          e.preventDefault();
+          return false;
+        }
         e.preventDefault();
         const form = target.closest('form');
         if (form) form.querySelector('.item-amount').focus();
       }
     } else if (action === 'submitOnTab') {
-      if(e.key === 'Enter' && e.isComposing){ 
-        e.preventDefault(); 
-        return false; 
-      } else if(e.key === 'Tab' && !e.shiftKey){ 
-        e.preventDefault(); 
+      if (e.key === 'Enter' && e.isComposing) {
+        e.preventDefault();
+        return false;
+      } else if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
         const form = target.closest('form');
-        if(form && typeof form.requestSubmit === 'function') form.requestSubmit(); 
+        if (form && typeof form.requestSubmit === 'function') form.requestSubmit();
       }
     }
   }
@@ -5254,7 +5549,10 @@ document.addEventListener('focusin', (e) => {
   if (e.target.hasAttribute('contenteditable') && e.target.innerHTML.includes('<span')) {
     e.target.innerText = e.target.innerText;
   }
-  if (e.target.classList.contains('item-amount') || e.target.getAttribute('data-field') === 'amount') {
+  if (
+    e.target.classList.contains('item-amount') ||
+    e.target.getAttribute('data-field') === 'amount'
+  ) {
     if (e.target.value && e.target.value.includes(',')) {
       e.target.value = e.target.value.replace(/,/g, '');
     }
@@ -5265,11 +5563,11 @@ document.addEventListener('focusin', (e) => {
     if (action === 'select') {
       target.select();
     } else if (action === 'scrollIntoView') {
-      if(window.innerWidth < 640) { 
+      if (window.innerWidth < 640) {
         setTimeout(() => {
           const form = target.closest('form');
           if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 300); 
+        }, 300);
       }
     }
   }
@@ -5321,22 +5619,22 @@ function showAlert(message, title = window._t('alert.title') || 'Alert') {
   return new Promise((resolve) => {
     window.isSystemModalOpen = true;
     document.body.style.overflow = 'hidden';
-    
+
     const modal = document.getElementById('custom-alert-modal');
     document.getElementById('custom-alert-title').textContent = title;
     const escapedMessage = escapeHtml(String(message)).replace(/\n/g, '<br>');
     document.getElementById('custom-alert-message').innerHTML = escapedMessage;
-    
+
     modal.classList.remove('hidden');
     modal.classList.add('flex');
-    
+
     const okBtn = document.getElementById('custom-alert-ok-btn');
-    
+
     const handleOk = () => {
       cleanup();
       resolve();
     };
-    
+
     const handleKeydown = (e) => {
       if (e.key === 'Enter' || e.key === 'Escape') {
         e.preventDefault();
@@ -5344,7 +5642,7 @@ function showAlert(message, title = window._t('alert.title') || 'Alert') {
         handleOk();
       }
     };
-    
+
     const cleanup = () => {
       modal.classList.add('hidden');
       modal.classList.remove('flex');
@@ -5355,7 +5653,7 @@ function showAlert(message, title = window._t('alert.title') || 'Alert') {
       okBtn.removeEventListener('click', handleOk);
       document.removeEventListener('keydown', handleKeydown, true);
     };
-    
+
     okBtn.addEventListener('click', handleOk);
     document.addEventListener('keydown', handleKeydown, true);
     setTimeout(() => okBtn.focus(), 10);
@@ -5371,16 +5669,22 @@ function requestConfirm(message, title = window._t('confirm.title') || 'Confirm'
     document.getElementById('custom-confirm-title').textContent = title;
     const escapedMessage = escapeHtml(String(message)).replace(/\n/g, '<br>');
     document.getElementById('custom-confirm-message').innerHTML = escapedMessage;
-    
+
     modal.classList.remove('hidden');
     modal.classList.add('flex');
-    
+
     const okBtn = document.getElementById('custom-confirm-ok-btn');
     const cancelBtn = document.getElementById('custom-confirm-cancel-btn');
-    
-    const handleOk = () => { cleanup(); resolve(true); };
-    const handleCancel = () => { cleanup(); resolve(false); };
-    
+
+    const handleOk = () => {
+      cleanup();
+      resolve(true);
+    };
+    const handleCancel = () => {
+      cleanup();
+      resolve(false);
+    };
+
     const handleKeydown = (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -5392,7 +5696,7 @@ function requestConfirm(message, title = window._t('confirm.title') || 'Confirm'
         handleCancel();
       }
     };
-    
+
     const cleanup = () => {
       modal.classList.add('hidden');
       modal.classList.remove('flex');
@@ -5404,7 +5708,7 @@ function requestConfirm(message, title = window._t('confirm.title') || 'Confirm'
       cancelBtn.removeEventListener('click', handleCancel);
       document.removeEventListener('keydown', handleKeydown, true);
     };
-    
+
     okBtn.addEventListener('click', handleOk);
     cancelBtn.addEventListener('click', handleCancel);
     document.addEventListener('keydown', handleKeydown, true);
@@ -5424,6 +5728,6 @@ document.addEventListener('mousedown', (e) => {
   }
 });
 
-// The visibilitychange autosave has been removed because async Web Worker encryption 
+// The visibilitychange autosave has been removed because async Web Worker encryption
 // gets killed by the browser before completion, leading to data loss.
 // We rely on the 10-second draftTimer instead.

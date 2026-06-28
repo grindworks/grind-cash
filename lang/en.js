@@ -247,5 +247,6 @@ export default {
   'alert.drop_while_saving': 'Cannot open file while saving.',
   'error.csv_invalid_date': 'Invalid date format detected at Row {0}: "{1}"',
   'error.csv_abort': 'Import aborted to prevent data corruption.',
-  'error.split_locked': 'Cannot apply split fees on a record that has already been exported and locked.',
+  'error.split_locked':
+    'Cannot apply split fees on a record that has already been exported and locked.',
 };

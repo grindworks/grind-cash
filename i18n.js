@@ -51,9 +51,10 @@ window.I18n = (() => {
 
       if (params.length > 0) {
         text = text.replace(/\{(\w+)\}/g, (match, key) => {
-          const val = params.length === 1 && typeof params[0] === 'object' && params[0] !== null
-            ? params[0][key]
-            : params[key];
+          const val =
+            params.length === 1 && typeof params[0] === 'object' && params[0] !== null
+              ? params[0][key]
+              : params[key];
           return val === null || val === undefined ? '' : String(val);
         });
       }
