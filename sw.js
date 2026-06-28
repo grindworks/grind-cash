@@ -1,5 +1,5 @@
 // 💡 アップデート時はここを v2, v3... と書き換えることで更新が発火します
-const CACHE_NAME = 'grindcash-v20260628-8';
+const CACHE_NAME = 'grindcash-v20260628-9';
 const urlsToCache = [
   './',
   './index.html',
