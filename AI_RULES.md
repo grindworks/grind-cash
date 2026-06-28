@@ -1,4 +1,4 @@
-# GrindMoney AI Rules
+# GrindCash AI Rules
 
 ## 1. Environment & Architecture
 
@@ -15,10 +15,13 @@
 - **Vanilla JavaScript (Modern ES6+):** Use strict typing conceptually, modern features (arrow functions, template literals, destructuring, Optional Chaining).
 - **SQL Security & Safety:**
   - ALWAYS use parameterized queries (`db.prepare("... WHERE id = ?")`). Never interpolate variables directly into SQL strings.
+  - **Zero-Trust UI (Backend-in-Frontend):** Even though this is a client-side app, treat the SQLite DB as the absolute source of truth. Do not rely solely on HTML attributes (like `disabled` or `contenteditable="false"`) to lock records. Always verify the record's state (e.g., `is_exported`) via SQL before executing `UPDATE` or `DELETE`.
   - SQLite in `sql.js` does not auto-persist. Any operation that modifies data (INSERT, UPDATE, DELETE) MUST set a flag (e.g., `isDirty = true`) to warn the user before they close the tab.
 - **Error Handling (FAIL-SAFE):**
   - Assume files selected by the user might be corrupted or manipulated. Always wrap decryption and JSON/CSV parsing in robust `try...catch` blocks.
   - Fail gracefully with user-friendly `alert` or toast notifications, allowing the user to retry without reloading the app.
+  - **No Async on Unload:** Never rely on asynchronous operations (e.g., Web Worker crypto) inside `visibilitychange` or `beforeunload` events to save data. The browser will terminate them, causing silent data loss. Rely strictly on debounced timers (`draftTimer`) while the app is active.
+  - **Precision & Data Integrity:** Never let visual formatters (e.g., `Intl.NumberFormat`) mask underlying floating-point precision. If a currency does not support decimals (like JPY), you MUST mathematically round the value (`Math.round()`) *before* saving it to the database to prevent cumulative calculation discrepancies.
 
 ## 3. Frontend (S-Rank UI & SaaS-like Flat Design)
 
@@ -35,6 +38,7 @@
   - Enhance the "Grind (fast input)" experience. Ensure form submissions do not cause page reloads (`event.preventDefault()`).
   - Maintain focus on input fields programmatically after actions.
   - Ensure UI transitions do not cause layout shifts (CLS). Use smooth CSS animations or View Transitions where appropriate.
+  - **DOM Performance Guardrails:** When rendering options, tags, or search results from the DB, ALWAYS cap the results (e.g., `LIMIT 100`) in the SQL query. Rendering thousands of DOM nodes synchronously will cause severe UI stutters on large datasets.
 - **Minimalist Vibe:** Keep the UI clean. Hide complex actions in the Command Palette (`Cmd+K`).
 
 ## 4. AI Directives
@@ -42,3 +46,4 @@
 - **Deep Contextual Analysis:** Do not act like a naive static analysis tool. Analyze actual data flow in the browser memory before suggesting "optimizations."
 - **Respect Design Philosophy:** Maintain the "Serverless & Subscription-free" nature of the tool. If a feature requires heavy processing, rely on the user's local machine or "BYO-AI (Bring Your Own AI)" via prompt generation, rather than suggesting API integrations that require API keys in the code.
 - **Language:** Output chat explanations in **Japanese**. Code & comments strictly in **English**.
+- **Code Comments:** Delete unnecessary or redundant comments. Unify all comments in standard, concise Git-style English (imperative mood, e.g., "Fix data validation" instead of "This fixes data validation").

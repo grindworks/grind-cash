@@ -168,6 +168,16 @@
   }
 }
 
+@utility csv-preview-scroll {
+  background: linear-gradient(to right, white 30%, rgba(255, 255, 255, 0)),
+              linear-gradient(to right, rgba(255, 255, 255, 0), white 70%) 0 100%,
+              radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, .2), rgba(0, 0, 0, 0)),
+              radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, .2), rgba(0, 0, 0, 0)) 0 100%;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
 /* --- カスタムスタイル --- */
 
 /* モーダルのアニメーション用ユーティリティ */
@@ -204,6 +214,10 @@
 }
 
 @layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
   /* フォーカスリングの統一スタイル */
   :focus-visible {
     outline: 2px solid var(--color-blue-600);
@@ -217,5 +231,17 @@
   }
   #blocks-container {
     view-transition-name: block-list;
+  }
+
+  .privacy-mode .tabular-nums,
+  .privacy-mode .item-amount {
+    filter: blur(5px);
+    opacity: 0.7;
+    user-select: none;
+  }
+  .privacy-mode .tabular-nums:hover,
+  .privacy-mode .item-amount:hover {
+    filter: none;
+    opacity: 1;
   }
 }

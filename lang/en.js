@@ -1,0 +1,251 @@
+export default {
+  'app.title': 'GrindCash',
+  'toc.filter': 'Filter index...',
+  'title.current_file': 'Currently open file',
+  'filename.unsaved': 'Unsaved.cash',
+  'btn.install': '↓ Install App',
+  'dict.select': 'Select Dictionary',
+  'dict.select_title': 'Select a dictionary for auto-suggestions',
+  'dict.custom': 'Dict: Custom',
+  'dict.none': 'Suggest: Off',
+  'dict.general': 'Dict: General Business',
+
+  'placeholder.password': 'Encryption Password...',
+  'title.password_help': 'Entering a password will strongly encrypt the file upon saving.',
+  'title.toggle_password': 'Toggle password visibility',
+  'btn.open': 'Open',
+  'btn.save': 'Save',
+  'title.cmd': 'Open Command Palette',
+  'status.loading': 'Starting SQLite engine...',
+  'filter.all': 'All Periods',
+  'period.all': 'All Periods',
+  'period.jan_mar': 'Jan-Mar',
+  'period.apr_jun': 'Apr-Jun',
+  'period.jul_sep': 'Jul-Sep',
+  'period.oct_dec': 'Oct-Dec',
+  'period.this_year': 'This Year (Jan-Dec)',
+  'period.prev_fiscal_year': 'Previous FY',
+  'period.this_fiscal_year': 'Current FY',
+  'title.change_fiscal_start_month': 'Change fiscal start month',
+  'placeholder.new_block': 'Create new block (e.g., May 2026 Business Trip) ...',
+  'btn.expand_all': 'Expand All',
+  'btn.collapse_all': 'Collapse All',
+  'error.fatal': 'Failed to start application',
+  'error.fatal_desc':
+    'Required files could not be loaded.<br />Please check your network and reload the page.',
+  'btn.reload': 'Reload Page',
+  'csv.title': 'CSV Import Settings',
+  'csv.desc': 'Assign CSV columns to GrindCash fields.',
+  'csv.date': 'Date Column',
+  'csv.optional': '(Optional)',
+  'csv.account': 'Account Column',
+  'csv.memo': 'Memo Column',
+  'csv.amount': 'Amount Column',
+  'csv.preview': 'Data Preview (First few rows)',
+  'csv.skip_first': 'Skip first',
+  'csv.skip_rows': 'rows',
+  'csv.encoding': 'Encoding:',
+  'btn.cancel': 'Cancel',
+  'btn.import': 'Import',
+  'export.title': 'CSV Export',
+  'export.desc': 'Select the accounting software format to output.',
+  'export.format': 'Output Format',
+  'btn.export': 'Export',
+  'dict_edit.title': 'Edit Custom Dictionary',
+  'dict_edit.desc':
+    'Register and reorder frequently used accounts.<br />Click the eye icon to hide from suggestions.',
+  'btn.show_all': 'Show All',
+  'btn.hide_all': 'Hide All',
+  'placeholder.new_account': 'Add new account',
+  'btn.add': 'Add',
+  'btn.save_close': 'Save & Close',
+  'prompt.pw_title': 'Enter Password',
+  'prompt.pw_desc': 'File is encrypted. Please enter the password to decrypt:',
+  'btn.ok': 'OK',
+  'prompt.ios_install_btn': 'Add to Home Screen',
+  'drop.title': 'Drop .cash file here to open',
+  'drop.desc1': 'You can also overwrite and save directly.',
+  'drop.desc2': '* Click anywhere to dismiss this screen.',
+  'cmd.search': 'Command Search',
+  'cmd.placeholder': 'Type a command or search...',
+
+  // main.js inside strings:
+  'toast.restored': 'Restored unsaved data',
+  'toast.saved': 'Data has been saved',
+  'toast.copied': 'Copied to clipboard',
+  'alert.restore_fail': '⚠️ Failed to restore because the previous backup data is corrupted.',
+  'confirm.discard_changes': 'You have unsaved changes. Discard them and open another file?',
+  'confirm.pw_empty':
+    '⚠️ WARNING ⚠️\nPassword is empty.\nSaving now will remove encryption and save in plain text.\n\nAre you sure you want to remove encryption?',
+  'alert.pw_empty_canceled': 'Save canceled. Please set a password.',
+  'alert.pw_mismatch': '❌ Passwords do not match. Save canceled.',
+  'alert.write_permission_fail':
+    'Could not get write permission. The browser may have revoked it.\n\nPlease try "Save As".',
+  'toast.saved_to': 'Saved data to "{0}"',
+  'toast.save_error': 'Error: Failed to save file. Check disk capacity and permissions.',
+  'alert.multi_tab':
+    '⚠️ GrindCash is already open in another tab or window.\n\nTo prevent data conflicts, please do not edit in this tab.',
+  'alert.http_desc':
+    '⚠️ SECURITY WARNING ⚠️\n\nIn the current access environment (HTTP), file read/write and encryption are blocked by browser security restrictions.\n\nTo run GrindCash normally, upload to an "HTTPS" environment or run on "localhost".',
+  'error.http_required': 'Error: HTTPS environment or localhost is required',
+
+  // templates
+  'prompt.save_tpl_title': 'Save this block as a template.\nEnter template name:',
+  'toast.tpl_saved':
+    '✅ Template "{0}" saved.\nYou can call it anytime from the Command Palette (Cmd+K).',
+  'confirm.delete_tpl': 'Delete template "{0}"?',
+  'cmd.insert': '[Insert] {0}',
+  'cmd.delete': '[Delete] {0}',
+
+  // command titles:
+  'cmd.save_title': 'Save Data (Save)',
+  'cmd.open_title': 'Open File (Open)',
+  'cmd.saveas_title': 'Save as a Copy (Save As)',
+  'cmd.new_title': 'Create New Block (New)',
+  'export.unexported_only': 'Export unexported records only (Mark as exported after)',
+  'cmd.import_title': 'Import CSV (Import CSV)',
+  'cmd.export_title': 'Export CSV (Export CSV)',
+  'cmd.editdict_title': 'Edit Custom Account Dictionary',
+  'cmd.ai_title': 'Copy AI Formatting Prompt (AI)',
+  'cmd.markdown_title': 'Copy List as Markdown (for GrindSite)',
+  'cmd.expandall_title': 'Expand All Blocks',
+  'cmd.collapseall_title': 'Collapse All Blocks',
+  'cmd.calc_copied': 'Copied {0}',
+  'cmd.calc_inserted': 'Inserted {0} directly',
+
+  // index.html/main.js logic labels
+  'label.grand_total': 'Total Amount',
+  'label.period_info_all': '💡 Currently exporting data for <b>all periods</b>.',
+  'label.period_info_filtered': '💡 Currently exporting data for <b>"{0}"</b>.',
+  'label.empty_blocks': 'No transaction data.',
+  'label.period': 'Period',
+  'label.tag_modal_title': '{0} ({1} items)',
+  'label.no_date': 'No date',
+  'label.unclassified': 'Unclassified',
+  'label.unnamed': 'Unnamed',
+  'label.undecided': 'Undecided',
+  'toast.no_copy_data': 'No data to copy.',
+  'toast.md_copied': 'Copied as Markdown',
+  'toast.import_success': 'Imported {0} items',
+  'toast.import_skip': ' ({0} skipped due to invalid amount)',
+  'error.import_fail': 'Error occurred during import.',
+  'toast.filter_outside':
+    'Reset period to "All" because the added date was outside the current filter.',
+  'tooltip.edit_date': 'Click to edit date (Supports YYYY/MM/DD)',
+
+  // custom dict editor:
+  'dict_edit.show': 'Show',
+  'dict_edit.hide': 'Hide',
+  'dict_edit.delete_title': 'Delete completely',
+
+  // fiscal year start month change:
+  'prompt.fiscal_month': 'Enter the fiscal start month (1-12):',
+  'alert.invalid_fiscal_month': 'Please enter a number between 1 and 12.',
+  'confirm.sort_by_date':
+    'Sort items in this block by "oldest first"?\n(Items with the same date maintain their original order)',
+  'confirm.restore_draft':
+    'Unsaved backup data from your last session was found.\n\nRestore it?\n(Selecting Cancel will discard the backup)',
+  'toast.prompt_copied': 'Copied AI prompt',
+  'toast.sorted': 'Sorted by date',
+  'toast.settlement_created': 'Settlement record created.',
+  'toast.split_applied': 'Split applied: Gross {0} & Fee {1}',
+  'toast.split_added': 'Added Gross ({0}) & {1} ({2})',
+  'error.split_no_focus': 'Please click or focus on an Amount field first to apply the fee split.',
+  'error.split_no_amount': 'Please enter an amount first.',
+  'error.split_invalid': 'Invalid amount value.',
+  'toast.privacy_toggled': 'Privacy Mode Toggled',
+  'toast.app_updated_reload':
+    'App updated. <a href="#" id="toast-reload-btn" class="ml-2 font-bold underline cursor-pointer">Reload to apply</a>',
+  'toast.sqlite_loaded': 'SQLite engine started successfully',
+  'toast.sqlite_load_fail': 'Error: Failed to start SQLite engine',
+  'placeholder.account': 'Account',
+  'dict_edit.add_label': 'Add new account',
+  'title.change_fiscal_start_month_format': 'Change start month (Currently: starts in {0})',
+  'csv.preset': 'Preset Configurations',
+  'csv.preset_save': 'Save Configuration',
+  'csv.preset_default': '-- Auto-detect Columns --',
+  'prompt.preset_name': 'Enter a name for this CSV preset (e.g. Amex, PayPal):',
+  'confirm.delete_preset': 'Delete preset "{0}"?',
+  'alert.preset_name_required': 'Preset name is required.',
+  'toast.preset_saved': 'Preset "{0}" saved successfully.',
+  'toast.preset_deleted': 'Preset "{0}" deleted.',
+  'confirm.delete_custom_account': 'Delete "{0}" from the dictionary completely?',
+  'alert.invalid_amount_or_formula': 'The entered amount or formula is invalid.',
+  'alert.invalid_date': 'This date does not exist. Please check the calendar.',
+  'alert.invalid_date_format': 'Invalid date format. (e.g., 12/31 or 2026-12-31)',
+  'toast.future_date': 'A future date has been entered.',
+  'alert.csv_too_large':
+    'File size is too large (5MB limit). Loading was aborted to prevent browser crash.',
+  'alert.file_load_fail_memory':
+    'Failed to load file. The file may be corrupted, or memory is insufficient.',
+  'alert.memo_and_amount_required': '"Memo" and "Amount" columns are required.',
+  'alert.duplicate_columns_mapped':
+    'The same column is mapped to multiple fields.\nPlease review your column mappings.',
+  'alert.too_many_import_rows':
+    '⚠️ Too many data rows ({0} rows).\nTo prevent the browser from freezing, only the first {1} rows will be imported.\nPlease split the CSV file and try again for the rest.',
+  'alert.db_engine_starting':
+    'Database engine is starting. Please wait a few seconds and try again.',
+  'alert.file_too_large': 'File size is too large (50MB limit). The file may be invalid.',
+  'toast.file_loaded': 'Loaded file "{0}"',
+  'alert.file_load_fail': 'Failed to load file.',
+  'alert.no_export_data': 'No data to export.',
+  'alert.unsupported_file_type':
+    'Unsupported file type. Please drop a file of type .cash, .grind, or .csv.',
+  'export.generic_headers':
+    '"ID","Date","Account","Amount","Currency","Tax Rate","Memo","Block Name"',
+  'prompt.ai_template':
+    'You are an excellent data conversion assistant.\nAnalyze the "sample CSV of an unknown accounting software" that I will present to you, and tell me the "column mapping" to import it into GrindCash (a cash management app).\n\nThe four data fields required by GrindCash for import are:\n- Date\n- Account (Optional)\n- Memo / Description\n- Amount\n\nI will paste the sample CSV below. Please analyze and tell me which column (1-indexed, from the left) corresponds to each of the four fields above.\n\n[Paste your sample CSV here]',
+  'markdown.title': '## Exported Data (Markdown)\n\n',
+
+  // password / security flow:
+  'prompt.pw_backup': 'Backup data is encrypted. Enter decryption password:',
+  'prompt.pw_new': '🔒 Set (or change) password.\nEnter the same password again to confirm:',
+  'alert.cancel_startup_desc': 'Startup was canceled. Please reload.',
+  'error.security_stop_desc': 'Stopped for security.<br>Please reload.',
+
+  // record / template:
+  'confirm.delete_record': 'Delete this entry?',
+  'error.tpl_load': 'Failed to load template data.',
+  'error.tpl_corrupted': 'Template data is corrupted.',
+  'toast.downloaded': 'Downloaded "{0}"',
+
+  // welcome / empty state:
+  'welcome.title': 'Welcome to GrindCash',
+  'welcome.desc':
+    'Drag & drop a .cash file, or<br>create your first block from the input field above.',
+  'welcome.new_block': 'Create New Block',
+  'welcome.import_csv': 'Import CSV',
+  'welcome.browser_ok': 'Recommended browser (Chrome / Edge)',
+  'welcome.fsa_enabled': 'Direct file overwrite (File System API) is enabled',
+  'welcome.browser_warn': '⚠️ Recommended browser: Chrome or Edge',
+  'welcome.fsa_disabled':
+    'Your current browser does not support direct file overwrite. Each save will trigger a download.',
+  'filter_empty.title': 'No matching records',
+  'filter_empty.desc':
+    'No data exists for the selected period (filter).<br>Try changing the filter and search again.',
+  'filter_empty.show_all': 'Show All Periods',
+  'alert.cell_too_long':
+    'Cell length exceeds the limit of 10,000 characters. The CSV file may be invalid.',
+  'alert.unclosed_quote': 'Unclosed quotation mark detected. The CSV file may be invalid.',
+  'label.do_not_select': '-- Do not select --',
+  'label.column_num': 'Column {0}',
+  'csv.decode_fail':
+    'Failed to decode with encoding "{0}". The file may be corrupted or the encoding specified is incorrect.',
+
+  'export.opt_generic': 'Generic CSV',
+  'export.opt_xero': 'Xero',
+  'export.opt_qb': 'QuickBooks Online',
+
+  // period dropdown labels (for dynamic generation)
+  'label.filter_by_year': '--- Filter by Year ---',
+  'label.filter_by_month': '--- Filter by Month ---',
+
+  'cmd.split_stripe': 'Split Stripe Fee (2.9% + $0.30) on Active Row',
+  'cmd.split_paypal': 'Split PayPal Fee (3.49% + $0.49) on Active Row',
+  'cmd.privacy_mode': 'Toggle Privacy Mode (Hide Numbers)',
+  'error.record_locked': 'Cannot modify. This block contains exported and locked records.',
+  'alert.drop_while_saving': 'Cannot open file while saving.',
+  'error.csv_invalid_date': 'Invalid date format detected at Row {0}: "{1}"',
+  'error.csv_abort': 'Import aborted to prevent data corruption.',
+  'error.split_locked': 'Cannot apply split fees on a record that has already been exported and locked.',
+};

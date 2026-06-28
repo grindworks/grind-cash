@@ -1,0 +1,31 @@
+# GrindCash - Offline-First Accounting Hub
+
+> Secure, serverless, local-first cash management and accounting database running entirely in your browser. No servers, no SaaS subscriptions, 100% data sovereignty.
+
+## Core Features
+
+- **Local-First Architecture**: Runs entirely in the client-side browser using a WebAssembly-compiled SQLite database (`sql.js`). Financial data is never transmitted to any third-party server.
+- **Strong Local Encryption**: Encrypts database files (`.cash` format) using AES-256-GCM (via Web Crypto API).
+- **Fully Offline-First (PWA)**: Installed as a Progressive Web App (PWA). Works with zero internet connection.
+- **Smart Formatting**: Supports multi-currency accounts and evaluates mathematical expressions (e.g., `150 * 1.08`) directly in amount fields. Automatically parses localized decimal formats (`.` and `,`).
+- **Accounting Relay Hub**: Functions as a front-end "data collector" for daily expenses, receipts, and blocks (e.g., projects or business trips). Exports clean, sanitized CSVs optimized for final tax-processing systems like Xero or QuickBooks Online.
+- **Hashtag Aggregation**: Automatically compiles project-specific totals based on hashtags (e.g., `#ProjectA`) inside transaction memo fields.
+- **Custom Dictionary**: Fully customizable autocomplete suggestions for frequently used account types.
+
+## Technical Details
+
+- **Database Engine**: WebAssembly SQLite (`sql.js`).
+- **File Access**: Overwrites local files directly using the browser's `File System Access API` (Chrome/Edge). Safari and Firefox fallback to manual download prompts.
+- **State Management**: Asynchronously saves an unencrypted or encrypted draft to local browser storage (`IndexedDB`) every 10 seconds.
+- **Asset Portability**: Serverless deployment. The complete app is bundled into highly portable static assets: `index.html`, `main.js`, `styles.css`, `sw.js`, and `manifest.json`.
+
+## Frequently Asked Questions
+
+### Where is my financial data stored?
+All transaction records, templates, and settings are saved locally inside your browser's sandboxed Storage (or directly to your local file system if you open/save a `.cash` file). There is no back-end server or cloud synchronization.
+
+### What happens if I lose my password?
+Because encryption uses mathematically strong AES-256-GCM, data recovery is technically impossible without the password. GrindSite does not have a "password reset" mechanism since it has no access to your files.
+
+### Is it compliant with GDPR and other privacy laws?
+Yes. Since GrindCash does not collect, transmit, or process any personal or financial data on external servers, the application is compliant by default. Full data sovereignty remains with the user.
