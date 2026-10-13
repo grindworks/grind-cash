@@ -221,32 +221,50 @@ async function getPasswordHash(password) {
   const msgUint8 = new TextEncoder().encode(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
 
+  // Security enhancement (Zeroization): Overwrite plaintext password buffer with random values
+  // *Note: Best effort zeroization due to JS GC and TextEncoder behavior
+  crypto.getRandomValues(msgUint8);
 
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 // --- Secure password management (in-memory only) ---
-async function setMasterPassword(password) {
-  const pwInput = document.getElementById('file-password');
-  
-  if (!password) {
-    currentMasterKey = null;
-    currentMasterKeyHash = '';
-    if (pwInput) pwInput.value = '';
-    updatePasswordUI();
-    return;
-  }
-
-  const enc = new TextEncoder();
-  currentMasterKey = await window.crypto.subtle.importKey(
+async function importPasswordKey(password) {
+  const key = await window.crypto.subtle.importKey(
     'raw',
-    enc.encode(password),
+    new TextEncoder().encode(password),
     { name: 'PBKDF2' },
     false,
-    ['deriveKey']
+    ['deriveKey'],
   );
-  currentMasterKeyHash = await getPasswordHash(password);
-  
+  const hash = await getPasswordHash(password);
+  return { key, hash };
+}
+
+function applyMasterKey(key, hash) {
+  currentMasterKey = key;
+  currentMasterKeyHash = hash;
+  const pwInput = document.getElementById('file-password');
   if (pwInput) pwInput.value = '';
   updatePasswordUI();
+}
+
+async function setMasterPassword(password) {
+  if (!password) {
+    applyMasterKey(null, '');
+    return;
+  }
+  const { key, hash } = await importPasswordKey(password);
+  applyMasterKey(key, hash);
+}
+
+// Drop the key but keep the hash so saving asks before removing encryption
+function clearMasterPassword() {
+  currentMasterKey = null;
+  updatePasswordUI();
+  if (currentMasterKeyHash !== '') setDirty(true);
+  document.getElementById('file-password')?.focus();
 }
 
 function updatePasswordUI() {
@@ -276,14 +294,6 @@ async function deriveKey(keyMaterial, salt, iterations = 600000) {
     false,
     ['encrypt', 'decrypt'],
   );
-}
-
-  // Security enhancement (Zeroization): Overwrite plaintext password buffer with random values
-  // *Note: Best effort zeroization due to JS GC and TextEncoder behavior
-  crypto.getRandomValues(msgUint8);
-
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 // --- IndexedDB Auto Backup Logic ---
@@ -350,28 +360,28 @@ async function clearDraft() {
 
 function setDirty(state) {
   if (state && db) {
-    if (!draftTimer) {
-      draftTimer = setTimeout(async () => {
-        try {
-          if (!isDirty) return;
-          if (!db) return;
-          if (currentMasterKeyHash !== '' && !currentMasterKey) {
-            console.warn('Draft save aborted: Password removed from an encrypted session.');
-            return;
-          }
-
-          if (currentMasterKey) {
-            data = await encryptData(data, currentMasterKey);
-          }
-          if (!isDirty) return;
-          await saveDraft(data);
-        } catch (e) {
-          console.error('Draft save failed', e);
-        } finally {
-          draftTimer = null;
+    // Debounce: save the draft 15 seconds after the last change
+    if (draftTimer) clearTimeout(draftTimer);
+    draftTimer = setTimeout(async () => {
+      draftTimer = null;
+      try {
+        if (!isDirty) return;
+        if (!db) return;
+        if (currentMasterKeyHash !== '' && !currentMasterKey) {
+          console.warn('Draft save aborted: Password removed from an encrypted session.');
+          return;
         }
-      }, 15000);
-    }
+
+        let data = db.export();
+        if (currentMasterKey) {
+          data = await encryptData(data, currentMasterKey);
+        }
+        if (!isDirty) return;
+        await saveDraft(data);
+      } catch (e) {
+        console.error('Draft save failed', e);
+      }
+    }, 15000);
   } else if (!state) {
     if (draftTimer) {
       clearTimeout(draftTimer);
@@ -413,6 +423,66 @@ function setDirty(state) {
     filenameBadge.textContent = fileName;
     filenameBadge.classList.remove('hidden');
   }
+}
+
+function getTodayString() {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+}
+
+// Return a Date only if y/m/d is a real calendar date (no rollover like 02-31 -> 03-03)
+function createStrictDate(y, m, d) {
+  const dateObj = new Date(y, m - 1, d);
+  if (dateObj.getFullYear() !== y || dateObj.getMonth() !== m - 1 || dateObj.getDate() !== d) {
+    return new Date(NaN);
+  }
+  return dateObj;
+}
+
+// Convert EU/US/JP digit grouping to a plain decimal (1.234,56 / 1,234.56 -> 1234.56)
+function normalizeNumberSeparators(expr) {
+  return expr.replace(/(?:\d+[.,])+\d+/g, (match) => {
+    const lastComma = match.lastIndexOf(',');
+    const lastDot = match.lastIndexOf('.');
+
+    if (lastComma > lastDot && lastDot !== -1) {
+      // Convert EU format (1.000,50) to 1000.50
+      return match.replace(/\./g, '').replace(/,/g, '.');
+    } else if (lastDot > lastComma && lastComma !== -1) {
+      // Convert US/JP format (1,000.50) to 1000.50
+      return match.replace(/,/g, '');
+    } else if (lastComma !== -1) {
+      // If only comma is found
+      if (/,\d{3}$/.test(match)) {
+        // Treat as thousands separator if trailing 3 digits (1,000 -> 1000)
+        return match.replace(/,/g, '');
+      } else {
+        // Otherwise treat as EU decimal (1,50 -> 1.50)
+        return match.replace(/,/g, '.');
+      }
+    } else {
+      // If only dot is found
+      const dotMatches = match.match(/\./g);
+      if (dotMatches && dotMatches.length > 1) {
+        // Treat as EU thousands separator if multiple dots (1.000.000 -> 1000000)
+        return match.replace(/\./g, '');
+      }
+      // Single dot is treated as standard decimal
+      return match;
+    }
+  });
+}
+
+function triggerDownload(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // Revoke later so the browser can start reading the blob
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function escapeHtml(unsafe) {
@@ -517,9 +587,6 @@ function handlePlainTextPaste(event) {
   event.target.dispatchEvent(new CustomEvent('input', { bubbles: true, detail: 'custom-paste' }));
 }
 
-const cryptoWorker = new Worker('./crypto-worker.js');
-let workerMsgId = 0;
-
 async function encryptData(data, keyMaterial) {
   const salt = window.crypto.getRandomValues(new Uint8Array(16));
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
@@ -558,7 +625,7 @@ async function decryptData(encryptedData, keyMaterial) {
       return new Uint8Array(decrypted);
     }
   } catch (e) {
-    throw new Error('パスワードが間違っているか、ファイルが破損しています。');
+    throw new Error(window._t('alert.pw_incorrect'));
   }
 }
 
@@ -686,7 +753,7 @@ async function initSQLite() {
                 // Show prompt if failed or missing key
                 let promptMsg = window._t('prompt.pw_backup') || 'File is encrypted. Please enter the password to decrypt:';
                 if (attemptCount > 0) {
-                  promptMsg = '❌ Incorrect password. Please try again:\n\n' + promptMsg;
+                  promptMsg = window._t('alert.pw_incorrect') + '\n\n' + promptMsg;
                 }
                 password = await requestPasswordPrompt(promptMsg);
                 if (password === null) {
@@ -694,8 +761,9 @@ async function initSQLite() {
                   document.body.innerHTML = `<h1 style='text-align:center; margin-top:20vh;'>${window._t('error.security_stop_desc') || 'System halted. Reload page to restart.'}</h1>`;
                   return;
                 }
-                await setMasterPassword(password);
-                Uints = await decryptData(copy, currentMasterKey);
+                const candidate = await importPasswordKey(password);
+                Uints = await decryptData(copy, candidate.key);
+                applyMasterKey(candidate.key, candidate.hash);
                 success = true;
               }
             } catch (err) {
@@ -1016,6 +1084,17 @@ async function addItem(
 ) {
   const safeMemo = (memo || '').trim();
   if (!safeMemo || amount === '' || amount === null) return;
+  const inserted = await insertRecord(
+    parentId,
+    safeMemo,
+    amount,
+    dateStr,
+    accountStr,
+    taxRate,
+    currency,
+  );
+  if (!inserted) return;
+
   if (parentId) {
     if (dateStr) lastUsedDates[parentId] = dateStr;
     if (accountStr) lastUsedAccounts[parentId] = accountStr;
@@ -1029,8 +1108,6 @@ async function addItem(
       if (amountEl) amountEl.value = '';
     }
   }
-
-  await insertRecord(parentId, safeMemo, amount, dateStr, accountStr, taxRate, currency);
 
   const filterVal = document.getElementById('period-filter')?.value;
   let isOutsideFilter = false;
@@ -1065,16 +1142,15 @@ async function insertRecord(
   taxRate = '',
   currency = 'USD',
 ) {
-  // Strip currency symbols for math evaluation
   let safeAmountExpr = amountExpr;
   if (typeof amountExpr === 'string') {
-    safeAmountExpr = amountExpr.replace(/,/g, '');
+    safeAmountExpr = normalizeNumberSeparators(amountExpr);
   }
 
   const parsedAmount = evaluateMath(safeAmountExpr);
   if (amountExpr !== null && amountExpr !== '' && parsedAmount === null) {
     await showAlert(window._t('alert.invalid_amount_or_formula'));
-    return;
+    return false;
   }
 
   let finalAmount = roundAmount(parsedAmount, currency);
@@ -1115,6 +1191,7 @@ async function insertRecord(
     if (stmt) stmt.free();
   }
   setDirty(true);
+  return true;
 }
 
 let renderMemoSuggestionsTimeout = null;
@@ -1286,6 +1363,7 @@ async function updateRecord(id, field, newValue, element) {
     }
   } catch (e) {
     console.error('Lock check error', e);
+    return;
   } finally {
     if (checkExportStmt) checkExportStmt.free();
   }
@@ -1309,36 +1387,7 @@ async function updateRecord(id, field, newValue, element) {
     } else {
       let mathExpr = val;
 
-      mathExpr = mathExpr.replace(/(?:\d+[.,])+\d+/g, (match) => {
-        const lastComma = match.lastIndexOf(',');
-        const lastDot = match.lastIndexOf('.');
-
-        if (lastComma > lastDot && lastDot !== -1) {
-          // Convert EU format (1.000,50) to 1000.50
-          return match.replace(/\./g, '').replace(/,/g, '.');
-        } else if (lastDot > lastComma && lastComma !== -1) {
-          // Convert US/JP format (1,000.50) to 1000.50
-          return match.replace(/,/g, '');
-        } else if (lastComma !== -1) {
-          // If only comma is found
-          if (/,\d{3}$/.test(match)) {
-            // Treat as thousands separator if trailing 3 digits (1,000 -> 1000)
-            return match.replace(/,/g, '');
-          } else {
-            // Otherwise treat as EU decimal (1,50 -> 1.50)
-            return match.replace(/,/g, '.');
-          }
-        } else {
-          // If only dot is found
-          const dotMatches = match.match(/\./g);
-          if (dotMatches && dotMatches.length > 1) {
-            // Treat as EU thousands separator if multiple dots (1.000.000 -> 1000000)
-            return match.replace(/\./g, '');
-          }
-          // Single dot is treated as standard decimal
-          return match;
-        }
-      });
+      mathExpr = normalizeNumberSeparators(mathExpr);
       val = evaluateMath(mathExpr);
       if (val === null) {
         if (element) {
@@ -1464,14 +1513,56 @@ async function updateRecord(id, field, newValue, element) {
     if (checkStmt) checkStmt.free();
   }
 
+  // Items follow the block currency, so amounts must satisfy its rounding rule (e.g. JPY integers)
+  let roundedChildren = [];
+  if (field === 'currency') {
+    let childSelect;
+    try {
+      childSelect = db.prepare(
+        'SELECT id, amount FROM records WHERE parent_id = ? AND amount IS NOT NULL',
+      );
+      childSelect.bind([id]);
+      while (childSelect.step()) {
+        const [childId, amount] = childSelect.get();
+        const rounded = roundAmount(amount, val);
+        if (rounded !== amount) roundedChildren.push([rounded, childId]);
+      }
+    } finally {
+      if (childSelect) childSelect.free();
+    }
+
+    if (
+      roundedChildren.length > 0 &&
+      !(await requestConfirm(window._t('confirm.currency_round', val, roundedChildren.length)))
+    ) {
+      renderData();
+      return;
+    }
+  }
+
   const query = `UPDATE records SET ${field} = ? WHERE id = ?`;
 
   let stmt;
+  let childStmt;
+  let amountStmt;
   try {
+    db.run('BEGIN TRANSACTION;');
     stmt = db.prepare(query);
     stmt.run([val, id]);
+    if (field === 'currency') {
+      childStmt = db.prepare('UPDATE records SET currency = ? WHERE parent_id = ?');
+      childStmt.run([val, id]);
+      amountStmt = db.prepare('UPDATE records SET amount = ? WHERE id = ?');
+      roundedChildren.forEach((params) => amountStmt.run(params));
+    }
+    db.run('COMMIT;');
+  } catch (e) {
+    db.run('ROLLBACK;');
+    throw e;
   } finally {
     if (stmt) stmt.free();
+    if (childStmt) childStmt.free();
+    if (amountStmt) amountStmt.free();
   }
 
   setDirty(true);
@@ -1485,8 +1576,11 @@ async function updateRecord(id, field, newValue, element) {
       }
     }
     updateTotalsOnly();
-  } else if (field === 'tax_rate' || field === 'currency') {
+  } else if (field === 'tax_rate') {
     updateTotalsOnly();
+  } else if (field === 'currency') {
+    // Re-render so item amounts are formatted with the new currency
+    renderData();
   } else if (field === 'created_at') {
     const filterVal = document.getElementById('period-filter')?.value;
     let isOutsideFilter = false;
@@ -2867,6 +2961,25 @@ async function deleteRecord(id) {
 
 async function sortBlockByDate(blockId) {
   if (!db) return;
+
+  let lockStmt;
+  try {
+    lockStmt = db.prepare('SELECT COUNT(*) FROM records WHERE parent_id = ? AND is_exported = 1');
+    lockStmt.bind([blockId]);
+    if (lockStmt.step() && lockStmt.get()[0] > 0) {
+      await showAlert(
+        window._t('error.record_locked') ||
+          'Cannot modify. This block contains exported and locked records.',
+      );
+      return;
+    }
+  } catch (e) {
+    console.error('Lock check error', e);
+    return;
+  } finally {
+    if (lockStmt) lockStmt.free();
+  }
+
   if (!(await requestConfirm(window._t('confirm.sort_by_date')))) return;
   let stmt;
   let items = [];
@@ -3004,16 +3117,24 @@ async function saveGrindFile(isSaveAs = false) {
       console.warn('SQLite VACUUM skipped due to active statements:', vacuumError);
     }
     let data = db.export();
-    // Warning if password is removed
+
+    // Apply a newly entered password after confirmation
+    const pwInput = document.getElementById('file-password');
+    const typedPassword = pwInput ? pwInput.value : '';
+    if (typedPassword) {
+      const confirmPw = await requestPasswordPrompt(window._t('prompt.pw_new'));
+      if (confirmPw === null) return;
+      if (confirmPw !== typedPassword) {
+        await showAlert(window._t('alert.pw_mismatch'));
+        return;
+      }
+      await setMasterPassword(typedPassword);
+    }
+
+    // Warn before removing encryption from a protected file
     if (currentMasterKeyHash !== '' && !currentMasterKey) {
-      const confirmRemove = await showConfirm(
-        window._t('prompt.pw_remove') || 'Are you sure you want to remove the password? The file will be saved unencrypted.'
-      );
-      if (!confirmRemove) {
-        showToast(
-          window._t('status.pw_remove_cancel') || 'Save canceled to protect data.',
-          '<span class="text-blue-500 text-xl font-bold">🛡️</span>'
-        );
+      if (!(await requestConfirm(window._t('confirm.pw_empty')))) {
+        await showAlert(window._t('alert.pw_empty_canceled'));
         return;
       }
       currentMasterKeyHash = '';
@@ -3064,7 +3185,7 @@ async function saveGrindFile(isSaveAs = false) {
     if (isSaveAs || !targetFileHandle || targetFileHandle.isDummy) {
       if ('showSaveFilePicker' in window) {
         try {
-          const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+          const todayStr = getTodayString().replace(/-/g, '');
           targetFileHandle = await window.showSaveFilePicker({
             suggestedName: `GrindCash_${todayStr}.cash`,
             types: [
@@ -3077,22 +3198,17 @@ async function saveGrindFile(isSaveAs = false) {
         }
       } else {
         const blob = new Blob([data], { type: 'application/x-sqlite3' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download =
-          targetFileHandle && targetFileHandle.name ? targetFileHandle.name : `GrindCash_${getTodayString().replace(/-/g, '')}.cash`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        const fileName =
+          targetFileHandle && targetFileHandle.name
+            ? targetFileHandle.name
+            : `GrindCash_${getTodayString().replace(/-/g, '')}.cash`;
+        triggerDownload(blob, fileName);
         setDirty(false);
         showToast(
-          window._t('toast.downloaded', a.download),
+          window._t('toast.downloaded', fileName),
           '<span class="text-green-400">💾</span>',
         );
         showSaveSuccessFeedback();
-        
         return;
       }
     }
@@ -3121,7 +3237,6 @@ async function saveGrindFile(isSaveAs = false) {
     );
     showSaveSuccessFeedback();
     triggerHaptic();
-    
   } catch (err) {
     console.error('Save failed:', err);
     showToast(window._t('toast.save_error'), '<span class="text-red-400">❌</span>');
@@ -3170,41 +3285,44 @@ async function processFileHandle(handle, isDummy = false) {
     const isEncrypted =
       magicStr === 'GRINDENC' || magicStr === 'GRINDEN2' || magicStr !== 'SQLite f';
 
+    // Keep the current session's key until the new file opens successfully
+    let fileKey = null;
+    let fileKeyHash = '';
     if (isEncrypted) {
       let success = false;
-          let attemptCount = 0;
-          while (!success) {
-            try {
-              let copy = new Uint8Array(Uints);
-              if (attemptCount === 0 && currentMasterKey) {
-                Uints = await decryptData(copy, currentMasterKey);
-                success = true;
-              } else {
-                let promptMsg = window._t('prompt.pw_import') || 'Please enter the password to decrypt the current database:';
-                if (attemptCount > 0) {
-                  promptMsg = '❌ Incorrect password.\n\n' + promptMsg;
-                }
-                const password = await requestPasswordPrompt(promptMsg);
-                if (password === null) {
-                  throw new Error('Canceled');
-                }
-                await setMasterPassword(password);
-                Uints = await decryptData(copy, currentMasterKey);
-                success = true;
-              }
-            } catch (err) {
-              if (err.message === 'Canceled') {
-                return;
-              }
-              attemptCount++;
+      let attemptCount = 0;
+      // The session key is tried silently first, so it does not count as a wrong entry
+      const silentAttempts = currentMasterKey ? 1 : 0;
+      while (!success) {
+        try {
+          let copy = new Uint8Array(Uints);
+          if (attemptCount === 0 && currentMasterKey) {
+            Uints = await decryptData(copy, currentMasterKey);
+            fileKey = currentMasterKey;
+            fileKeyHash = currentMasterKeyHash;
+            success = true;
+          } else {
+            let promptMsg = window._t('prompt.pw_desc');
+            if (attemptCount > silentAttempts) {
+              promptMsg = window._t('alert.pw_incorrect') + '\n\n' + promptMsg;
             }
+            const password = await requestPasswordPrompt(promptMsg);
+            if (password === null) {
+              throw new Error('Canceled');
+            }
+            const candidate = await importPasswordKey(password);
+            Uints = await decryptData(copy, candidate.key);
+            fileKey = candidate.key;
+            fileKeyHash = candidate.hash;
+            success = true;
           }
-    }
-
-    if (!isEncrypted) {
-      lastSavedPasswordHash = '';
-      const pwInput = document.getElementById('file-password');
-      if (pwInput) pwInput.value = '';
+        } catch (err) {
+          if (err.message === 'Canceled') {
+            return;
+          }
+          attemptCount++;
+        }
+      }
     }
 
     let newDb;
@@ -3213,6 +3331,8 @@ async function processFileHandle(handle, isDummy = false) {
     } catch (e) {
       throw new Error('Invalid SQLite database file.');
     }
+
+    applyMasterKey(fileKey, fileKeyHash);
 
     if (db) {
       try {
@@ -3456,7 +3576,24 @@ async function exportCSV(format = 'generic') {
 
   const csvContent = csvRows.join('\r\n') + '\r\n';
 
-  // 2. Mark records as exported after successful CSV export
+  let blob;
+  if (format === 'xero' || format === 'qb') {
+    // Output without BOM for Xero/QuickBooks
+    blob = new Blob([csvContent], { type: 'text/csv' });
+  } else {
+    // Output with BOM for Generic
+    const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
+    blob = new Blob([bom, csvContent], { type: 'text/csv' });
+  }
+
+  const dateSuffix = getTodayString().replace(/-/g, '');
+
+  // Change filename based on format
+  const formatName = format === 'xero' ? 'Xero' : format === 'qb' ? 'QuickBooks' : 'Generic';
+
+  triggerDownload(blob, `GrindCash_${formatName}_${dateSuffix}.csv`);
+
+  // Lock exported records only after the download has started
   if (unexportedOnly) {
     const exportedIds = values.map((row) => row[0]); // Array of c.id
     if (exportedIds.length > 0) {
@@ -3484,30 +3621,6 @@ async function exportCSV(format = 'generic') {
       }
     }
   }
-
-  let blob;
-  if (format === 'xero' || format === 'qb') {
-    // Output without BOM for Xero/QuickBooks
-    blob = new Blob([csvContent], { type: 'text/csv' });
-  } else {
-    // Output with BOM for Generic
-    const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
-    blob = new Blob([bom, csvContent], { type: 'text/csv' });
-  }
-
-  const url = URL.createObjectURL(blob);
-
-  const today = new Date();
-  const dateSuffix = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
-
-  // Change filename based on format
-  const formatName = format === 'xero' ? 'Xero' : format === 'qb' ? 'QuickBooks' : 'Generic';
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `GrindCash_${formatName}_${dateSuffix}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 async function importCSV(event) {
@@ -3903,7 +4016,8 @@ async function executeCSVImport() {
 
       let amount = NaN;
       if (!isInvalidHyphen && amountStr !== '') {
-        amount = Math.round((parseFloat(amountStr) + Number.EPSILON) * 100) / 100;
+        const parsedAmount = parseFloat(amountStr);
+        amount = isNaN(parsedAmount) ? NaN : roundAmount(parsedAmount, baseCurrency);
         if (amountStr.endsWith('-') && !amountStr.startsWith('-')) amount = -Math.abs(amount);
         if (amount > 10000000000000 || amount < -10000000000000) amount = NaN;
       }
@@ -3915,9 +4029,9 @@ async function executeCSVImport() {
         if (trimmedDate) {
           if (/^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}$/.test(trimmedDate)) {
             const parts = trimmedDate.split(/[\/\-]/);
-            parsedDate = new Date(
+            parsedDate = createStrictDate(
               parseInt(parts[0], 10),
-              parseInt(parts[1], 10) - 1,
+              parseInt(parts[1], 10),
               parseInt(parts[2], 10),
             );
           } else if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(trimmedDate)) {
@@ -3941,7 +4055,7 @@ async function executeCSVImport() {
                 m = secondNum;
               }
             }
-            parsedDate = new Date(parseInt(parts[2], 10), m - 1, d);
+            parsedDate = createStrictDate(parseInt(parts[2], 10), m, d);
           } else if (/^\d{1,2}[\/\-]\d{1,2}$/.test(trimmedDate)) {
             // "MM/DD" or "DD/MM" format handling with current year fallback
             const parts = trimmedDate.split(/[\/\-]/);
@@ -3964,7 +4078,7 @@ async function executeCSVImport() {
                 m = secondNum;
               }
             }
-            parsedDate = new Date(currentYear, m - 1, d);
+            parsedDate = createStrictDate(currentYear, m, d);
           }
         }
 
@@ -4476,9 +4590,7 @@ if (typeof BroadcastChannel !== 'undefined') {
       } else if (e.data === 'pong') {
         if (!hasAlerted) {
           hasAlerted = true;
-          await showAlert(
-            '⚠️ GrindCash is already open in another tab or window.\n\nTo prevent data conflicts, please do not edit in this tab.',
-          );
+          await showAlert(window._t('alert.multi_tab'));
           document.body.style.opacity = '0.5';
           document.body.style.pointerEvents = 'none';
         }
@@ -4792,16 +4904,22 @@ function filterByTag(tagName) {
   let stmt;
   try {
     stmt = db.prepare(
-      "SELECT created_at, memo, amount, currency FROM records WHERE parent_id IS NOT NULL AND memo LIKE ? ESCAPE '\\'",
+      "SELECT created_at, memo, amount, currency FROM records WHERE parent_id IS NOT NULL AND (memo LIKE ? ESCAPE '\\' OR memo LIKE ? ESCAPE '\\')",
     );
     // Fix: Add backslash itself to escape targets to prevent SQL crashes
     const escapedTag = tagName.replace(/([\\_%])/g, '\\$1');
-    stmt.bind([`%#${escapedTag}%`]);
+    stmt.bind([`%#${escapedTag}%`, `%＃${escapedTag}%`]);
 
+    // LIKE is a prefix match (#food hits #foodie), so confirm with the display tag pattern
+    const targetTag = tagName.toLowerCase();
     let totals = Object.create(null); // Replace with safe dictionary
     let items = [];
     while (stmt.step()) {
       const [date, memo, amount, currency] = stmt.get();
+      const memoTags = Array.from((memo || '').matchAll(/(?:#|＃)([\p{L}\p{N}_\-ー]+)/gu), (m) =>
+        m[1].toLowerCase(),
+      );
+      if (!memoTags.includes(targetTag)) continue;
       const safeAmount = parseFloat(amount || 0);
       const c = currency || 'USD';
       totals[c] = (totals[c] || 0) + safeAmount;
@@ -5056,8 +5174,8 @@ async function applyFeeSplit(rate, fixed, label) {
     return;
   }
 
-  // Strip commas and evaluate math expression
-  const cleanVal = amountVal.replace(/[,$€£¥]/g, '').trim();
+  // Strip currency symbols and normalize digit grouping before evaluation
+  const cleanVal = normalizeNumberSeparators(amountVal.replace(/[$€£¥]/g, '').trim());
   const gross = evaluateMath(cleanVal);
   if (gross === null || isNaN(gross)) {
     await showAlert(window._t('error.split_invalid') || 'Invalid amount value.');
@@ -5075,6 +5193,15 @@ async function applyFeeSplit(rate, fixed, label) {
       if (curStmt.step()) recordCurrency = curStmt.get()[0] || recordCurrency;
       curStmt.free();
     } catch (e) {}
+  }
+
+  // Fixed fees are defined in USD only
+  if (fixed !== 0 && recordCurrency !== 'USD') {
+    await showAlert(
+      window._t('error.split_usd_only', recordCurrency) ||
+        'This fee preset uses a fixed USD fee and can only be applied to USD records.',
+    );
+    return;
   }
 
   let fee = gross * rate + fixed;
@@ -5182,8 +5309,8 @@ async function applyFeeSplit(rate, fixed, label) {
       setDirty(true);
       renderData();
       let msg = (window._t('toast.split_applied') || `Split applied: Gross {0} & Fee {1}`)
-        .replace('{0}', `${formatCurrencyAmount(gross, baseCurrency)}`)
-        .replace('{1}', `${formatCurrencyAmount(netFee, baseCurrency)}`);
+        .replace('{0}', `${formatCurrencyAmount(gross, recordCurrency)}`)
+        .replace('{1}', `${formatCurrencyAmount(netFee, recordCurrency)}`);
       showToast(msg, '✨');
     }
   }
@@ -5364,6 +5491,7 @@ document.addEventListener('click', (e) => {
 
     // UI toggles & modals
     if (action === 'togglePasswordVisibility') togglePasswordVisibility(target);
+    else if (action === 'clearMasterPassword') clearMasterPassword();
     else if (action === 'loadGrindFile') loadGrindFile();
     else if (action === 'saveGrindFile') saveGrindFile();
     else if (action === 'toggleCommandPalette') toggleCommandPalette();
@@ -5598,13 +5726,23 @@ document.addEventListener('focusin', (e) => {
   if (e.target.hasAttribute('contenteditable') && e.target.innerHTML.includes('<span')) {
     e.target.innerText = e.target.innerText;
   }
-  if (
-    e.target.classList.contains('item-amount') ||
-    e.target.getAttribute('data-field') === 'amount'
-  ) {
-    if (e.target.value && e.target.value.includes(',')) {
-      e.target.value = e.target.value.replace(/,/g, '');
+  if (e.target.getAttribute('data-field') === 'amount' && e.target.tagName === 'INPUT' && db) {
+    // Edit the stored value: the display uses the browser locale (1.234 in de-DE is 1234)
+    let amountStmt;
+    try {
+      amountStmt = db.prepare('SELECT amount FROM records WHERE id = ?');
+      amountStmt.bind([parseInt(e.target.getAttribute('data-id'), 10)]);
+      if (amountStmt.step()) {
+        const amount = amountStmt.get()[0];
+        e.target.value = amount === null ? '' : String(amount);
+      }
+    } catch (err) {
+      console.error('Failed to load amount for editing:', err);
+    } finally {
+      if (amountStmt) amountStmt.free();
     }
+  } else if (e.target.classList.contains('item-amount') && e.target.value) {
+    e.target.value = normalizeNumberSeparators(e.target.value);
   }
   const target = e.target.closest('[data-action-focus]');
   if (target) {
@@ -5779,4 +5917,4 @@ document.addEventListener('mousedown', (e) => {
 
 // The visibilitychange autosave has been removed because async Web Worker encryption
 // gets killed by the browser before completion, leading to data loss.
-// We rely on the 10-second draftTimer instead.
+// We rely on the 15-second draftTimer instead.

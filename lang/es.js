@@ -75,10 +75,12 @@ export default {
   'toast.copied': 'Copiado al portapapeles',
   'alert.restore_fail': '⚠️ Error al restaurar porque la copia de seguridad anterior está dañada.',
   'confirm.discard_changes': 'Tiene cambios sin guardar. ¿Descartarlos y abrir otro archivo?',
+  'confirm.currency_round': 'Al cambiar a {0}, se redondearán {1} importe(s) de este bloque a los decimales de {0}. Volver a la moneda anterior no los restaurará. ¿Continuar?',
   'confirm.pw_empty':
     '⚠️ ADVERTENCIA ⚠️\nLa contraseña está vacía.\nGuardar ahora eliminará el cifrado y guardará en texto plano.\n\n¿Está seguro de que desea eliminar el cifrado?',
   'alert.pw_empty_canceled': 'Guardado cancelado. Por favor, establezca una contraseña.',
   'alert.pw_mismatch': '❌ Las contraseñas no coinciden. Guardado cancelado.',
+  'alert.pw_incorrect': '❌ Contraseña incorrecta o el archivo está dañado.',
   'alert.write_permission_fail':
     'No se pudo obtener el permiso de escritura. El navegador puede haberlo revocado.\n\nPor favor, intente "Guardar como".',
   'toast.saved_to': 'Datos guardados en "{0}"',
@@ -157,6 +159,7 @@ export default {
     'Por favor, haga clic o enfoque en un campo de cantidad primero para aplicar la división de comisiones.',
   'error.split_no_amount': 'Por favor, introduzca una cantidad primero.',
   'error.split_invalid': 'Valor de cantidad no válido.',
+  'error.split_usd_only': 'Esta plantilla de comisión usa una tarifa fija en USD y no se puede aplicar a registros en {0}.',
   'toast.privacy_toggled': 'Modo de privacidad alternado',
   'toast.app_updated_reload':
     'Aplicación actualizada. <a href="#" id="toast-reload-btn" class="ml-2 font-bold underline cursor-pointer">Recargar para aplicar</a>',

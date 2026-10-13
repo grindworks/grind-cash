@@ -75,10 +75,12 @@ export default {
   'toast.copied': 'Copied to clipboard',
   'alert.restore_fail': '⚠️ Failed to restore because the previous backup data is corrupted.',
   'confirm.discard_changes': 'You have unsaved changes. Discard them and open another file?',
+  'confirm.currency_round': 'Switching to {0} rounds {1} item amount(s) in this block to match its decimal places. This cannot be undone by switching back. Continue?',
   'confirm.pw_empty':
     '⚠️ WARNING ⚠️\nPassword is empty.\nSaving now will remove encryption and save in plain text.\n\nAre you sure you want to remove encryption?',
   'alert.pw_empty_canceled': 'Save canceled. Please set a password.',
   'alert.pw_mismatch': '❌ Passwords do not match. Save canceled.',
+  'alert.pw_incorrect': '❌ Incorrect password, or the file is corrupted.',
   'alert.write_permission_fail':
     'Could not get write permission. The browser may have revoked it.\n\nPlease try "Save As".',
   'toast.saved_to': 'Saved data to "{0}"',
@@ -153,6 +155,7 @@ export default {
   'error.split_no_focus': 'Please click or focus on an Amount field first to apply the fee split.',
   'error.split_no_amount': 'Please enter an amount first.',
   'error.split_invalid': 'Invalid amount value.',
+  'error.split_usd_only': 'This fee preset uses a fixed USD fee. It cannot be applied to {0} records.',
   'toast.privacy_toggled': 'Privacy Mode Toggled',
   'toast.app_updated_reload':
     'App updated. <a href="#" id="toast-reload-btn" class="ml-2 font-bold underline cursor-pointer">Reload to apply</a>',

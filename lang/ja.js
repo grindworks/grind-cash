@@ -74,11 +74,13 @@ export default {
   'toast.copied': 'コピーしました',
   'alert.restore_fail': '⚠️ 前回の未保存データが破損しているため、復元を中止しました。',
   'confirm.discard_changes': '未保存のデータがあります。変更を破棄して別のファイルを開きますか？',
+  'confirm.currency_round': '{0} に変更すると、このブロックの明細 {1} 件の金額を {0} の桁数に丸めます。元の通貨に戻しても金額は戻りません。続けますか？',
   'confirm.pw_empty':
     '⚠️ 警告 ⚠️\nパスワードが空になっています。\nこのまま保存すると、ファイルの暗号化が解除され「平文」で保存されます。\n\n本当に暗号化を解除して保存しますか？',
   'alert.pw_empty_canceled':
     '保存を中断しました。パスワードを空のままにせず、再度入力してください。',
   'alert.pw_mismatch': '❌ パスワードが一致しません。保存を中止しました。',
+  'alert.pw_incorrect': '❌ パスワードが間違っているか、ファイルが破損しています。',
   'alert.write_permission_fail':
     'ファイルの書き込み権限が取得できませんでした。時間経過によりブラウザが権限を取り消した可能性があります。\n\n「複製して保存する (Save As)」をお試しください。',
   'toast.saved_to': 'データを "{0}" に保存しました',
@@ -153,6 +155,7 @@ export default {
   'error.split_no_focus': '手数料を分割するには、まず金額欄をクリックしてフォーカスしてください。',
   'error.split_no_amount': '先に金額を入力してください。',
   'error.split_invalid': '無効な金額です。',
+  'error.split_usd_only': 'この手数料プリセットは米ドルの固定手数料を使うため、{0} の明細には適用できません。',
   'toast.privacy_toggled': 'プライバシーモードを切り替えました',
   'toast.app_updated_reload':
     'アプリが最新版に更新されました。<a href="#" id="toast-reload-btn" class="ml-2 font-bold underline cursor-pointer">リロードして適用</a>',

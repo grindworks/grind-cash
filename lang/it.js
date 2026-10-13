@@ -77,10 +77,12 @@ export default {
   'alert.restore_fail':
     '⚠️ Ripristino non riuscito perché i dati di backup precedenti sono corrotti.',
   'confirm.discard_changes': 'Hai modifiche non salvate. Eliminarle e aprire un altro file?',
+  'confirm.currency_round': 'Passando a {0}, {1} importi di questo blocco verranno arrotondati ai decimali di {0}. Tornare alla valuta precedente non li ripristinerà. Continuare?',
   'confirm.pw_empty':
     '⚠️ AVVERTENZA ⚠️\nLa password è vuota.\nSalvare ora rimuoverà la crittografia e salverà in testo normale.\n\nSei sicuro di voler rimuovere la crittografia?',
   'alert.pw_empty_canceled': 'Salvataggio annullato. Imposta una password.',
   'alert.pw_mismatch': '❌ Le password non corrispondono. Salvataggio annullato.',
+  'alert.pw_incorrect': '❌ Password errata oppure il file è danneggiato.',
   'alert.write_permission_fail':
     'Impossibile ottenere l\'autorizzazione di scrittura. Il browser potrebbe averla revocata.\n\nProva "Salva come".',
   'toast.saved_to': 'Dati salvati in "{0}"',
@@ -157,6 +159,7 @@ export default {
     'Fai clic o posizionati prima su un campo Importo per applicare la suddivisione delle commissioni.',
   'error.split_no_amount': 'Inserisci prima un importo.',
   'error.split_invalid': "Valore dell'importo non valido.",
+  'error.split_usd_only': 'Questo modello di commissione usa una tariffa fissa in USD e non può essere applicato a voci in {0}.',
   'toast.privacy_toggled': 'Modalità privacy attivata/disattivata',
   'toast.app_updated_reload':
     'App aggiornata. <a href="#" id="toast-reload-btn" class="ml-2 font-bold underline cursor-pointer">Ricarica per applicare</a>',

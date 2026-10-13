@@ -78,10 +78,12 @@ export default {
     '⚠️ Échec de la restauration car les données de sauvegarde précédentes sont corrompues.',
   'confirm.discard_changes':
     'Vous avez des modifications non enregistrées. Les abandonner et ouvrir un autre fichier ?',
+  'confirm.currency_round': 'Passer à {0} arrondira {1} montant(s) de ce bloc au nombre de décimales de {0}. Revenir à la devise d\'origine ne les restaurera pas. Continuer ?',
   'confirm.pw_empty':
     '⚠️ AVERTISSEMENT ⚠️\nLe mot de passe est vide.\nEnregistrer maintenant supprimera le chiffrement et enregistrera en texte brut.\n\nÊtes-vous sûr de vouloir supprimer le chiffrement ?',
   'alert.pw_empty_canceled': 'Enregistrement annulé. Veuillez définir un mot de passe.',
   'alert.pw_mismatch': '❌ Les mots de passe ne correspondent pas. Enregistrement annulé.',
+  'alert.pw_incorrect': '❌ Mot de passe incorrect ou fichier corrompu.',
   'alert.write_permission_fail':
     "Impossible d'obtenir l'autorisation d'écriture. Le navigateur l'a peut-être révoquée.\n\nVeuillez essayer \"Enregistrer sous\".",
   'toast.saved_to': 'Données enregistrées sous "{0}"',
@@ -159,6 +161,7 @@ export default {
     'Veuillez cliquer ou vous concentrer sur un champ Montant en premier pour appliquer la division des frais.',
   'error.split_no_amount': 'Veuillez saisir un montant en premier.',
   'error.split_invalid': 'Valeur de montant non valide.',
+  'error.split_usd_only': 'Ce modèle de frais utilise un montant fixe en USD et ne peut pas être appliqué aux écritures en {0}.',
   'toast.privacy_toggled': 'Mode confidentialité activé/désactivé',
   'toast.app_updated_reload':
     'Application mise à jour. <a href="#" id="toast-reload-btn" class="ml-2 font-bold underline cursor-pointer">Recharger pour appliquer</a>',
