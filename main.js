@@ -1523,7 +1523,8 @@ async function updateRecord(id, field, newValue, element) {
       );
       childSelect.bind([id]);
       while (childSelect.step()) {
-        const [childId, amount] = childSelect.get();
+        const [childId, rawAmount] = childSelect.get();
+        const amount = Number(rawAmount);
         const rounded = roundAmount(amount, val);
         if (rounded !== amount) roundedChildren.push([rounded, childId]);
       }
