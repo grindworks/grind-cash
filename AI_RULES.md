@@ -1,51 +1,39 @@
 # GrindCash AI Rules
 
-> Shared rules for every Grind product: [`../AGENTS.md`](../AGENTS.md). This file adds GrindCash rules and wins where the two differ.
+> Product type: PWA. Shared rules: [`../AGENTS.md`](../AGENTS.md) §1, §2, §4, §6 and the PWA rules in §7. This file adds GrindCash rules and wins where the two differ.
 
-## 1. Environment & Architecture
+## 1. Stack
 
-- **Serverless & Offline-First (PWA):** No Backend (No PHP, No Node.js). The application MUST run entirely in the browser using HTML, Vanilla JavaScript, and Tailwind CSS.
-- **Wasm SQLite (`sql.js`):** Database operations are performed in-memory via WebAssembly. Always remember to manage memory properly (e.g., `stmt.free()`, `db.close()` before re-instantiating) to prevent memory leaks.
-- **Local File Management:** Read/Write operations are strictly handled via the **File System Access API**. Never suggest uploading files to a server.
-- **Strong Security:** Data saving must pass through Web Crypto API (`AES-256-GCM`) when a password is provided.
-- **Absolute Portability (CRITICAL):**
-  - **Zero Build Tools:** Do NOT suggest adding `npm`, `Webpack`, `Vite`, or ES Modules that require a build step. The system MUST work instantly by just opening `index.html` in a modern browser.
-  - **No External Dependencies for Assets:** Do NOT suggest external CDNs for images or icons. Everything needed for the UI must be inline to guarantee offline functionality.
+- Vanilla JavaScript, no frontend framework.
+- Wasm SQLite (`sql.js`): the database lives in memory. Manage memory explicitly (`stmt.free()`, `db.close()` before re-instantiating) to prevent leaks.
+- Tailwind CSS v4.3.1 from npm devDependencies (`@tailwindcss/cli`, `tailwindcss`, pinned); `./build.sh` or `npm run build` regenerates `styles.css`. npm is a development tool only; nothing from `node_modules` ships.
 
-## 2. Coding Standards & Data Handling
+## 2. Data and files
 
-- **Vanilla JavaScript (Modern ES6+):** Use strict typing conceptually, modern features (arrow functions, template literals, destructuring, Optional Chaining).
-- **SQL Security & Safety:**
-  - ALWAYS use parameterized queries (`db.prepare("... WHERE id = ?")`). Never interpolate variables directly into SQL strings.
-  - **Zero-Trust UI (Backend-in-Frontend):** Even though this is a client-side app, treat the SQLite DB as the absolute source of truth. Do not rely solely on HTML attributes (like `disabled` or `contenteditable="false"`) to lock records. Always verify the record's state (e.g., `is_exported`) via SQL before executing `UPDATE` or `DELETE`.
-  - SQLite in `sql.js` does not auto-persist. Any operation that modifies data (INSERT, UPDATE, DELETE) MUST set a flag (e.g., `isDirty = true`) to warn the user before they close the tab.
-- **Error Handling (FAIL-SAFE):**
-  - Assume files selected by the user might be corrupted or manipulated. Always wrap decryption and JSON/CSV parsing in robust `try...catch` blocks.
-  - Fail gracefully with user-friendly `alert` or toast notifications, allowing the user to retry without reloading the app.
-  - **No Async on Unload:** Never rely on asynchronous operations (e.g., Web Worker crypto) inside `visibilitychange` or `beforeunload` events to save data. The browser will terminate them, causing silent data loss. Rely strictly on debounced timers (`draftTimer`) while the app is active.
-  - **Precision & Data Integrity:** Never let visual formatters (e.g., `Intl.NumberFormat`) mask underlying floating-point precision. If a currency does not support decimals (like JPY), you MUST mathematically round the value (`Math.round()`) *before* saving it to the database to prevent cumulative calculation discrepancies.
+- Files: SQLite databases opened as `.cash` or `.grind` (`manifest.json` file handlers).
+- SQL: ALWAYS use parameterized queries (`db.prepare("... WHERE id = ?")`). Never interpolate variables into SQL strings.
+- **Zero-trust UI:** The SQLite database is the source of truth. Do not rely only on HTML attributes (`disabled`, `contenteditable="false"`) to lock records. Check the record's state (e.g., `is_exported`) in SQL before every `UPDATE` or `DELETE`.
+- `sql.js` does not auto-persist. Every INSERT, UPDATE or DELETE must call `setDirty(true)` so the user is warned before closing the tab. Drafts are saved on `draftTimer` while the app is active (see shared §7 on unload).
+- **Precision:** Never let display formatters (e.g., `Intl.NumberFormat`) hide floating-point error. For currencies without decimals (such as JPY), round with `Math.round()` _before_ saving to the database.
+- **DOM guardrails:** Cap options, tags and search results in the SQL query (e.g., `LIMIT 100`). Rendering thousands of DOM nodes at once stalls the UI on large datasets.
 
-## 3. Frontend (S-Rank UI & SaaS-like Flat Design)
+## 3. UI
 
-- **Tailwind CSS:** Use Tailwind utility classes for all styling. Avoid custom CSS in `<style>` blocks unless absolutely necessary.
-- **Design System & Tone & Manner:**
-  - **SaaS-like Flat Design:** Maintain a clean, professional, and modern flat design.
-  - **Color Palette (Strictly Tailwind Default):** Do NOT use custom colors like `primary`. Strictly use Tailwind's default color palette to ensure 100% consistency.
-    - **Main Text & Headings:** Deep intellectual navy (`text-blue-950`).
-    - **Buttons, Accents & Focus Rings:** Solid blue (`blue-600` / `bg-blue-600` / `focus:ring-blue-600`).
-    - **Toast/System Notifications:** Deep dark slate (`bg-slate-900`) for a stable, professional look.
-    - **Backgrounds:** Use subtle slate tones (`bg-slate-50`, `bg-slate-100`) and refined grid patterns for empty states.
-- **Icons (Inline SVG Sprites):** Load icons strictly via inline SVG `<use href="#icon-name"></use>`. **NEVER** use external files like `sprite.svg` or icon fonts, as they break when the PWA is offline.
-- **Micro-Interactions & UX:**
-  - Enhance the "Grind (fast input)" experience. Ensure form submissions do not cause page reloads (`event.preventDefault()`).
-  - Maintain focus on input fields programmatically after actions.
-  - Ensure UI transitions do not cause layout shifts (CLS). Use smooth CSS animations or View Transitions where appropriate.
-  - **DOM Performance Guardrails:** When rendering options, tags, or search results from the DB, ALWAYS cap the results (e.g., `LIMIT 100`) in the SQL query. Rendering thousands of DOM nodes synchronously will cause severe UI stutters on large datasets.
-- **Minimalist Vibe:** Keep the UI clean. Hide complex actions in the Command Palette (`Cmd+K`).
+- Look, top bar, shortcuts, toasts, dialogs, wording and languages follow shared §7 UI. Do not restate them here; add only what differs.
+- Product-specific top-bar controls: UI language, dictionary and base currency selectors, placed before the file password field.
+- Extra UI languages beyond English and Japanese (German, Spanish, French, Italian) stay as shipped; do not add more.
 
-## 4. AI Directives
+## 4. Code
 
-- **Deep Contextual Analysis:** Do not act like a naive static analysis tool. Analyze actual data flow in the browser memory before suggesting "optimizations."
-- **Respect Design Philosophy:** Maintain the "Serverless & Subscription-free" nature of the tool. If a feature requires heavy processing, rely on the user's local machine or "BYO-AI (Bring Your Own AI)" via prompt generation, rather than suggesting API integrations that require API keys in the code.
-- **Language:** Output chat explanations in **Japanese**. Code & comments strictly in **English**.
-- **Code Comments:** Delete unnecessary or redundant comments. Unify all comments in standard, concise Git-style English (imperative mood, e.g., "Fix data validation" instead of "This fixes data validation").
+- Stricter than shared §5: write comments as concise Git-style English in the imperative mood ("Fix data validation", not "This fixes data validation").
+
+## 5. Known gaps against shared §7
+
+- Colors use `blue-600` (63 places) instead of the `primary` token; `input.css` has no `primary` token set. Because `primary` equals `blue-600`, migrate by replacing the classes without changing the look.
+- The unsaved marker is a badge near the total, not a file-name badge in the top bar; add the shared badge.
+- Fonts: `--font-sans` differs from the shared stack.
+- Dialogs use the product's own modal code, not `appAlert()`, `appConfirm()` and `appPrompt()`.
+- `showToast` takes an options object instead of `type`; toast position and animation follow the shared rule already.
+- Tailwind is pinned at 4.3.1 through npm; `build.sh` runs `npx tailwindcss` instead of the pinned binary.
+- `i18n.js` differs from grind-people's copy (default language `en` vs `ja`); make the two identical.
+- Japanese outside `lang/`: the default Japanese account dictionaries and CSV header/date patterns in `main.js` (data, not UI strings), and the `lang="ja"` SEO text in the `<noscript>` block of `index.html`.

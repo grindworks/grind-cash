@@ -161,8 +161,10 @@ export default {
   'error.split_invalid': 'Valor de cantidad no válido.',
   'error.split_usd_only': 'Esta plantilla de comisión usa una tarifa fija en USD y no se puede aplicar a registros en {0}.',
   'toast.privacy_toggled': 'Modo de privacidad alternado',
-  'toast.app_updated_reload':
-    'Aplicación actualizada. <a href="#" id="toast-reload-btn" class="ml-2 font-bold underline cursor-pointer">Recargar para aplicar</a>',
+  'update.ready': 'Hay una nueva versión disponible.',
+  'update.apply': 'Recargar',
+  'update.later': 'Más tarde',
+  'update.save_first': 'Guarda primero tu archivo y luego recarga.',
   'toast.sqlite_loaded': 'Motor SQLite iniciado correctamente',
   'toast.sqlite_load_fail': 'Error: No se pudo iniciar el motor SQLite',
   'placeholder.account': 'Cuenta',

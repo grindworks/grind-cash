@@ -157,8 +157,10 @@ export default {
   'error.split_invalid': '無効な金額です。',
   'error.split_usd_only': 'この手数料プリセットは米ドルの固定手数料を使うため、{0} の明細には適用できません。',
   'toast.privacy_toggled': 'プライバシーモードを切り替えました',
-  'toast.app_updated_reload':
-    'アプリが最新版に更新されました。<a href="#" id="toast-reload-btn" class="ml-2 font-bold underline cursor-pointer">リロードして適用</a>',
+  'update.ready': '新しいバージョンがあります。',
+  'update.apply': '再読み込み',
+  'update.later': 'あとで',
+  'update.save_first': '先にファイルを保存してから、再読み込みしてください。',
   'toast.sqlite_loaded': 'SQLite起動完了',
   'toast.sqlite_load_fail': 'エラー: SQLiteの起動に失敗しました',
   'placeholder.account': '科目',

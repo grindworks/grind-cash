@@ -163,8 +163,10 @@ export default {
   'error.split_invalid': 'Valeur de montant non valide.',
   'error.split_usd_only': 'Ce modèle de frais utilise un montant fixe en USD et ne peut pas être appliqué aux écritures en {0}.',
   'toast.privacy_toggled': 'Mode confidentialité activé/désactivé',
-  'toast.app_updated_reload':
-    'Application mise à jour. <a href="#" id="toast-reload-btn" class="ml-2 font-bold underline cursor-pointer">Recharger pour appliquer</a>',
+  'update.ready': 'Une nouvelle version est disponible.',
+  'update.apply': 'Recharger',
+  'update.later': 'Plus tard',
+  'update.save_first': 'Enregistrez d\'abord votre fichier, puis rechargez.',
   'toast.sqlite_loaded': 'Moteur SQLite démarré avec succès',
   'toast.sqlite_load_fail': 'Erreur : Échec du démarrage du moteur SQLite',
   'placeholder.account': 'Compte',

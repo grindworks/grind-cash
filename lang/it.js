@@ -161,8 +161,10 @@ export default {
   'error.split_invalid': "Valore dell'importo non valido.",
   'error.split_usd_only': 'Questo modello di commissione usa una tariffa fissa in USD e non può essere applicato a voci in {0}.',
   'toast.privacy_toggled': 'Modalità privacy attivata/disattivata',
-  'toast.app_updated_reload':
-    'App aggiornata. <a href="#" id="toast-reload-btn" class="ml-2 font-bold underline cursor-pointer">Ricarica per applicare</a>',
+  'update.ready': 'È disponibile una nuova versione.',
+  'update.apply': 'Ricarica',
+  'update.later': 'Più tardi',
+  'update.save_first': 'Salva prima il file, poi ricarica.',
   'toast.sqlite_loaded': 'Motore SQLite avviato correttamente',
   'toast.sqlite_load_fail': 'Errore: Avvio del motore SQLite non riuscito',
   'placeholder.account': 'Conto',

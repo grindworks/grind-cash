@@ -358,29 +358,42 @@ async function clearDraft() {
   }
 }
 
+async function persistDraftSnapshot() {
+  if (!isDirty || !db) return true;
+  try {
+    if (currentMasterKeyHash !== '' && !currentMasterKey) {
+      console.warn('Draft save aborted: Password removed from an encrypted session.');
+      return false;
+    }
+
+    let data = db.export();
+    if (currentMasterKey) {
+      data = await encryptData(data, currentMasterKey);
+    }
+    if (!isDirty) return true;
+    await saveDraft(data);
+    return true;
+  } catch (e) {
+    console.error('Draft save failed', e);
+    return false;
+  }
+}
+
+async function flushDraftNow() {
+  if (draftTimer) {
+    clearTimeout(draftTimer);
+    draftTimer = null;
+  }
+  return persistDraftSnapshot();
+}
+
 function setDirty(state) {
   if (state && db) {
     // Debounce: save the draft 15 seconds after the last change
     if (draftTimer) clearTimeout(draftTimer);
-    draftTimer = setTimeout(async () => {
+    draftTimer = setTimeout(() => {
       draftTimer = null;
-      try {
-        if (!isDirty) return;
-        if (!db) return;
-        if (currentMasterKeyHash !== '' && !currentMasterKey) {
-          console.warn('Draft save aborted: Password removed from an encrypted session.');
-          return;
-        }
-
-        let data = db.export();
-        if (currentMasterKey) {
-          data = await encryptData(data, currentMasterKey);
-        }
-        if (!isDirty) return;
-        await saveDraft(data);
-      } catch (e) {
-        console.error('Draft save failed', e);
-      }
+      void persistDraftSnapshot();
     }, 15000);
   } else if (!state) {
     if (draftTimer) {
@@ -5477,10 +5490,6 @@ function getCurrencyOptionsHtml(selected) {
 // Global Event Delegation (CSP Hardening)
 // ==========================================
 document.addEventListener('click', (e) => {
-  if (e.target && e.target.id === 'toast-reload-btn') {
-    e.preventDefault();
-    location.reload();
-  }
   const target = e.target.closest('[data-action]');
 
   if (target) {
@@ -5774,29 +5783,69 @@ document.addEventListener('paste', (e) => {
 // ==========================================
 // Service Worker Registration
 // ==========================================
+function showUpdateToast() {
+  if (document.getElementById('update-toast')) return;
+  const toast = document.createElement('div');
+  toast.id = 'update-toast';
+  toast.setAttribute('role', 'status');
+  toast.className =
+    'fixed inset-x-0 bottom-6 z-[9999] mx-auto flex w-max max-w-[90vw] items-center gap-3 rounded-full border border-slate-800/50 bg-slate-900/95 py-2 pr-2 pl-5 text-xs font-medium text-white shadow-xl backdrop-blur-sm';
+  const label = document.createElement('span');
+  label.textContent = `✨ ${window._t('update.ready')}`;
+  const apply = document.createElement('button');
+  apply.type = 'button';
+  apply.className = 'rounded-full bg-white px-3 py-1.5 font-semibold text-slate-900 hover:bg-slate-200';
+  apply.textContent = window._t('update.apply');
+  apply.addEventListener('click', applyAppUpdate);
+  const later = document.createElement('button');
+  later.type = 'button';
+  later.className = 'rounded-full px-2 py-1 text-slate-400 hover:text-white';
+  later.setAttribute('aria-label', window._t('update.later'));
+  later.textContent = '×';
+  later.addEventListener('click', () => toast.remove());
+  toast.append(label, apply, later);
+  document.body.appendChild(toast);
+}
+
+// Activate the waiting worker only after the draft is safe, then reload once it controls the page
+async function applyAppUpdate() {
+  if (isDirty && !(await flushDraftNow())) {
+    showToast(window._t('update.save_first'), '⚠️', { duration: 6000 });
+    return;
+  }
+  const registration = await navigator.serviceWorker.getRegistration();
+  if (registration && registration.waiting) {
+    navigator.serviceWorker.addEventListener(
+      'controllerchange',
+      () => {
+        isDirty = false;
+        location.reload();
+      },
+      { once: true },
+    );
+    registration.waiting.postMessage('SKIP_WAITING');
+  } else {
+    isDirty = false;
+    location.reload();
+  }
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').then(
-      (registration) => console.log('ServiceWorker registered'),
-      (err) => console.log('ServiceWorker registration failed: ', err),
-    );
-
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        refreshing = true;
-        if (typeof showToast === 'function') {
-          const message =
-            window._t && window._t('toast.app_updated_reload') !== 'toast.app_updated_reload'
-              ? window._t('toast.app_updated_reload')
-              : 'App updated. <a href="#" id="toast-reload-btn" class="ml-2 font-bold underline cursor-pointer">Reload to apply</a>';
-          showToast(message, '<span class="text-blue-400">✨</span>', {
-            duration: Infinity,
-            rawHtml: true,
+      (registration) => {
+        // An update may have finished installing during an earlier visit
+        if (registration.waiting && navigator.serviceWorker.controller) showUpdateToast();
+        registration.addEventListener('updatefound', () => {
+          const worker = registration.installing;
+          worker.addEventListener('statechange', () => {
+            // Installed while an old worker controls the page: this is an update
+            if (worker.state === 'installed' && navigator.serviceWorker.controller) showUpdateToast();
           });
-        }
-      }
-    });
+        });
+      },
+      (err) => console.error('ServiceWorker registration failed:', err),
+    );
   });
 }
 

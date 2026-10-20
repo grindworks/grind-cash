@@ -163,8 +163,10 @@ export default {
   'error.split_invalid': 'Ungültiger Betragswert.',
   'error.split_usd_only': 'Diese Gebührenvorlage verwendet eine feste USD-Gebühr und kann nicht auf {0}-Einträge angewendet werden.',
   'toast.privacy_toggled': 'Privatsphärenmodus umgeschaltet',
-  'toast.app_updated_reload':
-    'App aktualisiert. <a href="#" id="toast-reload-btn" class="ml-2 font-bold underline cursor-pointer">Neu laden, um anzuwenden</a>',
+  'update.ready': 'Eine neue Version ist verfügbar.',
+  'update.apply': 'Neu laden',
+  'update.later': 'Später',
+  'update.save_first': 'Speichere zuerst deine Datei und lade dann neu.',
   'toast.sqlite_loaded': 'SQLite-Engine erfolgreich gestartet',
   'toast.sqlite_load_fail': 'Fehler: SQLite-Engine konnte nicht gestartet werden',
   'placeholder.account': 'Konto',

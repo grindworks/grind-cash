@@ -157,8 +157,10 @@ export default {
   'error.split_invalid': 'Invalid amount value.',
   'error.split_usd_only': 'This fee preset uses a fixed USD fee. It cannot be applied to {0} records.',
   'toast.privacy_toggled': 'Privacy Mode Toggled',
-  'toast.app_updated_reload':
-    'App updated. <a href="#" id="toast-reload-btn" class="ml-2 font-bold underline cursor-pointer">Reload to apply</a>',
+  'update.ready': 'A new version is available.',
+  'update.apply': 'Reload',
+  'update.later': 'Later',
+  'update.save_first': 'Save your file first, then reload.',
   'toast.sqlite_loaded': 'SQLite engine started successfully',
   'toast.sqlite_load_fail': 'Error: Failed to start SQLite engine',
   'placeholder.account': 'Account',
