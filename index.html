@@ -762,7 +762,7 @@
         </div>
 
         <!-- App UI -->
-        <div id="app-ui" class="hidden" aria-label="Accounting Application Area">
+        <div id="app-ui" class="hidden" aria-label="Accounting Application Area" data-i18n-aria-label="aria.app_area">
           <!-- Grand Total (Sticky) -->
           <div
             class="sticky z-40 -mx-6 mb-10 flex flex-col gap-3 border-b border-slate-200/50 bg-white/70 px-6 pt-6 pb-4 backdrop-blur-2xl transition-colors"
@@ -925,7 +925,7 @@
                 >+</span
               >
             </div>
-            <label for="new-block-memo" class="sr-only">Create New Block</label>
+            <label for="new-block-memo" class="sr-only" data-i18n="welcome.new_block">Create New Block</label>
             <input
               type="text"
               id="new-block-memo"
@@ -966,7 +966,7 @@
           <section
             id="blocks-container"
             class="space-y-6"
-            aria-label="Transaction Blocks"
+            aria-label="Transaction Blocks" data-i18n-aria-label="aria.blocks"
           ></section>
         </div>
 
@@ -1224,7 +1224,7 @@
 
           <!-- Format Selector -->
           <div>
-            <label for="export-format" class="sr-only">Output Format</label>
+            <label for="export-format" class="sr-only" data-i18n="export.format">Output Format</label>
             <select
               id="export-format"
               class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary"

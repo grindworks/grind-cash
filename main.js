@@ -990,8 +990,7 @@ async function initSQLite() {
       err.message.includes('WebAssembly') ||
       err.message === 'WASM_INVALID'
     ) {
-      errMsg =
-        'WebAssembly is disabled or blocked by your browser/OS.<br>If you are using iOS Lockdown Mode, please exclude this site.';
+      errMsg = window._t('error.wasm_blocked');
     }
 
     showToast(window._t('toast.sqlite_load_fail'), '<span>⚠️</span>');
@@ -4198,23 +4197,23 @@ function renderCSVPreview() {
     let label = '';
     let badgeClass = 'bg-slate-200 text-slate-500';
     if (i === mapDate) {
-      label = 'Date';
+      label = window._t('label.date');
       badgeClass = 'bg-primary-100 text-blue-700';
     } else if (i === mapAccount) {
-      label = 'Account';
+      label = window._t('csv.preview_account');
       badgeClass = 'bg-purple-100 text-purple-700';
     } else if (i === mapMemo) {
-      label = 'Memo';
+      label = window._t('csv.preview_memo');
       badgeClass = 'bg-green-100 text-green-700';
     } else if (i === mapAmount) {
-      label = 'Amount';
+      label = window._t('csv.preview_amount');
       badgeClass = 'bg-orange-100 text-orange-700';
     }
 
     if (label)
-      thHtml += `<th class="px-3 py-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass}">${label}</span></th>`;
+      thHtml += `<th class="px-3 py-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass}">${escapeHtml(label)}</span></th>`;
     else
-      thHtml += `<th class="px-3 py-2"><span class="px-2 py-0.5 rounded text-[10px] font-medium ${badgeClass}">Col ${i + 1}</span></th>`;
+      thHtml += `<th class="px-3 py-2"><span class="px-2 py-0.5 rounded text-[10px] font-medium ${badgeClass}">${escapeHtml(window._t('csv.preview_col', i + 1))}</span></th>`;
   }
   previewHead.innerHTML = `<tr>${thHtml}</tr>`;
 
