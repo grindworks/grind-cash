@@ -278,6 +278,9 @@ export default {
   'prompt.ios_install': 'Para instalar: toca Compartir y elige «Añadir a pantalla de inicio».',
   'confirm.mark_downloaded_saved':
     'Descarga iniciada. Si el archivo se guardó correctamente, ¿borrar el indicador de cambios sin guardar?',
+
+  'toast.item_needs_memo': 'Introduzca una descripción para añadir el registro.',
+  'toast.item_needs_amount': 'Introduzca un importe para añadir el registro.',
   'toast.draft_paused':
     'La copia de seguridad automática está en pausa hasta que establezca una contraseña o guarde el archivo.',
   'confirm.discard_draft':

@@ -269,6 +269,9 @@ export default {
   'prompt.ios_install': 'To install: tap the Share button, then choose "Add to Home Screen".',
   'confirm.mark_downloaded_saved':
     'Download started. If the file saved successfully, clear the unsaved-changes indicator?',
+
+  'toast.item_needs_memo': 'Enter a memo to add the entry.',
+  'toast.item_needs_amount': 'Enter an amount to add the entry.',
   'toast.draft_paused': 'Auto-backup is paused until you set a password or save the file.',
   'confirm.discard_draft':
     'Delete the backup permanently?\n(Cancel keeps it until you make new changes)',

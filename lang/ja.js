@@ -273,6 +273,9 @@ export default {
     'インストール手順: 共有ボタンをタップし、「ホーム画面に追加」を選択してください。',
   'confirm.mark_downloaded_saved':
     'ダウンロードを開始しました。保存に成功した場合は、未保存の表示を消しますか？',
+
+  'toast.item_needs_memo': '追加するには摘要を入力してください。',
+  'toast.item_needs_amount': '追加するには金額を入力してください。',
   'toast.draft_paused': 'パスワードを設定するか保存するまで、自動バックアップを停止しています。',
   'confirm.discard_draft':
     'バックアップを完全に削除しますか？\n（キャンセルすると、次に変更するまで保持します）',

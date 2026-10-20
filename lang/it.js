@@ -278,6 +278,9 @@ export default {
   'prompt.ios_install': 'Per installare: tocca Condividi, poi scegli «Aggiungi a Home».',
   'confirm.mark_downloaded_saved':
     'Download avviato. Se il file è stato salvato correttamente, cancellare l’indicatore di modifiche non salvate?',
+
+  'toast.item_needs_memo': 'Inserisci una descrizione per aggiungere la voce.',
+  'toast.item_needs_amount': 'Inserisci un importo per aggiungere la voce.',
   'toast.draft_paused':
     'Il backup automatico è in pausa finché non imposti una password o salvi il file.',
   'confirm.discard_draft':

@@ -1185,7 +1185,18 @@ async function addItem(
   currency = 'USD',
 ) {
   const safeMemo = (memo || '').trim();
-  if (!safeMemo || amount === '' || amount === null) return;
+  const missingAmount = amount === null || String(amount).trim() === '';
+  if (!safeMemo || missingAmount) {
+    const form = parentId ? document.getElementById(`block-form-${parentId}`) : null;
+    const field = form?.querySelector(!safeMemo ? '.item-memo' : '.item-amount');
+    if (field) {
+      field.focus();
+      field.classList.add('!ring-2', '!ring-red-300');
+      setTimeout(() => field.classList.remove('!ring-2', '!ring-red-300'), 1500);
+    }
+    showToast(window._t(!safeMemo ? 'toast.item_needs_memo' : 'toast.item_needs_amount'), '⚠️');
+    return;
+  }
   const inserted = await insertRecord(
     parentId,
     safeMemo,

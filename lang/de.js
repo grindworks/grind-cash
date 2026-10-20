@@ -278,6 +278,9 @@ export default {
   'prompt.ios_install': 'Installation: Tippen Sie auf Teilen und wählen Sie „Zum Home-Bildschirm“.',
   'confirm.mark_downloaded_saved':
     'Download gestartet. Wenn die Datei erfolgreich gespeichert wurde, ungespeicherte Änderungen-Anzeige löschen?',
+
+  'toast.item_needs_memo': 'Geben Sie eine Notiz ein, um den Eintrag hinzuzufügen.',
+  'toast.item_needs_amount': 'Geben Sie einen Betrag ein, um den Eintrag hinzuzufügen.',
   'toast.draft_paused':
     'Die automatische Sicherung ist pausiert, bis Sie ein Passwort festlegen oder die Datei speichern.',
   'confirm.discard_draft':

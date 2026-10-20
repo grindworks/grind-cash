@@ -281,6 +281,9 @@ export default {
     'Pour installer : appuyez sur Partager, puis choisissez « Sur l’écran d’accueil ».',
   'confirm.mark_downloaded_saved':
     'Téléchargement démarré. Si le fichier a bien été enregistré, effacer l’indicateur de modifications non enregistrées ?',
+
+  'toast.item_needs_memo': 'Saisissez un libellé pour ajouter l’écriture.',
+  'toast.item_needs_amount': 'Saisissez un montant pour ajouter l’écriture.',
   'toast.draft_paused':
     'La sauvegarde automatique est suspendue jusqu’à ce que vous définissiez un mot de passe ou enregistriez le fichier.',
   'confirm.discard_draft':
