@@ -67,7 +67,9 @@ function formatCurrencyAmount(amount, currency) {
   const minDigits = currency === 'JPY' ? 0 : 2;
   const maxDigits = currency === 'JPY' ? 0 : 2;
   const formatter = getCachedFormatter(undefined, minDigits, maxDigits);
-  return `${amount < 0 ? '-' : ''}${sym}${formatter.format(Math.abs(amount))}`;
+  // Take the sign after rounding so tiny negatives do not print as -$0.00
+  const rounded = roundAmount(Number(amount) || 0, currency);
+  return `${rounded < 0 ? '-' : ''}${sym}${formatter.format(Math.abs(rounded))}`;
 }
 
 function getCurrencySymbol(currency) {
@@ -410,37 +412,50 @@ function createStrictDate(y, m, d) {
   return dateObj;
 }
 
+function prefersEuropeanNumberFormat() {
+  const lang = (
+    (window.I18n && typeof window.I18n.getLang === 'function' && window.I18n.getLang()) ||
+    document.documentElement.lang ||
+    'en'
+  )
+    .toString()
+    .slice(0, 2)
+    .toLowerCase();
+  return ['de', 'fr', 'es', 'it', 'nl', 'pt'].includes(lang);
+}
+
 // Convert EU/US/JP digit grouping to a plain decimal (1.234,56 / 1,234.56 -> 1234.56)
 function normalizeNumberSeparators(expr) {
+  const european = prefersEuropeanNumberFormat();
   return expr.replace(/(?:\d+[.,])+\d+/g, (match) => {
+    // Leading zero means a decimal fraction (0,500 -> 0.500), never thousands
+    if (/^0[.,]/.test(match)) {
+      return match.replace(/,/g, '.');
+    }
+
     const lastComma = match.lastIndexOf(',');
     const lastDot = match.lastIndexOf('.');
 
     if (lastComma > lastDot && lastDot !== -1) {
-      // Convert EU format (1.000,50) to 1000.50
       return match.replace(/\./g, '').replace(/,/g, '.');
-    } else if (lastDot > lastComma && lastComma !== -1) {
-      // Convert US/JP format (1,000.50) to 1000.50
+    }
+    if (lastDot > lastComma && lastComma !== -1) {
       return match.replace(/,/g, '');
-    } else if (lastComma !== -1) {
-      // If only comma is found
-      if (/,\d{3}$/.test(match)) {
-        // Treat as thousands separator if trailing 3 digits (1,000 -> 1000)
-        return match.replace(/,/g, '');
-      } else {
-        // Otherwise treat as EU decimal (1,50 -> 1.50)
+    }
+    if (lastComma !== -1) {
+      const commaCount = (match.match(/,/g) || []).length;
+      if (european) {
+        if (commaCount > 1) return match.replace(/,/g, '');
         return match.replace(/,/g, '.');
       }
-    } else {
-      // If only dot is found
-      const dotMatches = match.match(/\./g);
-      if (dotMatches && dotMatches.length > 1) {
-        // Treat as EU thousands separator if multiple dots (1.000.000 -> 1000000)
-        return match.replace(/\./g, '');
-      }
-      // Single dot is treated as standard decimal
-      return match;
+      if (/,\d{3}$/.test(match)) return match.replace(/,/g, '');
+      return match.replace(/,/g, '.');
     }
+
+    const dotCount = (match.match(/\./g) || []).length;
+    if (dotCount > 1) return match.replace(/\./g, '');
+    if (european && /\.\d{3}$/.test(match)) return match.replace(/\./g, '');
+    return match;
   });
 }
 
@@ -902,19 +917,29 @@ function roundAmount(amount, currency = 'USD') {
   const absAmount = Math.abs(amount);
   let rounded;
 
+  // Shift the decimal point in the string form: 10.075 * 100 is 1007.4999... in binary
+  const shift = (value, places) => {
+    const [mantissa, exp = '0'] = String(value).split('e');
+    return Number(`${mantissa}e${Number(exp) + places}`);
+  };
   if (isZeroDecimal) {
     rounded = sign * Math.round(absAmount);
   } else {
-    rounded = sign * (Math.round((absAmount + Number.EPSILON) * 100) / 100);
+    rounded = sign * shift(Math.round(shift(absAmount, 2)), -2);
   }
 
-  // Final polish:
   // Normalize negative zero (-0) to 0
-  return rounded === -0 ? 0 : rounded;
+  return Object.is(rounded, -0) ? 0 : rounded;
 }
 
-function evaluateMath(expr) {
-  if (expr === null || expr === '') return null;
+// Currency markers allowed around amounts (e.g. "150 EUR * 1.08", "¥1,000", "1,000円")
+const AMOUNT_CURRENCY_TOKENS = /USD|EUR|GBP|JPY|CAD|AUD|CA\$|AU\$|A\$|[$€£¥円]/gi;
+
+// Return the result rounded to 2 decimals, or the full-precision result with { raw: true }
+// so callers can round once with roundAmount for the record currency
+function evaluateMath(expr, { raw = false } = {}) {
+  if (expr === null || expr === undefined || expr === '') return null;
+  if (typeof expr === 'number') return Number.isFinite(expr) ? expr : null;
   if (String(expr).length > 50) return null;
 
   try {
@@ -927,19 +952,7 @@ function evaluateMath(expr) {
       .replace(/÷/g, '/')
       .replace(/[ー−△]/g, '-');
 
-    normalized = normalized.replace(/(?:\d+[.,])+\d+/g, (match) => {
-      const lastComma = match.lastIndexOf(',');
-      const lastDot = match.lastIndexOf('.');
-      if (lastComma > lastDot && lastDot !== -1) return match.replace(/\./g, '').replace(/,/g, '.');
-      else if (lastDot > lastComma && lastComma !== -1) return match.replace(/,/g, '');
-      else if (lastComma !== -1) {
-        if (/,\d{3}$/.test(match)) return match.replace(/,/g, '');
-        else return match.replace(/,/g, '.');
-      } else {
-        if (match.match(/\./g) && match.match(/\./g).length > 1) return match.replace(/\./g, '');
-        return match;
-      }
-    });
+    normalized = normalizeNumberSeparators(normalized);
 
     if (/^\([\d,.]+\)$/.test(normalized)) {
       normalized = '-' + normalized.replace(/[()]/g, '');
@@ -948,7 +961,10 @@ function evaluateMath(expr) {
       normalized = '-' + normalized.slice(0, -1);
     }
 
-    const sanitized = normalized.replace(/[^0-9+\-*/().]/g, '');
+    // Reject anything that is not a number, operator or currency marker (1e3, 12abc, 1O0)
+    const withoutCurrency = normalized.replace(AMOUNT_CURRENCY_TOKENS, '').replace(/\s+/g, '');
+    if (/[^0-9+\-*/().]/.test(withoutCurrency)) return null;
+    const sanitized = withoutCurrency;
     if (!sanitized) return null;
     if (sanitized.includes('**')) return null;
 
@@ -1032,11 +1048,10 @@ function evaluateMath(expr) {
     const result = evalStack[0];
 
     if (!isFinite(result) || isNaN(result)) return null;
-    // Round accurately even for negative numbers
-    const rounded =
-      Math.sign(result) * (Math.round((Math.abs(result) + Number.EPSILON) * 100) / 100);
-    if (rounded > 10000000000000 || rounded < -10000000000000) return null;
-    return rounded;
+    if (result > 10000000000000 || result < -10000000000000) return null;
+    // Drop binary noise (0.1 + 0.2) without rounding to a currency yet
+    if (raw) return Number(result.toPrecision(15));
+    return roundAmount(result, 'USD');
   } catch (e) {
     return null;
   }
@@ -1111,12 +1126,9 @@ async function insertRecord(
   taxRate = '',
   currency = 'USD',
 ) {
-  let safeAmountExpr = amountExpr;
-  if (typeof amountExpr === 'string') {
-    safeAmountExpr = normalizeNumberSeparators(amountExpr);
-  }
-
-  const parsedAmount = evaluateMath(safeAmountExpr);
+  // evaluateMath normalizes digit grouping itself; normalizing twice turns 1,500 (de) into 1500.
+  // Numbers pass through untouched so "1.234" is never re-read with locale rules
+  const parsedAmount = evaluateMath(amountExpr, { raw: true });
   if (amountExpr !== null && amountExpr !== '' && parsedAmount === null) {
     await showAlert(window._t('alert.invalid_amount_or_formula'));
     return false;
@@ -1348,10 +1360,7 @@ async function updateRecord(id, field, newValue, element) {
     if (val === '') {
       val = null;
     } else {
-      let mathExpr = val;
-
-      mathExpr = normalizeNumberSeparators(mathExpr);
-      val = evaluateMath(mathExpr);
+      val = evaluateMath(val, { raw: true });
       if (val === null) {
         if (element) {
           element.classList.add('!bg-red-100', '!text-red-600');
@@ -5672,8 +5681,6 @@ document.addEventListener('focusin', (e) => {
     } finally {
       if (amountStmt) amountStmt.free();
     }
-  } else if (e.target.classList.contains('item-amount') && e.target.value) {
-    e.target.value = normalizeNumberSeparators(e.target.value);
   }
   const target = e.target.closest('[data-action-focus]');
   if (target) {
