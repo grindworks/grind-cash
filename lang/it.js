@@ -150,8 +150,6 @@ export default {
   'alert.invalid_fiscal_month': 'Inserisci un numero compreso tra 1 e 12.',
   'confirm.sort_by_date':
     'Ordinare gli elementi in questo blocco dal "più vecchio al più recente"?\n(Gli elementi con la stessa data mantengono l\'ordine originale)',
-  'confirm.restore_draft':
-    'Sono stati trovati dati di backup non salvati della sessione precedente.\n\nRipristinarli?\n(Selezionando Annulla il backup verrà eliminato)',
   'toast.prompt_copied': 'Prompt IA copiato',
   'toast.sorted': 'Ordinato per data',
   'toast.settlement_created': 'Record di liquidazione creato.',
@@ -280,6 +278,10 @@ export default {
   'alert.cannot_delete_locked':
     'Impossibile eliminare. Questo blocco contiene record già esportati e bloccati.',
   'prompt.ios_install': 'Per installare: tocca Condividi, poi scegli «Aggiungi a Home».',
+  'toast.draft_paused':
+    'Il backup automatico è in pausa finché non imposti una password o salvi il file.',
+  'confirm.discard_draft':
+    'Eliminare definitivamente il backup?\n(Annulla lo conserva fino alla prossima modifica)',
   'settlement.bank_account': 'Banca',
   'settlement.reconciliation': 'Riconciliazione',
   'alert.detected_date_format': '(Formato rilevato: {0})',
@@ -295,4 +297,6 @@ export default {
   'title.delete_block': 'Elimina l’intero blocco',
   'title.save_template': 'Salva questo blocco come modello',
   'cmd.calc_hint': '(Invio per applicare / copiare)',
+  'confirm.restore_draft':
+    'Sono stati trovati dati di backup non salvati della sessione precedente.\n\nRipristinarli?',
 };

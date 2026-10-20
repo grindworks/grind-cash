@@ -12,6 +12,7 @@ let collapsedBlocks = new Set();
 let draftTimer = null;
 let statusTimeoutId = null;
 let isSaving = false;
+let draftPausedNotified = false;
 let currentMasterKey = null; // CryptoKey (extractable: false)
 let currentMasterKeyHash = '';
 
@@ -260,8 +261,11 @@ async function deriveKey(keyMaterial, salt, iterations = 600000) {
 const DB_NAME = 'GrindCashDB';
 const STORE_NAME = 'drafts';
 
+// Open the draft store once and reuse the connection
+let idbPromise = null;
 function openDB() {
-  return new Promise((resolve, reject) => {
+  if (idbPromise) return idbPromise;
+  idbPromise = new Promise((resolve, reject) => {
     try {
       const request = indexedDB.open(DB_NAME, 1);
       request.onupgradeneeded = (e) => {
@@ -270,13 +274,28 @@ function openDB() {
           idb.createObjectStore(STORE_NAME);
         }
       };
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => {
+        const idb = request.result;
+        // Reopen on the next call if the browser closes the connection
+        idb.onclose = () => {
+          idbPromise = null;
+        };
+        idb.onversionchange = () => {
+          idb.close();
+          idbPromise = null;
+        };
+        resolve(idb);
+      };
       request.onerror = () => reject(request.error);
     } catch (e) {
       console.warn('IndexedDB is blocked. Auto-save is disabled.');
       reject(e);
     }
   });
+  idbPromise.catch(() => {
+    idbPromise = null;
+  });
+  return idbPromise;
 }
 
 async function saveDraft(uints) {
@@ -313,6 +332,11 @@ async function clearDraft() {
     const idb = await openDB();
     const tx = idb.transaction(STORE_NAME, 'readwrite');
     tx.objectStore(STORE_NAME).delete('latest_draft');
+    await new Promise((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
   } catch (e) {
     console.error('Draft clear failed', e);
   }
@@ -321,10 +345,15 @@ async function clearDraft() {
 async function persistDraftSnapshot() {
   if (!isDirty || !db) return true;
   try {
+    // Never write a plaintext draft of an encrypted file; tell the user backups are paused
     if (currentMasterKeyHash !== '' && !currentMasterKey) {
-      console.warn('Draft save aborted: Password removed from an encrypted session.');
+      if (!draftPausedNotified) {
+        draftPausedNotified = true;
+        showToast(window._t('toast.draft_paused'), '⚠️', { duration: 6000 });
+      }
       return false;
     }
+    draftPausedNotified = false;
 
     let data = db.export();
     if (currentMasterKey) {
@@ -735,8 +764,7 @@ async function initSQLite() {
         let Uints = draft;
         const magic = Uints.slice(0, 8);
         const magicStr = new TextDecoder().decode(magic);
-        const isEncrypted =
-          magicStr === 'GRINDENC' || magicStr === 'GRINDEN2' || magicStr !== 'SQLite f';
+        const isEncrypted = magicStr === 'GRINDENC' || magicStr === 'GRINDEN2';
 
         if (isEncrypted) {
           let password = null;
@@ -773,7 +801,7 @@ async function initSQLite() {
           }
         }
         initialData = Uints;
-      } else {
+      } else if (await requestConfirm(window._t('confirm.discard_draft'))) {
         await clearDraft();
       }
     }
@@ -781,6 +809,8 @@ async function initSQLite() {
     if (initialData) {
       try {
         db = new SQL.Database(initialData);
+        // Fail on non-SQLite bytes here; the constructor accepts anything
+        db.exec('SELECT count(*) FROM sqlite_master');
         migrateDatabase();
         setDirty(true);
         showToast(window._t('toast.restored'), '<span class="text-orange-400">↺</span>');
@@ -788,6 +818,11 @@ async function initSQLite() {
         console.error('Draft restore failed', dbError);
         await showAlert(window._t('alert.restore_fail'));
         await clearDraft();
+        if (db) {
+          try {
+            db.close();
+          } catch (_) {}
+        }
         db = new SQL.Database();
         db.run(`
           CREATE TABLE IF NOT EXISTS records (
@@ -3271,8 +3306,7 @@ async function processFileHandle(handle, isDummy = false) {
 
     const magic = Uints.slice(0, 8);
     const magicStr = new TextDecoder().decode(magic);
-    const isEncrypted =
-      magicStr === 'GRINDENC' || magicStr === 'GRINDEN2' || magicStr !== 'SQLite f';
+    const isEncrypted = magicStr === 'GRINDENC' || magicStr === 'GRINDEN2';
 
     // Keep the current session's key until the new file opens successfully
     let fileKey = null;
@@ -3317,11 +3351,15 @@ async function processFileHandle(handle, isDummy = false) {
     let newDb;
     try {
       newDb = new SQL.Database(Uints);
+      newDb.exec('SELECT count(*) FROM sqlite_master');
     } catch (e) {
+      if (newDb) {
+        try {
+          newDb.close();
+        } catch (_) {}
+      }
       throw new Error('Invalid SQLite database file.');
     }
-
-    applyMasterKey(fileKey, fileKeyHash);
 
     if (db) {
       try {
@@ -3330,10 +3368,12 @@ async function processFileHandle(handle, isDummy = false) {
       db = null;
     }
     db = newDb;
+    applyMasterKey(fileKey, fileKeyHash);
     migrateDatabase();
     loadSettingsFromDb();
 
     lastUsedDates = {};
+    lastUsedAccounts = {};
     collapsedBlocks.clear();
     window.currentActiveMonths = null;
     currentDisplayedTotal = 0;

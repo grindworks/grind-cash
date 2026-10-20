@@ -147,8 +147,6 @@ export default {
   'alert.invalid_fiscal_month': 'Please enter a number between 1 and 12.',
   'confirm.sort_by_date':
     'Sort items in this block by "oldest first"?\n(Items with the same date maintain their original order)',
-  'confirm.restore_draft':
-    'Unsaved backup data from your last session was found.\n\nRestore it?\n(Selecting Cancel will discard the backup)',
   'toast.prompt_copied': 'Copied AI prompt',
   'toast.sorted': 'Sorted by date',
   'toast.settlement_created': 'Settlement record created.',
@@ -271,6 +269,9 @@ export default {
   'alert.cannot_delete_locked':
     'Cannot delete. This block contains records that have already been exported and locked.',
   'prompt.ios_install': 'To install: tap the Share button, then choose "Add to Home Screen".',
+  'toast.draft_paused': 'Auto-backup is paused until you set a password or save the file.',
+  'confirm.discard_draft':
+    'Delete the backup permanently?\n(Cancel keeps it until you make new changes)',
   'settlement.bank_account': 'Bank',
   'settlement.reconciliation': 'Reconciliation',
   'alert.detected_date_format': '(Detected format: {0})',
@@ -286,4 +287,5 @@ export default {
   'title.delete_block': 'Delete entire block',
   'title.save_template': 'Save this block as a template',
   'cmd.calc_hint': '(Enter to apply / copy)',
+  'confirm.restore_draft': 'Unsaved backup data from your last session was found.\n\nRestore it?',
 };

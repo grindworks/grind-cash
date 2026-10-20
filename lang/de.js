@@ -152,8 +152,6 @@ export default {
   'alert.invalid_fiscal_month': 'Bitte geben Sie eine Zahl zwischen 1 und 12 ein.',
   'confirm.sort_by_date':
     'Einträge in diesem Block nach "älteste zuerst" sortieren?\n(Einträge mit demselben Datum behalten ihre ursprüngliche Reihenfolge bei)',
-  'confirm.restore_draft':
-    'Ungespeicherte Backup-Daten aus Ihrer letzten Sitzung wurden gefunden.\n\nWiederherstellen?\n(Abbrechen verwirft das Backup)',
   'toast.prompt_copied': 'AI-Prompt kopiert',
   'toast.sorted': 'Nach Datum sortiert',
   'toast.settlement_created': 'Abrechnungsdatensatz erstellt.',
@@ -280,6 +278,10 @@ export default {
   'alert.cannot_delete_locked':
     'Löschen nicht möglich. Dieser Block enthält bereits exportierte und gesperrte Datensätze.',
   'prompt.ios_install': 'Installation: Tippen Sie auf Teilen und wählen Sie „Zum Home-Bildschirm“.',
+  'toast.draft_paused':
+    'Die automatische Sicherung ist pausiert, bis Sie ein Passwort festlegen oder die Datei speichern.',
+  'confirm.discard_draft':
+    'Sicherung endgültig löschen?\n(Abbrechen behält sie bis zur nächsten Änderung)',
   'settlement.bank_account': 'Bank',
   'settlement.reconciliation': 'Abgleich',
   'alert.detected_date_format': '(Erkanntes Format: {0})',
@@ -295,4 +297,6 @@ export default {
   'title.delete_block': 'Ganzen Block löschen',
   'title.save_template': 'Diesen Block als Vorlage speichern',
   'cmd.calc_hint': '(Enter zum Übernehmen / Kopieren)',
+  'confirm.restore_draft':
+    'Ungespeicherte Backup-Daten aus Ihrer letzten Sitzung wurden gefunden.\n\nWiederherstellen?',
 };

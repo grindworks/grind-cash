@@ -150,8 +150,6 @@ export default {
   'alert.invalid_fiscal_month': 'Por favor, introduzca un número entre 1 y 12.',
   'confirm.sort_by_date':
     '¿Ordenar los elementos de este bloque por "más antiguos primero"?\n(Los elementos con la misma fecha mantienen su orden original)',
-  'confirm.restore_draft':
-    'Se encontraron datos de copia de seguridad no guardados de su última sesión.\n\n¿Restaurarlos?\n(Seleccionar Cancelar descartará la copia de seguridad)',
   'toast.prompt_copied': 'Prompt de IA copiado',
   'toast.sorted': 'Ordenado por fecha',
   'toast.settlement_created': 'Registro de liquidación creado.',
@@ -280,6 +278,10 @@ export default {
   'alert.cannot_delete_locked':
     'No se puede eliminar. Este bloque contiene registros ya exportados y bloqueados.',
   'prompt.ios_install': 'Para instalar: toca Compartir y elige «Añadir a pantalla de inicio».',
+  'toast.draft_paused':
+    'La copia de seguridad automática está en pausa hasta que establezca una contraseña o guarde el archivo.',
+  'confirm.discard_draft':
+    '¿Eliminar la copia de seguridad definitivamente?\n(Cancelar la conserva hasta su próximo cambio)',
   'settlement.bank_account': 'Banco',
   'settlement.reconciliation': 'Conciliación',
   'alert.detected_date_format': '(Formato detectado: {0})',
@@ -295,4 +297,6 @@ export default {
   'title.delete_block': 'Eliminar el bloque completo',
   'title.save_template': 'Guardar este bloque como plantilla',
   'cmd.calc_hint': '(Intro para aplicar / copiar)',
+  'confirm.restore_draft':
+    'Se encontraron datos de copia de seguridad no guardados de su última sesión.\n\n¿Restaurarlos?',
 };

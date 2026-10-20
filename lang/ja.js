@@ -148,8 +148,6 @@ export default {
   'alert.invalid_fiscal_month': '1から12の数値を入力してください。',
   'confirm.sort_by_date':
     'このブロック内の明細を「日付が古い順」に並べ替えますか？\n（同じ日付の場合は入力した順になります）',
-  'confirm.restore_draft':
-    '⚠️ 前回終了時の未保存データ（バックアップ）が見つかりました。\n\n復元しますか？\n（「キャンセル」を押すとバックアップは破棄されます）',
   'toast.prompt_copied': 'AI用プロンプトをコピーしました',
   'toast.sorted': '日付順にソートしました',
   'toast.settlement_created': '決済レコードを作成しました',
@@ -274,6 +272,9 @@ export default {
     '削除できません。エクスポート済みでロックされた明細が含まれています。',
   'prompt.ios_install':
     'インストール手順: 共有ボタンをタップし、「ホーム画面に追加」を選択してください。',
+  'toast.draft_paused': 'パスワードを設定するか保存するまで、自動バックアップを停止しています。',
+  'confirm.discard_draft':
+    'バックアップを完全に削除しますか？\n（キャンセルすると、次に変更するまで保持します）',
   'settlement.bank_account': '普通預金',
   'settlement.reconciliation': '消込',
   'alert.detected_date_format': '（判定した形式: {0}）',
@@ -289,4 +290,6 @@ export default {
   'title.delete_block': 'ブロックごと削除',
   'title.save_template': 'このブロックをテンプレートとして保存',
   'cmd.calc_hint': '（Enterで入力 / コピー）',
+  'confirm.restore_draft':
+    '⚠️ 前回終了時の未保存データ（バックアップ）が見つかりました。\n\n復元しますか？',
 };

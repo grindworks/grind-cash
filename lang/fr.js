@@ -152,8 +152,6 @@ export default {
   'alert.invalid_fiscal_month': 'Veuillez saisir un nombre entre 1 et 12.',
   'confirm.sort_by_date':
     'Trier les éléments de ce bloc du "plus ancien au plus récent" ?\n(Les éléments avec la même date conservent leur ordre d\'origine)',
-  'confirm.restore_draft':
-    'Des données de sauvegarde non enregistrées de votre dernière session ont été trouvées.\n\nLes restaurer ?\n(Sélectionner Annuler supprimera la sauvegarde)',
   'toast.prompt_copied': 'Prompt IA copié',
   'toast.sorted': 'Trié par date',
   'toast.settlement_created': 'Enregistrement de règlement créé.',
@@ -283,6 +281,10 @@ export default {
     'Suppression impossible. Ce bloc contient des enregistrements déjà exportés et verrouillés.',
   'prompt.ios_install':
     'Pour installer : appuyez sur Partager, puis choisissez « Sur l’écran d’accueil ».',
+  'toast.draft_paused':
+    'La sauvegarde automatique est suspendue jusqu’à ce que vous définissiez un mot de passe ou enregistriez le fichier.',
+  'confirm.discard_draft':
+    'Supprimer définitivement la sauvegarde ?\n(Annuler la conserve jusqu’à votre prochaine modification)',
   'settlement.bank_account': 'Banque',
   'settlement.reconciliation': 'Rapprochement',
   'alert.detected_date_format': '(Format détecté : {0})',
@@ -298,4 +300,6 @@ export default {
   'title.delete_block': 'Supprimer tout le bloc',
   'title.save_template': 'Enregistrer ce bloc comme modèle',
   'cmd.calc_hint': '(Entrée pour appliquer / copier)',
+  'confirm.restore_draft':
+    'Des données de sauvegarde non enregistrées de votre dernière session ont été trouvées.\n\nLes restaurer ?',
 };
