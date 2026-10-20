@@ -64,12 +64,10 @@ window.I18n = (() => {
     /** Update all DOM elements with data-i18n attributes. */
     updateDOM: function () {
       document.querySelectorAll('[data-i18n]').forEach((el) => {
-        // Use textContent for <option>; innerHTML does not apply there
-        if (el.tagName === 'OPTION') {
-          el.textContent = this.get(el.getAttribute('data-i18n'));
-        } else {
-          el.innerHTML = this.get(el.getAttribute('data-i18n'));
-        }
+        el.textContent = this.get(el.getAttribute('data-i18n'));
+      });
+      document.querySelectorAll('[data-i18n-html]').forEach((el) => {
+        el.innerHTML = this.get(el.getAttribute('data-i18n-html'));
       });
       document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
         el.setAttribute('placeholder', this.get(el.getAttribute('data-i18n-placeholder')));

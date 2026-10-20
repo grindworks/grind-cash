@@ -31,5 +31,4 @@
 
 - `showToast` takes an options object instead of `type`; toast position and animation follow the shared rule already.
 - Tailwind is pinned at 4.3.1 through npm; `build.sh` runs `npx tailwindcss` instead of the pinned binary.
-- `i18n.js` differs from grind-people's copy (default language `en` vs `ja`); make the two identical.
 - Japanese outside `lang/`: the default Japanese account dictionaries and CSV header/date patterns in `main.js` (data, not UI strings), and the `lang="ja"` SEO text in the `<noscript>` block of `index.html`.
