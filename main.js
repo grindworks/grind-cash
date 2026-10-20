@@ -5157,14 +5157,22 @@ function setAllCustomAccountsHidden(isHidden) {
   renderCustomDictEditor();
 }
 function formatMemoHtml(memo) {
-  const escaped = escapeHtml(memo);
-  if (!escaped.includes('#') && !escaped.includes('＃')) return escaped;
-  // Fix: Use Unicode property escapes (\p{L}: letters, \p{N}: numbers)
-  // to match worldwide languages flawlessly without noise (requires 'u' flag)
-  return escaped.replace(
-    /(#|＃)([\p{L}\p{N}_\-ー]+)/gu,
-    '<span class="text-blue-500 bg-blue-50 px-1 rounded cursor-pointer hover:bg-blue-100 transition-colors" data-action="filterByTag" data-tag="$2">$1$2</span>',
-  );
+  const text = (memo ?? '').toString();
+  if (!text.includes('#') && !text.includes('＃')) return escapeHtml(text);
+
+  const re = /(#|＃)([\p{L}\p{N}_\-ー]+)/gu;
+  let result = '';
+  let lastIndex = 0;
+  let match;
+  while ((match = re.exec(text)) !== null) {
+    result += escapeHtml(text.slice(lastIndex, match.index));
+    const hash = escapeHtml(match[1]);
+    const tag = escapeHtml(match[2]);
+    result += `<span class="text-blue-500 bg-blue-50 px-1 rounded cursor-pointer hover:bg-blue-100 transition-colors" data-action="filterByTag" data-tag="${tag}">${hash}${tag}</span>`;
+    lastIndex = match.index + match[0].length;
+  }
+  result += escapeHtml(text.slice(lastIndex));
+  return result;
 }
 
 // Use the same aggregation as the index so both show the same numbers
