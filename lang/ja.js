@@ -8,6 +8,8 @@ export default {
   'dict.select_title': '入力時にサジェストする科目辞書を選択',
   'dict.custom': '辞書: カスタム',
   'dict.none': '科目サジェスト: オフ',
+  'dict.general': '辞書: 一般ビジネス',
+  'dict.marketer': '辞書: デジタルマーケター',
 
   'placeholder.password': '暗号化パスワード...',
   'title.password_help': 'パスワードを入力すると保存時にファイルを強力に暗号化します',
@@ -66,7 +68,7 @@ export default {
   'drop.desc1': 'そのまま上書き保存も可能です',
   'drop.desc2': '※画面をクリックするとこの表示を消せます',
   'cmd.search': 'コマンド検索',
-  'cmd.placeholder': 'Type a command or search...',
+  'cmd.placeholder': 'コマンドを入力または検索...',
 
   // main.js inside strings:
   'toast.restored': '未保存データを復元しました',
@@ -219,7 +221,7 @@ export default {
   'toast.downloaded': '"{0}" をダウンロードしました',
 
   // welcome / empty state:
-  'welcome.title': 'Welcome to GrindCash',
+  'welcome.title': 'GrindCash へようこそ',
   'welcome.desc':
     '.cash ファイルをドラッグ＆ドロップするか、<br>上の入力欄から最初のブロックを作成しましょう。',
   'welcome.new_block': '新しいブロックを作る',
@@ -257,4 +259,31 @@ export default {
   'error.csv_invalid_date': '{0}行目で無効な日付フォーマットを検出しました: "{1}"',
   'error.csv_abort': 'データ破損を防ぐため、インポートを中止しました。',
   'error.split_locked': 'エクスポート済みの明細に対して、手数料の分割記帳は適用できません。',
+
+  'alert.title': '通知',
+  'confirm.title': '確認',
+  'tax.none': 'なし',
+  'tax.standard_10': '10%',
+  'tax.reduced_8': '8%',
+  'tax.standard_20': '20%',
+  'tax.vat_5': '5%',
+  'tax.exempt': '非課税',
+  'currency.base': '基準通貨',
+  'currency.base_title': '新規ブロックの基準通貨',
+  'alert.cannot_delete_locked':
+    '削除できません。エクスポート済みでロックされた明細が含まれています。',
+  'prompt.ios_install':
+    'インストール手順: 共有ボタンをタップし、「ホーム画面に追加」を選択してください。',
+  'alert.detected_date_format': '（判定した形式: {0}）',
+  'period.calendar_year_label': '{0}年（1月〜12月）',
+  'period.fiscal_year_label': '{0}年度（{1}月始まり）',
+  'period.custom': 'カスタム期間',
+  'badge.prior': '前年度',
+  'badge.prior_title': '前年度のデータ',
+  'badge.older': '過年度',
+  'badge.older_title': '2年度以上前のデータ',
+  'title.sort_by_date': '日付の古い順に並べ替え',
+  'title.delete_block': 'ブロックごと削除',
+  'title.save_template': 'このブロックをテンプレートとして保存',
+  'cmd.calc_hint': '（Enterで入力 / コピー）',
 };

@@ -9,6 +9,7 @@ export default {
   'dict.custom': 'Dict: Personalizado',
   'dict.none': 'Sugerencias: Apagado',
   'dict.general': 'Dict: Negocios generales',
+  'dict.marketer': 'Dict: Digital Marketer',
 
   'placeholder.password': 'Contraseña de cifrado...',
   'title.password_help': 'Introducir una contraseña cifrará fuertemente el archivo al guardar.',
@@ -265,4 +266,30 @@ export default {
   'error.csv_abort': 'Importación abortada para evitar la corrupción de datos.',
   'error.split_locked':
     'No se puede aplicar la división de comisiones en un registro que ya ha sido exportado y bloqueado.',
+
+  'alert.title': 'Alerta',
+  'confirm.title': 'Confirmación',
+  'tax.none': 'Ninguno',
+  'tax.standard_10': '10%',
+  'tax.reduced_8': '8%',
+  'tax.standard_20': '20%',
+  'tax.vat_5': '5%',
+  'tax.exempt': 'Exento',
+  'currency.base': 'Moneda base',
+  'currency.base_title': 'Moneda base para bloques nuevos',
+  'alert.cannot_delete_locked':
+    'No se puede eliminar. Este bloque contiene registros ya exportados y bloqueados.',
+  'prompt.ios_install': 'Para instalar: toca Compartir y elige «Añadir a pantalla de inicio».',
+  'alert.detected_date_format': '(Formato detectado: {0})',
+  'period.calendar_year_label': '{0} (ene.–dic.)',
+  'period.fiscal_year_label': 'Ejercicio {0} (desde el mes {1})',
+  'period.custom': 'Periodo personalizado',
+  'badge.prior': 'Anterior',
+  'badge.prior_title': 'Datos del ejercicio anterior',
+  'badge.older': 'Antiguo',
+  'badge.older_title': 'Datos de hace dos o más ejercicios',
+  'title.sort_by_date': 'Ordenar por fecha (más antigua primero)',
+  'title.delete_block': 'Eliminar el bloque completo',
+  'title.save_template': 'Guardar este bloque como plantilla',
+  'cmd.calc_hint': '(Intro para aplicar / copiar)',
 };

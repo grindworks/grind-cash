@@ -20,8 +20,6 @@ const isMac =
     ? navigator.userAgentData.platform.toUpperCase().indexOf('MAC') >= 0
     : navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 
-const _t = (key, ...params) => (window.I18n ? window.I18n.get(key, params) : key);
-
 function renderDataWithTransition() {
   if (document.startViewTransition) {
     try {
@@ -94,61 +92,21 @@ function updateCurrencySymbolAndFormatter() {
   }
 }
 
-const dictOptions = {
-  en: [
-    { value: 'custom', label: 'Dict: Custom' },
-    { value: 'none', label: 'Suggest: Off' },
-    { value: 'marketer', label: 'Dict: Digital Marketer' },
-    { value: 'general', label: 'Dict: General Business' },
-  ],
-  ja: [
-    { value: 'custom', label: '辞書: カスタム' },
-    { value: 'none', label: '科目サジェスト: オフ' },
-    { value: 'marketer', label: '辞書: デジタルマーケター' },
-    { value: 'general', label: '辞書: 一般ビジネス' },
-  ],
-  de: [
-    { value: 'custom', label: 'Wb: Benutzerdefiniert' },
-    { value: 'none', label: 'Vorschlag: Aus' },
-    { value: 'marketer', label: 'Wb: Digital Marketer' },
-    { value: 'general', label: 'Wb: Allgemeine Geschäfte' },
-  ],
-  fr: [
-    { value: 'custom', label: 'Dict : Personnalisé' },
-    { value: 'none', label: 'Suggestions : Désactivées' },
-    { value: 'marketer', label: 'Dict : Digital Marketer' },
-    { value: 'general', label: 'Dict : Affaires générales' },
-  ],
-  es: [
-    { value: 'custom', label: 'Dict: Personalizado' },
-    { value: 'none', label: 'Sugerencias: Apagado' },
-    { value: 'marketer', label: 'Dict: Digital Marketer' },
-    { value: 'general', label: 'Dict: Negocios generales' },
-  ],
-  it: [
-    { value: 'custom', label: 'Diz: Personalizzato' },
-    { value: 'none', label: 'Suggerimenti: Disattivati' },
-    { value: 'marketer', label: 'Diz: Digital Marketer' },
-    { value: 'general', label: 'Diz: Affari generali' },
-  ],
-};
+const DICT_OPTION_KEYS = ['custom', 'none', 'marketer', 'general'];
 
 function rebuildDictSelectOptions() {
   const select = document.getElementById('dict-select');
   if (!select) return;
-  const lang = (window.I18n && window.I18n.getLang()) || 'en';
-  const options = dictOptions[lang] || dictOptions.en;
-
   const savedValue = select.value;
   select.innerHTML = '';
-  options.forEach((opt) => {
+  DICT_OPTION_KEYS.forEach((value) => {
     const o = document.createElement('option');
-    o.value = opt.value;
-    o.textContent = opt.label;
+    o.value = value;
+    o.textContent = window._t(`dict.${value}`);
     select.appendChild(o);
   });
 
-  if (options.some((opt) => opt.value === savedValue)) {
+  if (DICT_OPTION_KEYS.includes(savedValue)) {
     select.value = savedValue;
   } else {
     select.value = 'custom';
@@ -177,7 +135,7 @@ async function changeAppLanguage(lang) {
   const select = document.getElementById('dict-select');
   if (select) {
     const savedDict = getDbSetting('accountDict', 'custom');
-    if (dictOptions[lang] && dictOptions[lang].some((opt) => opt.value === savedDict)) {
+    if (DICT_OPTION_KEYS.includes(savedDict)) {
       select.value = savedDict;
     } else {
       select.value = 'custom';
@@ -717,7 +675,7 @@ function migrateDatabase() {
 async function initSQLite() {
   try {
     if (typeof initSqlJs === 'undefined') {
-      throw new Error(window._t('error.fatal_desc') || 'sql.js is not loaded.');
+      throw new Error(window._t('error.fatal_desc'));
     }
 
     // Suppress 'wasm streaming compile failed' warning
@@ -762,14 +720,14 @@ async function initSQLite() {
                 success = true;
               } else {
                 // Show prompt if failed or missing key
-                let promptMsg = window._t('prompt.pw_backup') || 'File is encrypted. Please enter the password to decrypt:';
+                let promptMsg = window._t('prompt.pw_backup');
                 if (attemptCount > 0) {
                   promptMsg = window._t('alert.pw_incorrect') + '\n\n' + promptMsg;
                 }
                 password = await requestPasswordPrompt(promptMsg);
                 if (password === null) {
-                  await showAlert(window._t('alert.cancel_startup_desc') || 'Decryption canceled. Database startup aborted.');
-                  document.body.innerHTML = `<h1 style='text-align:center; margin-top:20vh;'>${window._t('error.security_stop_desc') || 'System halted. Reload page to restart.'}</h1>`;
+                  await showAlert(window._t('alert.cancel_startup_desc'));
+                  document.body.innerHTML = `<h1 style='text-align:center; margin-top:20vh;'>${window._t('error.security_stop_desc')}</h1>`;
                   return;
                 }
                 const candidate = await importPasswordKey(password);
@@ -1331,10 +1289,7 @@ window.createCollectionRecord = function (id) {
       setDirty(true);
       renderData();
 
-      showToast(
-        window._t('toast.settlement_created') || 'Settlement record created.',
-        '<span class="text-emerald-400">✅</span>',
-      );
+      showToast(window._t('toast.settlement_created'), '<span class="text-emerald-400">✅</span>');
 
       requestAnimationFrame(() => {
         const newDateEl = document.querySelector(
@@ -1365,10 +1320,7 @@ async function updateRecord(id, field, newValue, element) {
     );
     checkExportStmt.bind([id, id]);
     if (checkExportStmt.step() && checkExportStmt.get()[0] > 0) {
-      await showAlert(
-        window._t('error.record_locked') ||
-          'Cannot modify. This block contains exported and locked records.',
-      );
+      await showAlert(window._t('error.record_locked'));
       renderData();
       return;
     }
@@ -1469,7 +1421,8 @@ async function updateRecord(id, field, newValue, element) {
       ) {
         await showAlert(
           window._t('alert.invalid_date') +
-            ` (Detected format: ${isMonthFirst ? 'MM/DD' : 'DD/MM'})`,
+            ' ' +
+            window._t('alert.detected_date_format', isMonthFirst ? 'MM/DD' : 'DD/MM'),
         );
         renderData();
         return;
@@ -1893,7 +1846,7 @@ function checkFutureDate(input) {
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   if (input.value > todayStr) {
     if (!input.classList.contains('text-red-600')) {
-      showToast(window._t('toast.future_date') || 'A future date has been entered.', '⚠️');
+      showToast(window._t('toast.future_date'), '⚠️');
     }
     input.classList.add('text-red-600', 'font-bold', 'bg-red-50', 'rounded');
     input.classList.remove('text-slate-600', 'bg-transparent');
@@ -2009,7 +1962,9 @@ function getFormattedPeriodText(activeMonths) {
     }
     if (isContinuous) {
       const [y, m] = sorted[0].split('-').map(Number);
-      return m === 1 ? `${y} (Jan-Dec)` : `FY ${y} (from M${m})`;
+      return m === 1
+        ? window._t('period.calendar_year_label', y)
+        : window._t('period.fiscal_year_label', y, m);
     }
   }
   return `${formatMonth(sorted[0])} ~ ${formatMonth(sorted[sorted.length - 1])}`;
@@ -2037,16 +1992,7 @@ function updatePeriodDropdown() {
   }
 
   const lang = (window.I18n && window.I18n.getLang()) || 'en';
-  const isJapanese = lang === 'ja';
-  const monthNames = isJapanese
-    ? ['', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
-    : [''];
-  if (!isJapanese) {
-    for (let m = 1; m <= 12; m++) {
-      const date = new Date(2000, m - 1, 15);
-      monthNames.push(date.toLocaleDateString(lang, { month: 'short' }));
-    }
-  }
+  const monthFormatter = new Intl.DateTimeFormat(lang, { year: 'numeric', month: 'short' });
 
   let html = `<option value="all">${window._t('filter.all')}</option>`;
   if (years.size > 0) {
@@ -2057,11 +2003,8 @@ function updatePeriodDropdown() {
     html += `</optgroup><optgroup label="${window._t('label.filter_by_month')}">`;
     months.forEach((ym) => {
       const [y, m] = ym.split('-');
-      const monthNum = parseInt(m, 10);
-      const monthLabel = isJapanese
-        ? `${escapeHtml(y)}年${monthNames[monthNum]}`
-        : `${monthNames[monthNum]} ${escapeHtml(y)}`;
-      html += `<option value="${escapeHtml(ym)}">${monthLabel}</option>`;
+      const monthLabel = monthFormatter.format(new Date(parseInt(y, 10), parseInt(m, 10) - 1, 15));
+      html += `<option value="${escapeHtml(ym)}">${escapeHtml(monthLabel)}</option>`;
     });
     html += `</optgroup>`;
   }
@@ -2071,7 +2014,8 @@ function updatePeriodDropdown() {
   if (window.currentActiveMonths && window.currentActiveMonths.length > 0) {
     const existingCustom = select.querySelector('option[value="custom"]');
     if (existingCustom) existingCustom.remove();
-    const customPeriodText = getFormattedPeriodText(window.currentActiveMonths) || 'Custom Period';
+    const customPeriodText =
+      getFormattedPeriodText(window.currentActiveMonths) || window._t('period.custom');
     const customOpt = new Option(customPeriodText, 'custom', true, true);
     customOpt.disabled = true;
     select.insertBefore(customOpt, select.firstChild);
@@ -2392,9 +2336,9 @@ function renderData(focusBlockId = null) {
                   <svg aria-hidden="true" class="w-8 h-8 text-slate-500"><use href="#icon-search"></use></svg>
                 </div>
               </div>
-              <h2 class="text-2xl sm:text-3xl font-extrabold text-blue-950 mb-3 tracking-tight">${_t('filter_empty.title')}</h2>
-              <p class="text-sm text-slate-500 max-w-sm mx-auto leading-relaxed mb-8">${_t('filter_empty.desc')}</p>
-              <button data-action="setPeriodFilter" data-period="all" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-6 py-2.5 rounded-full text-sm font-bold shadow-sm transition-all active:scale-95">${_t('filter_empty.show_all')}</button>
+              <h2 class="text-2xl sm:text-3xl font-extrabold text-blue-950 mb-3 tracking-tight">${window._t('filter_empty.title')}</h2>
+              <p class="text-sm text-slate-500 max-w-sm mx-auto leading-relaxed mb-8">${window._t('filter_empty.desc')}</p>
+              <button data-action="setPeriodFilter" data-period="all" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-6 py-2.5 rounded-full text-sm font-bold shadow-sm transition-all active:scale-95">${window._t('filter_empty.show_all')}</button>
            </div>
         </div>
       `;
@@ -2402,16 +2346,16 @@ function renderData(focusBlockId = null) {
       const isFsaSupported = 'showSaveFilePicker' in window;
       const browserNoticeHtml = isFsaSupported
         ? `<div class="mt-8 flex flex-col items-center gap-1 text-[11px] text-slate-400">
-             <p class="font-bold flex items-center gap-1"><svg aria-hidden="true" class="w-3.5 h-3.5"><use href="#icon-sparkles"></use></svg> ${_t('welcome.browser_ok')}</p>
-             <p class="opacity-80">${_t('welcome.fsa_enabled')}</p>
+             <p class="font-bold flex items-center gap-1"><svg aria-hidden="true" class="w-3.5 h-3.5"><use href="#icon-sparkles"></use></svg> ${window._t('welcome.browser_ok')}</p>
+             <p class="opacity-80">${window._t('welcome.fsa_enabled')}</p>
            </div>`
         : `<div class="mt-8 flex flex-col items-center gap-1.5 text-[11px] text-orange-600 bg-orange-50 px-4 py-2.5 rounded-xl border border-orange-200">
-             <p class="font-bold flex items-center gap-1 text-xs">${_t('welcome.browser_warn')}</p>
-             <p class="opacity-90 max-w-[260px] leading-relaxed">${_t('welcome.fsa_disabled')}</p>
+             <p class="font-bold flex items-center gap-1 text-xs">${window._t('welcome.browser_warn')}</p>
+             <p class="opacity-90 max-w-[260px] leading-relaxed">${window._t('welcome.fsa_disabled')}</p>
            </div>`;
       emptyHtml = `
         <div id="empty-state" class="flex flex-col items-center justify-center py-20 px-6 text-center border border-slate-200 rounded-3xl bg-slate-50 relative overflow-hidden transition-colors">
-           <div class="absolute inset-0 pointer-events-none" style="background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px); background-size: 24px 24px; opacity: 0.6;"></div>
+           <div class="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,var(--color-slate-200)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-slate-200)_1px,transparent_1px)] bg-[size:24px_24px] opacity-60"></div>
            <div class="absolute inset-0 pointer-events-none bg-gradient-to-b from-slate-50 via-transparent to-slate-50 opacity-80"></div>
            <div class="relative z-10 flex flex-col items-center">
               <div class="relative flex items-center justify-center mb-6">
@@ -2419,14 +2363,14 @@ function renderData(focusBlockId = null) {
                   <svg aria-hidden="true" class="w-8 h-8 text-blue-600"><use href="#icon-cash"></use></svg>
                 </div>
               </div>
-              <h2 class="text-2xl sm:text-3xl font-extrabold text-blue-950 mb-3 tracking-tight">${_t('welcome.title')}</h2>
-              <p class="text-sm text-slate-500 max-w-md mx-auto leading-relaxed mb-8">${_t('welcome.desc')}</p>
+              <h2 class="text-2xl sm:text-3xl font-extrabold text-blue-950 mb-3 tracking-tight">${window._t('welcome.title')}</h2>
+              <p class="text-sm text-slate-500 max-w-md mx-auto leading-relaxed mb-8">${window._t('welcome.desc')}</p>
               <div class="flex flex-col sm:flex-row items-center gap-3">
                 <button data-action="focusNewBlockMemo" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-sm font-bold shadow-sm transition-all active:scale-95 flex items-center gap-2">
-                  <span class="text-lg font-light leading-none mb-0.5">+</span> ${_t('welcome.new_block')}
+                  <span class="text-lg font-light leading-none mb-0.5">+</span> ${window._t('welcome.new_block')}
                 </button>
                 <button data-action="triggerCsvInputClick" class="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 px-6 py-3 rounded-full text-sm font-bold shadow-sm transition-all active:scale-95 flex items-center gap-2">
-                  <svg aria-hidden="true" class="w-4 h-4"><use href="#icon-import"></use></svg> ${_t('welcome.import_csv')}
+                  <svg aria-hidden="true" class="w-4 h-4"><use href="#icon-import"></use></svg> ${window._t('welcome.import_csv')}
                 </button>
               </div>
               ${browserNoticeHtml}
@@ -2613,16 +2557,16 @@ function updateOrCreateBlockElement(block, existingEl = null) {
     if (validDiffs.length > 0) {
       const minDiff = validDiffs.reduce((min, curr) => Math.min(min, curr), Infinity);
       if (minDiff === 1) {
-        blockBadgeHtml = `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 ml-2 shrink-0 select-none" title="Prior year data">Prior</span>`;
+        blockBadgeHtml = `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 ml-2 shrink-0 select-none" title="${escapeHtml(window._t('badge.prior_title'))}">${escapeHtml(window._t('badge.prior'))}</span>`;
       } else if (minDiff >= 2) {
-        blockBadgeHtml = `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 ml-2 shrink-0 select-none" title="Older years data">Older</span>`;
+        blockBadgeHtml = `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 ml-2 shrink-0 select-none" title="${escapeHtml(window._t('badge.older_title'))}">${escapeHtml(window._t('badge.older'))}</span>`;
       }
     }
   }
 
   // Dynamically insert text using Tailwind content-[attr(data-xxx)]
   const blockTitleEmptyClass = 'empty:before:content-[attr(data-empty)]';
-  const untitledText = window._t('label.unnamed') || 'Untitled';
+  const untitledText = window._t('label.unnamed');
 
   const headerHtml = `
     <div data-action="toggleBlock" data-id="${block.id}" class="bg-slate-50/50 px-8 py-5 border-b border-slate-100 flex justify-between items-center transition-colors cursor-pointer select-none group/header hover:bg-slate-100">
@@ -2642,10 +2586,10 @@ function updateOrCreateBlockElement(block, existingEl = null) {
           <span id="block-total-${block.id}" class="flex flex-wrap justify-end gap-x-3">${formatCurrency(Math.abs(blockTotal), block.currency || 'USD')}</span>
         </div>
         <div class="flex items-center pl-4 border-l border-slate-200/50 ml-4 shrink-0 h-8">
-          <button data-stop-propagation="true" data-action="sortBlockByDate" data-id="${block.id}" aria-label="Sort by date" class="w-8 h-8 flex items-center justify-center rounded text-slate-300 hover:bg-slate-100 hover:text-slate-600 md:opacity-0 md:group-hover/block:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all cursor-pointer mr-1 ${block.children.length < 2 ? 'opacity-30 pointer-events-none md:!opacity-30' : ''}" title="Sort by oldest date first">
+          <button data-stop-propagation="true" data-action="sortBlockByDate" data-id="${block.id}" aria-label="${escapeHtml(window._t('title.sort_by_date'))}" class="w-8 h-8 flex items-center justify-center rounded text-slate-300 hover:bg-slate-100 hover:text-slate-600 md:opacity-0 md:group-hover/block:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all cursor-pointer mr-1 ${block.children.length < 2 ? 'opacity-30 pointer-events-none md:!opacity-30' : ''}" title="${escapeHtml(window._t('title.sort_by_date'))}">
             <svg aria-hidden="true" class="w-5 h-5"><use href="#icon-sort"></use></svg>
           </button>
-          <button data-stop-propagation="true" data-action="deleteRecord" data-id="${block.id}" aria-label="Delete block" class="w-8 h-8 flex items-center justify-center rounded text-slate-300 hover:bg-red-50 hover:text-red-500 md:opacity-0 md:group-hover/block:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-200 transition-all cursor-pointer" title="Delete entire block">
+          <button data-stop-propagation="true" data-action="deleteRecord" data-id="${block.id}" aria-label="${escapeHtml(window._t('title.delete_block'))}" class="w-8 h-8 flex items-center justify-center rounded text-slate-300 hover:bg-red-50 hover:text-red-500 md:opacity-0 md:group-hover/block:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-200 transition-all cursor-pointer" title="${escapeHtml(window._t('title.delete_block'))}">
             <svg aria-hidden="true" class="w-5 h-5"><use href="#icon-trash"></use></svg>
           </button>
         </div>
@@ -2775,7 +2719,7 @@ function updateOrCreateBlockElement(block, existingEl = null) {
 
   if (isNew) {
     blockEl.innerHTML = `
-      <button data-stop-propagation="true" data-action="saveTemplate" data-id="${block.id}" class="absolute -top-3 -left-3 opacity-100 md:opacity-0 group-hover/block:opacity-100 bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-600/50 hover:shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:scale-110 p-2 rounded-xl transition-all duration-300 cursor-pointer flex items-center justify-center z-10" title="Save this block as a template">
+      <button data-stop-propagation="true" data-action="saveTemplate" data-id="${block.id}" class="absolute -top-3 -left-3 opacity-100 md:opacity-0 group-hover/block:opacity-100 bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-600/50 hover:shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:scale-110 p-2 rounded-xl transition-all duration-300 cursor-pointer flex items-center justify-center z-10" title="${escapeHtml(window._t('title.save_template'))}" aria-label="${escapeHtml(window._t('title.save_template'))}">
         <svg aria-hidden="true" class="w-5 h-5"><use href="#icon-squares-plus"></use></svg>
       </button>
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all hover:border-slate-300 hover:shadow-md">
@@ -2813,12 +2757,12 @@ function updateOrCreateBlockElement(block, existingEl = null) {
 
 async function saveTemplate(blockId) {
   if (!db) return;
-  let blockMemo = window._t('label.unnamed') || 'Unnamed';
+  let blockMemo = window._t('label.unnamed');
   let blockStmt;
   try {
     blockStmt = db.prepare('SELECT memo FROM records WHERE id = ?');
     blockStmt.bind([blockId]);
-    if (blockStmt.step()) blockMemo = blockStmt.get()[0] || 'Unnamed';
+    if (blockStmt.step()) blockMemo = blockStmt.get()[0] || blockMemo;
     else return;
   } finally {
     if (blockStmt) blockStmt.free();
@@ -2979,10 +2923,7 @@ async function sortBlockByDate(blockId) {
     lockStmt = db.prepare('SELECT COUNT(*) FROM records WHERE parent_id = ? AND is_exported = 1');
     lockStmt.bind([blockId]);
     if (lockStmt.step() && lockStmt.get()[0] > 0) {
-      await showAlert(
-        window._t('error.record_locked') ||
-          'Cannot modify. This block contains exported and locked records.',
-      );
+      await showAlert(window._t('error.record_locked'));
       return;
     }
   } catch (e) {
@@ -3020,7 +2961,7 @@ async function sortBlockByDate(blockId) {
     });
     setDirty(true);
     renderData();
-    showToast(window._t('toast.sorted') || 'Sorted by date', '🧹');
+    showToast(window._t('toast.sorted'), '🧹');
   } catch (e) {
     console.error('Sort failed', e);
   } finally {
@@ -3058,10 +2999,7 @@ function duplicateRecord(id) {
 
       setDirty(true);
       renderData();
-      showToast(
-        window._t('toast.copied') || 'Record duplicated',
-        '<span class="text-green-400">📋</span>',
-      );
+      showToast(window._t('toast.copied'), '<span class="text-green-400">📋</span>');
 
       requestAnimationFrame(() => {
         const newDateEl = document.querySelector(
@@ -3368,7 +3306,7 @@ async function processFileHandle(handle, isDummy = false) {
     fileHandle = handle;
     setDirty(false);
 
-    showToast(`Loaded "${file.name}"`, '<span class="text-blue-400">📂</span>');
+    showToast(window._t('toast.file_loaded', file.name), '<span class="text-blue-400">📂</span>');
 
     const countRes = db.exec('SELECT COUNT(*) FROM records');
     const recordCount = countRes.length > 0 ? countRes[0].values[0][0] : 0;
@@ -3418,21 +3356,13 @@ function showExportModal() {
   const infoEl = document.getElementById('export-period-info');
   if (infoEl) {
     const filterEl = document.getElementById('period-filter');
-    let periodText = 'All Periods';
+    let periodText = null;
     if (window.currentActiveMonths && window.currentActiveMonths.length > 0) {
-      const sorted = [...window.currentActiveMonths].sort();
-      const formatMonth = (ym) => {
-        const [y, m] = ym.split('-');
-        return `${y}/${parseInt(m, 10)}`;
-      };
-      periodText = `${formatMonth(sorted[0])} ~ ${formatMonth(sorted[sorted.length - 1])}`;
+      periodText = getFormattedPeriodText(window.currentActiveMonths);
     } else if (filterEl && filterEl.value !== 'all') {
       periodText = filterEl.options[filterEl.selectedIndex].text;
     }
-    const isAll =
-      periodText === 'All Periods' ||
-      periodText === window._t('period.all') ||
-      periodText === 'すべての期間';
+    const isAll = !periodText;
     infoEl.innerHTML = isAll
       ? window._t('label.period_info_all')
       : window._t('label.period_info_filtered', escapeHtml(periodText));
@@ -3529,7 +3459,7 @@ async function exportCSV(format = 'generic') {
   values.forEach((row) => {
     const id = row[0];
     const dateStr = row[1] ? row[1].split(' ')[0] : '';
-    const account = row[2] || 'Uncategorized';
+    const account = row[2] || window._t('label.unclassified');
     const amount = parseFloat(row[3] || 0);
     const memo = row[4] ? row[4].toString() : '';
     const parentMemo = row[5] ? row[5].toString() : '';
@@ -4171,7 +4101,7 @@ function copyAIPrompt() {
   navigator.clipboard
     .writeText(promptText)
     .then(() => {
-      showToast(window._t('toast.prompt_copied') || 'Copied AI prompt to clipboard', '📋');
+      showToast(window._t('toast.prompt_copied'), '📋');
     })
     .catch((err) => {
       console.error('Copy failed', err);
@@ -4184,22 +4114,22 @@ async function copyAsMarkdown() {
     'SELECT created_at, account, memo, amount, currency FROM records WHERE parent_id IS NOT NULL ORDER BY created_at DESC',
   );
   if (res.length === 0) {
-    await showAlert(window._t('toast.no_copy_data') || 'No data to copy.');
+    await showAlert(window._t('toast.no_copy_data'));
     return;
   }
-  let markdown = '## Exported Data (Markdown)\n\n';
+  let markdown = window._t('markdown.title');
   res[0].values.forEach((row) => {
-    const date = row[0] ? row[0].split(' ')[0] : 'No date';
-    const account = row[1] || 'Uncategorized';
-    const memo = row[2] || 'Unnamed';
+    const date = row[0] ? row[0].split(' ')[0] : window._t('label.no_date');
+    const account = row[1] || window._t('label.unclassified');
+    const memo = row[2] || window._t('label.unnamed');
     const c = row[4] || 'USD';
-    const amountStr = row[3] !== null ? formatCurrencyAmount(parseFloat(row[3]), c) : 'Unknown';
+    const amountStr = row[3] !== null ? formatCurrencyAmount(parseFloat(row[3]), c) : '-';
     markdown += `- **${date}** [${account}] ${memo} : **${amountStr}**\n`;
   });
   navigator.clipboard
     .writeText(markdown)
     .then(() => {
-      showToast(window._t('toast.md_copied') || 'Copied data as Markdown', '📋');
+      showToast(window._t('toast.md_copied'), '📋');
     })
     .catch((err) => console.error('Copy failed', err));
 }
@@ -4238,12 +4168,9 @@ document.addEventListener('DOMContentLoaded', () => {
       installBtn.classList.remove('hidden');
       // Override default text to show iOS specific message
       installBtn.removeAttribute('data-i18n');
-      installBtn.textContent = window._t('prompt.ios_install_btn') || 'Add to Home Screen';
+      installBtn.textContent = window._t('prompt.ios_install_btn');
       installBtn.onclick = () => {
-        showAlert(
-          window._t('prompt.ios_install') ||
-            "To install this app, tap the Share icon at the bottom of Safari and select 'Add to Home Screen'.",
-        );
+        showAlert(window._t('prompt.ios_install'));
       };
     }
   }
@@ -4258,92 +4185,92 @@ function getCommandsList() {
     {
       id: 'split_stripe',
       icon: '<svg aria-hidden="true" class="w-5 h-5 text-indigo-500"><use href="#icon-cash"></use></svg>',
-      title: window._t('cmd.split_stripe') || 'Split Stripe Fee (2.9% + $0.30) on Active Row',
+      title: window._t('cmd.split_stripe'),
       action: () => applyFeeSplit(0.029, 0.3, 'Stripe Fee'),
     },
     {
       id: 'split_paypal',
       icon: '<svg aria-hidden="true" class="w-5 h-5 text-blue-500"><use href="#icon-cash"></use></svg>',
-      title: window._t('cmd.split_paypal') || 'Split PayPal Fee (3.49% + $0.49) on Active Row',
+      title: window._t('cmd.split_paypal'),
       action: () => applyFeeSplit(0.0349, 0.49, 'PayPal Fee'),
     },
     {
       id: 'privacy',
       icon: '<svg aria-hidden="true" class="w-5 h-5"><use href="#icon-eye-slash"></use></svg>',
-      title: window._t('cmd.privacy_mode') || 'Toggle Privacy Mode (Hide Numbers)',
+      title: window._t('cmd.privacy_mode'),
       action: () => {
         document.body.classList.toggle('privacy-mode');
-        showToast(window._t('toast.privacy_toggled') || 'Privacy Mode Toggled', '👀');
+        showToast(window._t('toast.privacy_toggled'), '👀');
       },
     },
     {
       id: 'save',
       icon: '<svg aria-hidden="true" class="w-5 h-5"><use href="#icon-save"></use></svg>',
-      title: _t('cmd.save_title'),
+      title: window._t('cmd.save_title'),
       shortcut: isMac ? '⌘S' : 'Ctrl+S',
       action: () => saveGrindFile(),
     },
     {
       id: 'open',
       icon: '<svg aria-hidden="true" class="w-5 h-5"><use href="#icon-folder"></use></svg>',
-      title: _t('cmd.open_title'),
+      title: window._t('cmd.open_title'),
       shortcut: isMac ? '⌘O' : 'Ctrl+O',
       action: () => loadGrindFile(),
     },
     {
       id: 'saveas',
       icon: '<svg aria-hidden="true" class="w-5 h-5"><use href="#icon-copy"></use></svg>',
-      title: _t('cmd.saveas_title'),
+      title: window._t('cmd.saveas_title'),
       shortcut: isMac ? '⇧⌘S' : 'Ctrl+Shift+S',
       action: () => saveGrindFile(true),
     },
     {
       id: 'new',
       icon: '<svg aria-hidden="true" class="w-5 h-5"><use href="#icon-sparkles"></use></svg>',
-      title: _t('cmd.new_title'),
+      title: window._t('cmd.new_title'),
       shortcut: isMac ? '⌥N' : 'Alt+N',
       action: () => document.getElementById('new-block-memo').focus(),
     },
     {
       id: 'import',
       icon: '<svg aria-hidden="true" class="w-5 h-5"><use href="#icon-import"></use></svg>',
-      title: _t('cmd.import_title'),
+      title: window._t('cmd.import_title'),
       action: () => document.getElementById('csv-input').click(),
     },
     {
       id: 'export',
       icon: '<svg aria-hidden="true" class="w-5 h-5"><use href="#icon-export"></use></svg>',
-      title: _t('cmd.export_title'),
+      title: window._t('cmd.export_title'),
       action: showExportModal,
     },
     {
       id: 'editdict',
       icon: '<svg aria-hidden="true" class="w-5 h-5"><use href="#icon-pencil"></use></svg>',
-      title: _t('cmd.editdict_title'),
+      title: window._t('cmd.editdict_title'),
       action: () => showAccountDictEditor(),
     },
     {
       id: 'ai',
       icon: '<svg aria-hidden="true" class="w-5 h-5"><use href="#icon-bot"></use></svg>',
-      title: _t('cmd.ai_title'),
+      title: window._t('cmd.ai_title'),
       action: copyAIPrompt,
     },
     {
       id: 'markdown',
       icon: '<svg aria-hidden="true" class="w-5 h-5"><use href="#icon-copy"></use></svg>',
-      title: _t('cmd.markdown_title'),
+      title: window._t('cmd.markdown_title'),
       action: copyAsMarkdown,
     },
     {
       id: 'expandall',
       icon: '<svg aria-hidden="true" class="w-5 h-5"><use href="#icon-chevron-down"></use></svg>',
-      title: _t('cmd.expandall_title'),
+      title: window._t('cmd.expandall_title'),
       action: () => toggleAllBlocks(false),
     },
     {
       id: 'collapseall',
       icon: '<svg aria-hidden="true" class="w-5 h-5" style="transform: rotate(-90deg)"><use href="#icon-chevron-down"></use></svg>',
-      title: _t('cmd.collapseall_title'),
+      title: window._t('cmd.collapseall_title'),
       action: () => toggleAllBlocks(true),
     },
   ];
@@ -4426,7 +4353,7 @@ function getFilteredCommands(query) {
         filtered.unshift({
           id: 'calculator',
           icon: '<svg aria-hidden="true" class="w-5 h-5 text-green-500"><use href="#icon-sparkles"></use></svg>',
-          title: `= ${formatCurrencyAmount(calcResult, baseCurrency)} <span class="text-xs text-slate-400 ml-2">(Rate calculation / Enter to apply)</span>`,
+          title: `= ${formatCurrencyAmount(calcResult, baseCurrency)} <span class="text-xs text-slate-400 ml-2">${escapeHtml(window._t('cmd.calc_hint'))}</span>`,
           action: () => {
             const resultStr = calcResult.toString();
             navigator.clipboard.writeText(resultStr);
@@ -4449,12 +4376,15 @@ function getFilteredCommands(query) {
                   );
                 }
 
-                showToast(`Applied ${resultStr}`, '<span class="text-green-400">✨</span>');
+                showToast(
+                  window._t('cmd.calc_inserted', resultStr),
+                  '<span class="text-green-400">✨</span>',
+                );
                 return;
               }
             }
             showToast(
-              `Copied ${formatCurrencyAmount(calcResult, baseCurrency)}`,
+              window._t('cmd.calc_copied', formatCurrencyAmount(calcResult, baseCurrency)),
               '<span class="text-green-400">📋</span>',
             );
           },
@@ -5076,8 +5006,7 @@ document.addEventListener('drop', async (e) => {
   if (!hasFiles(e)) return;
   if (window.isSystemModalOpen || isSaving) {
     e.preventDefault();
-    if (isSaving)
-      showToast(window._t('alert.drop_while_saving') || 'Cannot open file while saving.', '⚠️');
+    if (isSaving) showToast(window._t('alert.drop_while_saving'), '⚠️');
     return;
   }
   e.preventDefault();
@@ -5156,10 +5085,7 @@ async function applyFeeSplit(rate, fixed, label) {
   // Get focused element before opening palette
   const activeEl = prePaletteActiveElement;
   if (!activeEl) {
-    await showAlert(
-      window._t('error.split_no_focus') ||
-        'Please click or focus on an Amount field first to apply the fee split.',
-    );
+    await showAlert(window._t('error.split_no_focus'));
     return;
   }
 
@@ -5182,7 +5108,7 @@ async function applyFeeSplit(rate, fixed, label) {
   }
 
   if (!amountVal) {
-    await showAlert(window._t('error.split_no_amount') || 'Please enter an amount first.');
+    await showAlert(window._t('error.split_no_amount'));
     return;
   }
 
@@ -5209,10 +5135,7 @@ async function applyFeeSplit(rate, fixed, label) {
 
   // Fixed fees are defined in USD only
   if (fixed !== 0 && recordCurrency !== 'USD') {
-    await showAlert(
-      window._t('error.split_usd_only', recordCurrency) ||
-        'This fee preset uses a fixed USD fee and can only be applied to USD records.',
-    );
+    await showAlert(window._t('error.split_usd_only', recordCurrency));
     return;
   }
 
@@ -5340,7 +5263,7 @@ function loadCSVPresets() {
   // Add default auto-detect option
   const defaultOpt = document.createElement('option');
   defaultOpt.value = 'default';
-  defaultOpt.textContent = window._t('csv.preset_default') || '-- Auto-detect --';
+  defaultOpt.textContent = window._t('csv.preset_default');
   select.appendChild(defaultOpt);
 
   const savedJson = getDbSetting('csv_presets', '[]');
@@ -5452,12 +5375,12 @@ async function deleteCurrentPreset() {
 
 function getTaxOptionsHtml(selectedRate) {
   const rates = [
-    { value: '', label: window._t('tax.none') || 'None' },
-    { value: '10%', label: window._t('tax.standard_10') || '10%' },
-    { value: '8%', label: window._t('tax.reduced_8') || '8%' },
-    { value: '20%', label: window._t('tax.standard_20') || '20%' },
-    { value: '5%', label: window._t('tax.vat_5') || '5%' },
-    { value: 'Exempt', label: window._t('tax.exempt') || 'Exempt' },
+    { value: '', label: window._t('tax.none') },
+    { value: '10%', label: window._t('tax.standard_10') },
+    { value: '8%', label: window._t('tax.reduced_8') },
+    { value: '20%', label: window._t('tax.standard_20') },
+    { value: '5%', label: window._t('tax.vat_5') },
+    { value: 'Exempt', label: window._t('tax.exempt') },
   ];
   return rates
     .map(
@@ -5850,7 +5773,7 @@ if ('serviceWorker' in navigator) {
 // ==========================================
 // Custom Alert / Confirm Modals
 // ==========================================
-function showAlert(message, title = window._t('alert.title') || 'Alert') {
+function showAlert(message, title = window._t('alert.title')) {
   return new Promise((resolve) => {
     window.isSystemModalOpen = true;
     document.body.style.overflow = 'hidden';
@@ -5895,7 +5818,7 @@ function showAlert(message, title = window._t('alert.title') || 'Alert') {
   });
 }
 
-function requestConfirm(message, title = window._t('confirm.title') || 'Confirm') {
+function requestConfirm(message, title = window._t('confirm.title')) {
   return new Promise((resolve) => {
     window.isSystemModalOpen = true;
     document.body.style.overflow = 'hidden';

@@ -9,6 +9,7 @@ export default {
   'dict.custom': 'Dict: Custom',
   'dict.none': 'Suggest: Off',
   'dict.general': 'Dict: General Business',
+  'dict.marketer': 'Dict: Digital Marketer',
 
   'placeholder.password': 'Encryption Password...',
   'title.password_help': 'Entering a password will strongly encrypt the file upon saving.',
@@ -256,4 +257,30 @@ export default {
   'error.csv_abort': 'Import aborted to prevent data corruption.',
   'error.split_locked':
     'Cannot apply split fees on a record that has already been exported and locked.',
+
+  'alert.title': 'Alert',
+  'confirm.title': 'Confirm',
+  'tax.none': 'None',
+  'tax.standard_10': '10%',
+  'tax.reduced_8': '8%',
+  'tax.standard_20': '20%',
+  'tax.vat_5': '5%',
+  'tax.exempt': 'Exempt',
+  'currency.base': 'Base currency',
+  'currency.base_title': 'Base currency for new blocks',
+  'alert.cannot_delete_locked':
+    'Cannot delete. This block contains records that have already been exported and locked.',
+  'prompt.ios_install': 'To install: tap the Share button, then choose "Add to Home Screen".',
+  'alert.detected_date_format': '(Detected format: {0})',
+  'period.calendar_year_label': '{0} (Jan-Dec)',
+  'period.fiscal_year_label': 'FY {0} (from month {1})',
+  'period.custom': 'Custom period',
+  'badge.prior': 'Prior',
+  'badge.prior_title': 'Data from the previous fiscal year',
+  'badge.older': 'Older',
+  'badge.older_title': 'Data from two or more fiscal years ago',
+  'title.sort_by_date': 'Sort by oldest date first',
+  'title.delete_block': 'Delete entire block',
+  'title.save_template': 'Save this block as a template',
+  'cmd.calc_hint': '(Enter to apply / copy)',
 };

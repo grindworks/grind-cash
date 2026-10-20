@@ -9,6 +9,7 @@ export default {
   'dict.custom': 'Dict : Personnalisé',
   'dict.none': 'Suggestions : Désactivées',
   'dict.general': 'Dict : Affaires générales',
+  'dict.marketer': 'Dict : Digital Marketer',
 
   'placeholder.password': 'Mot de passe de chiffrement...',
   'title.password_help':
@@ -78,7 +79,8 @@ export default {
     '⚠️ Échec de la restauration car les données de sauvegarde précédentes sont corrompues.',
   'confirm.discard_changes':
     'Vous avez des modifications non enregistrées. Les abandonner et ouvrir un autre fichier ?',
-  'confirm.currency_round': 'Passer à {0} arrondira {1} montant(s) de ce bloc au nombre de décimales de {0}. Revenir à la devise d\'origine ne les restaurera pas. Continuer ?',
+  'confirm.currency_round':
+    "Passer à {0} arrondira {1} montant(s) de ce bloc au nombre de décimales de {0}. Revenir à la devise d'origine ne les restaurera pas. Continuer ?",
   'confirm.pw_empty':
     '⚠️ AVERTISSEMENT ⚠️\nLe mot de passe est vide.\nEnregistrer maintenant supprimera le chiffrement et enregistrera en texte brut.\n\nÊtes-vous sûr de vouloir supprimer le chiffrement ?',
   'alert.pw_empty_canceled': 'Enregistrement annulé. Veuillez définir un mot de passe.',
@@ -266,4 +268,31 @@ export default {
   'error.csv_abort': 'Importation annulée pour éviter la corruption des données.',
   'error.split_locked':
     "Impossible d'appliquer la division des frais sur un enregistrement déjà exporté et verrouillé.",
+
+  'alert.title': 'Alerte',
+  'confirm.title': 'Confirmation',
+  'tax.none': 'Aucun',
+  'tax.standard_10': '10%',
+  'tax.reduced_8': '8%',
+  'tax.standard_20': '20%',
+  'tax.vat_5': '5%',
+  'tax.exempt': 'Exonéré',
+  'currency.base': 'Devise de base',
+  'currency.base_title': 'Devise de base pour les nouveaux blocs',
+  'alert.cannot_delete_locked':
+    'Suppression impossible. Ce bloc contient des enregistrements déjà exportés et verrouillés.',
+  'prompt.ios_install':
+    'Pour installer : appuyez sur Partager, puis choisissez « Sur l’écran d’accueil ».',
+  'alert.detected_date_format': '(Format détecté : {0})',
+  'period.calendar_year_label': '{0} (janv.–déc.)',
+  'period.fiscal_year_label': 'Exercice {0} (dès le mois {1})',
+  'period.custom': 'Période personnalisée',
+  'badge.prior': 'N-1',
+  'badge.prior_title': 'Données de l’exercice précédent',
+  'badge.older': 'Ancien',
+  'badge.older_title': 'Données d’il y a deux exercices ou plus',
+  'title.sort_by_date': 'Trier par date (plus ancienne d’abord)',
+  'title.delete_block': 'Supprimer tout le bloc',
+  'title.save_template': 'Enregistrer ce bloc comme modèle',
+  'cmd.calc_hint': '(Entrée pour appliquer / copier)',
 };

@@ -9,6 +9,7 @@ export default {
   'dict.custom': 'Wb: Benutzerdefiniert',
   'dict.none': 'Vorschlag: Aus',
   'dict.general': 'Wb: Allgemeine Geschäfte',
+  'dict.marketer': 'Wb: Digital Marketer',
 
   'placeholder.password': 'Verschlüsselungskennwort...',
   'title.password_help':
@@ -265,4 +266,30 @@ export default {
   'error.csv_abort': 'Import abgebrochen, um Datenbeschädigung zu verhindern.',
   'error.split_locked':
     'Gebührenaufteilung kann nicht auf einen bereits exportierten und gesperrten Datensatz angewendet werden.',
+
+  'alert.title': 'Hinweis',
+  'confirm.title': 'Bestätigung',
+  'tax.none': 'Keine',
+  'tax.standard_10': '10%',
+  'tax.reduced_8': '8%',
+  'tax.standard_20': '20%',
+  'tax.vat_5': '5%',
+  'tax.exempt': 'Befreit',
+  'currency.base': 'Basiswährung',
+  'currency.base_title': 'Basiswährung für neue Blöcke',
+  'alert.cannot_delete_locked':
+    'Löschen nicht möglich. Dieser Block enthält bereits exportierte und gesperrte Datensätze.',
+  'prompt.ios_install': 'Installation: Tippen Sie auf Teilen und wählen Sie „Zum Home-Bildschirm“.',
+  'alert.detected_date_format': '(Erkanntes Format: {0})',
+  'period.calendar_year_label': '{0} (Jan.–Dez.)',
+  'period.fiscal_year_label': 'GJ {0} (ab Monat {1})',
+  'period.custom': 'Benutzerdefinierter Zeitraum',
+  'badge.prior': 'Vorjahr',
+  'badge.prior_title': 'Daten aus dem vorherigen Geschäftsjahr',
+  'badge.older': 'Älter',
+  'badge.older_title': 'Daten aus zwei oder mehr Geschäftsjahren zuvor',
+  'title.sort_by_date': 'Nach ältestem Datum sortieren',
+  'title.delete_block': 'Ganzen Block löschen',
+  'title.save_template': 'Diesen Block als Vorlage speichern',
+  'cmd.calc_hint': '(Enter zum Übernehmen / Kopieren)',
 };

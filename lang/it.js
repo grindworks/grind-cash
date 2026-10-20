@@ -9,6 +9,7 @@ export default {
   'dict.custom': 'Diz: Personalizzato',
   'dict.none': 'Suggerimenti: Disattivati',
   'dict.general': 'Diz: Affari generali',
+  'dict.marketer': 'Diz: Digital Marketer',
 
   'placeholder.password': 'Password di crittografia...',
   'title.password_help':
@@ -265,4 +266,30 @@ export default {
   'error.csv_abort': 'Importazione interrotta per evitare la corruzione dei dati.',
   'error.split_locked':
     'Impossibile applicare la suddivisione delle commissioni su un record già esportato e bloccato.',
+
+  'alert.title': 'Avviso',
+  'confirm.title': 'Conferma',
+  'tax.none': 'Nessuna',
+  'tax.standard_10': '10%',
+  'tax.reduced_8': '8%',
+  'tax.standard_20': '20%',
+  'tax.vat_5': '5%',
+  'tax.exempt': 'Esente',
+  'currency.base': 'Valuta di base',
+  'currency.base_title': 'Valuta di base per i nuovi blocchi',
+  'alert.cannot_delete_locked':
+    'Impossibile eliminare. Questo blocco contiene record già esportati e bloccati.',
+  'prompt.ios_install': 'Per installare: tocca Condividi, poi scegli «Aggiungi a Home».',
+  'alert.detected_date_format': '(Formato rilevato: {0})',
+  'period.calendar_year_label': '{0} (gen.–dic.)',
+  'period.fiscal_year_label': 'Esercizio {0} (dal mese {1})',
+  'period.custom': 'Periodo personalizzato',
+  'badge.prior': 'Prec.',
+  'badge.prior_title': 'Dati dell’esercizio precedente',
+  'badge.older': 'Vecchio',
+  'badge.older_title': 'Dati di due o più esercizi fa',
+  'title.sort_by_date': 'Ordina per data (dalla più vecchia)',
+  'title.delete_block': 'Elimina l’intero blocco',
+  'title.save_template': 'Salva questo blocco come modello',
+  'cmd.calc_hint': '(Invio per applicare / copiare)',
 };
