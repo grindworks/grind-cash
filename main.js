@@ -3848,6 +3848,8 @@ function showCSVModal() {
   document.body.style.overflow = 'hidden';
   setAppInert(true);
 
+  // Reset per-file state; a selected preset overrides it in updateCSVPreview
+  document.getElementById('csv-skip-rows').value = 1;
   loadCSVPresets();
   updateCSVPreview();
 }
@@ -3863,7 +3865,9 @@ function updateCSVPreview() {
       const decoder = new TextDecoder(encoding, { fatal: true });
       text = decoder.decode(pendingCSVBuffer);
     } catch (e) {
-      if (encoding === 'utf-8') {
+      const appLang =
+        (window.I18n && typeof window.I18n.getLang === 'function' && window.I18n.getLang()) || 'en';
+      if (encoding === 'utf-8' && appLang === 'ja') {
         try {
           const sjisDecoder = new TextDecoder('sjis', { fatal: true });
           text = sjisDecoder.decode(pendingCSVBuffer);
@@ -3944,7 +3948,9 @@ function updateCSVPreview() {
   );
   const skipRowsInput = document.getElementById('csv-skip-rows');
   const skipRows = skipRowsInput ? Math.max(0, parseInt(skipRowsInput.value, 10) || 0) : 0;
-  const firstRow = pendingCSVData.length > skipRows ? pendingCSVData[skipRows] : [];
+  // Auto-detect against the header row (the last skipped row), not the first data row
+  const detectRowIndex = skipRows > 0 ? skipRows - 1 : 0;
+  const firstRow = pendingCSVData.length > detectRowIndex ? pendingCSVData[detectRowIndex] : [];
 
   const presetSelect = document.getElementById('csv-preset-select');
   const selectedPreset = presetSelect ? presetSelect.value : 'default';
@@ -3953,35 +3959,38 @@ function updateCSVPreview() {
   let defaultAccount = '-1';
   let defaultMemo = '-1';
   let defaultAmount = '-1';
-  let defaultSkip = 1;
+  let defaultSkip = null;
 
   if (selectedPreset === 'default') {
-    // Default: Run column auto-guess logic
     if (maxCols >= 1) {
-      const dateIdx = firstRow.findIndex((c) => c && c.match(/日|date/i));
+      const dateIdx = firstRow.findIndex((c) => c && c.match(/日|date|datum|fecha/i));
       defaultDate = dateIdx !== -1 ? dateIdx.toString() : '0';
     }
     if (mapAccount && maxCols >= 4) {
-      const accIdx = firstRow.findIndex((c) => c && c.match(/科目|account|category/i));
+      const accIdx = firstRow.findIndex((c) => c && c.match(/科目|account|category|konto|compte/i));
       defaultAccount = accIdx !== -1 ? accIdx.toString() : '3';
     }
     if (maxCols >= 2) {
       const memoIdx = firstRow.findIndex(
-        (c) => c && c.match(/摘要|メモ|内容|店名|利用先|memo|description/i),
+        (c) => c && c.match(/摘要|メモ|内容|店名|利用先|memo|description|beschreibung|libell/i),
       );
       defaultMemo = memoIdx !== -1 ? memoIdx.toString() : '1';
     }
     if (maxCols >= 3) {
       const amountIdx = firstRow.findIndex(
-        (c) => c && c.match(/金額|支払|出金|入金|利用額|amount/i),
+        (c) => c && c.match(/金額|支払|出金|入金|利用額|amount|betrag|montant|importe/i),
       );
       defaultAmount = amountIdx !== -1 ? amountIdx.toString() : '2';
     }
     document.getElementById('csv-preset-delete-btn').disabled = true;
   } else {
-    // Apply preset values from DB
     const savedJson = getDbSetting('csv_presets', '[]');
-    let presets = JSON.parse(savedJson);
+    let presets = [];
+    try {
+      presets = JSON.parse(savedJson);
+    } catch (e) {
+      presets = [];
+    }
     const preset = presets[parseInt(selectedPreset, 10)];
     if (preset) {
       defaultDate = preset.date;
@@ -3994,7 +4003,6 @@ function updateCSVPreview() {
     }
   }
 
-  // Generate select box options
   let optionsHtml = `<option value="-1">${window._t('label.do_not_select')}</option>`;
   for (let i = 0; i < maxCols; i++) {
     const sample = firstRow[i] !== undefined ? firstRow[i].substring(0, 15) : '';
@@ -4006,12 +4014,18 @@ function updateCSVPreview() {
   mapMemo.innerHTML = optionsHtml;
   mapAmount.innerHTML = optionsHtml;
 
-  // Apply initial values to elements
   mapDate.value = defaultDate;
   if (mapAccount) mapAccount.value = defaultAccount;
   mapMemo.value = defaultMemo;
   mapAmount.value = defaultAmount;
-  document.getElementById('csv-skip-rows').value = defaultSkip;
+  if (defaultSkip !== null) {
+    document.getElementById('csv-skip-rows').value = defaultSkip;
+  } else if (
+    skipRowsInput &&
+    (skipRowsInput.value === '' || isNaN(parseInt(skipRowsInput.value, 10)))
+  ) {
+    skipRowsInput.value = 1;
+  }
 
   renderCSVPreview();
 }
@@ -4114,13 +4128,21 @@ async function executeCSVImport() {
     return;
   }
 
+  // Keep the modal (and the mapping) open until the import succeeds so the user can fix it
   const dataToImport = [...pendingCSVData];
-  closeCSVModal();
 
   let successCount = 0;
   let skipCount = 0;
   let suggestStmt = null;
   let insertStmt = null;
+
+  const startIndex = Math.max(0, skipRows);
+  const MAX_IMPORT_ROWS = 3000;
+  const rowsToProcess = dataToImport.length - startIndex;
+  if (rowsToProcess > MAX_IMPORT_ROWS) {
+    await showAlert(window._t('alert.too_many_import_rows', rowsToProcess, MAX_IMPORT_ROWS));
+  }
+  const endIndex = Math.min(dataToImport.length, startIndex + MAX_IMPORT_ROWS);
 
   db.run('BEGIN TRANSACTION;');
   try {
@@ -4133,25 +4155,13 @@ async function executeCSVImport() {
     ]);
     const parentRes = db.exec('SELECT last_insert_rowid()');
     const parentId = parentRes[0].values[0][0];
-    const startIndex = Math.max(0, skipRows);
-    const MAX_IMPORT_ROWS = 3000;
-    const rowsToProcess = dataToImport.length - startIndex;
-    if (rowsToProcess > MAX_IMPORT_ROWS) {
-      await showAlert(window._t('alert.too_many_import_rows', rowsToProcess, MAX_IMPORT_ROWS));
-    }
-    const endIndex = Math.min(dataToImport.length, startIndex + MAX_IMPORT_ROWS);
 
-    try {
-      suggestStmt = db.prepare(
-        "SELECT account FROM records WHERE parent_id IS NOT NULL AND memo = ? AND account IS NOT NULL AND account != '' ORDER BY id DESC LIMIT 1",
-      );
-    } catch (e) {}
-
-    try {
-      insertStmt = db.prepare(
-        'INSERT INTO records (parent_id, memo, amount, created_at, account, currency) VALUES (?, ?, ?, ?, ?, ?)',
-      );
-    } catch (e) {}
+    suggestStmt = db.prepare(
+      "SELECT account FROM records WHERE parent_id IS NOT NULL AND memo = ? AND account IS NOT NULL AND account != '' ORDER BY id DESC LIMIT 1",
+    );
+    insertStmt = db.prepare(
+      'INSERT INTO records (parent_id, memo, amount, created_at, account, currency) VALUES (?, ?, ?, ?, ?, ?)',
+    );
 
     for (let i = startIndex; i < endIndex; i++) {
       const cols = dataToImport[i];
@@ -4185,24 +4195,8 @@ async function executeCSVImport() {
       const trimmedAmount = normalizedAmount.trim();
       if (/^\([\d,.]+\)$/.test(trimmedAmount))
         normalizedAmount = '-' + trimmedAmount.replace(/[()]/g, '');
-      let amountStr = normalizedAmount;
-      amountStr = amountStr
-        .replace(/(?:\d+[.,])+\d+/g, (match) => {
-          const lastComma = match.lastIndexOf(',');
-          const lastDot = match.lastIndexOf('.');
-          if (lastComma > lastDot && lastDot !== -1)
-            return match.replace(/\./g, '').replace(/,/g, '.');
-          else if (lastDot > lastComma && lastComma !== -1) return match.replace(/,/g, '');
-          else if (lastComma !== -1) {
-            if (/,\d{3}$/.test(match)) return match.replace(/,/g, '');
-            else return match.replace(/,/g, '.');
-          } else {
-            if (match.match(/\./g) && match.match(/\./g).length > 1)
-              return match.replace(/\./g, '');
-            return match;
-          }
-        })
-        .replace(/[^\d.\-]/g, '');
+      // Same locale-aware separator rules as typed amounts
+      const amountStr = normalizeNumberSeparators(normalizedAmount).replace(/[^\d.\-]/g, '');
       const isInvalidHyphen =
         (amountStr.match(/-/g) || []).length > 1 ||
         (amountStr.includes('-') && !amountStr.startsWith('-') && !amountStr.endsWith('-'));
@@ -4216,16 +4210,26 @@ async function executeCSVImport() {
       }
 
       if (!isNaN(amount)) {
-        let parsedDate = new Date(dateStr);
+        let parsedDate = new Date(NaN);
         const trimmedDate = dateStr ? dateStr.trim() : '';
 
         if (trimmedDate) {
-          if (/^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}$/.test(trimmedDate)) {
-            const parts = trimmedDate.split(/[\/\-]/);
+          // Accept yyyy-mm-dd, yyyy/mm/dd, yyyy.mm.dd, yyyy年m月d日 and yyyymmdd; ignore a trailing time
+          const isoMatch =
+            trimmedDate.match(/^(\d{4})[\/\-.年](\d{1,2})[\/\-.月](\d{1,2})日?(?![\d.\/\-])/) ||
+            trimmedDate.match(/^(\d{4})(\d{2})(\d{2})$/);
+          if (isoMatch) {
             parsedDate = createStrictDate(
-              parseInt(parts[0], 10),
-              parseInt(parts[1], 10),
+              parseInt(isoMatch[1], 10),
+              parseInt(isoMatch[2], 10),
+              parseInt(isoMatch[3], 10),
+            );
+          } else if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(trimmedDate)) {
+            const parts = trimmedDate.split('.');
+            parsedDate = createStrictDate(
               parseInt(parts[2], 10),
+              parseInt(parts[1], 10),
+              parseInt(parts[0], 10),
             );
           } else if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(trimmedDate)) {
             const parts = trimmedDate.split(/[\/\-]/);
@@ -4239,18 +4243,15 @@ async function executeCSVImport() {
             } else if (secondNum > 12 && firstNum <= 12) {
               m = firstNum;
               d = secondNum;
+            } else if (isMonthFirst) {
+              m = firstNum;
+              d = secondNum;
             } else {
-              if (isMonthFirst) {
-                m = firstNum;
-                d = secondNum;
-              } else {
-                d = firstNum;
-                m = secondNum;
-              }
+              d = firstNum;
+              m = secondNum;
             }
             parsedDate = createStrictDate(parseInt(parts[2], 10), m, d);
           } else if (/^\d{1,2}[\/\-]\d{1,2}$/.test(trimmedDate)) {
-            // "MM/DD" or "DD/MM" format handling with current year fallback
             const parts = trimmedDate.split(/[\/\-]/);
             const currentYear = new Date().getFullYear();
             let firstNum = parseInt(parts[0], 10);
@@ -4262,14 +4263,12 @@ async function executeCSVImport() {
             } else if (secondNum > 12 && firstNum <= 12) {
               m = firstNum;
               d = secondNum;
+            } else if (isMonthFirst) {
+              m = firstNum;
+              d = secondNum;
             } else {
-              if (isMonthFirst) {
-                m = firstNum;
-                d = secondNum;
-              } else {
-                d = firstNum;
-                m = secondNum;
-              }
+              d = firstNum;
+              m = secondNum;
             }
             parsedDate = createStrictDate(currentYear, m, d);
           }
@@ -4280,7 +4279,6 @@ async function executeCSVImport() {
           try {
             suggestStmt.bind([memo]);
             if (suggestStmt.step()) finalAccountStr = suggestStmt.get()[0];
-          } catch (e) {
           } finally {
             suggestStmt.reset();
           }
@@ -4295,25 +4293,17 @@ async function executeCSVImport() {
         } else {
           if (dateStr.trim() !== '') {
             db.run('ROLLBACK;');
-            const errMsg =
-              window._t('error.csv_invalid_date', i + 1, dateStr) ||
-              `Invalid date format at Row ${i + 1}: "${dateStr}".`;
-            await showAlert(
-              `${errMsg}\n` +
-                (window._t('error.csv_abort') || 'Import aborted to prevent data corruption.'),
-            );
+            const errMsg = window._t('error.csv_invalid_date', i + 1, dateStr);
+            await showAlert(`${errMsg}\n` + window._t('error.csv_abort'));
             return;
           }
           const today = new Date();
           finalDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')} 00:00:00`;
         }
 
-        if (insertStmt) {
-          try {
-            insertStmt.run([parentId, memo, amount, finalDateStr, finalAccountStr, baseCurrency]);
-            successCount++;
-          } catch (e) {}
-        }
+        // A failed insert aborts the whole import (the outer catch rolls back)
+        insertStmt.run([parentId, memo, amount, finalDateStr, finalAccountStr, baseCurrency]);
+        successCount++;
       } else {
         skipCount++;
       }
@@ -4321,18 +4311,15 @@ async function executeCSVImport() {
 
     if (successCount === 0) db.run('DELETE FROM records WHERE id = ?', [parentId]);
     db.run('COMMIT;');
+    closeCSVModal();
     setDirty(true);
     collapsedBlocks.add(parentId);
     if (document.getElementById('period-filter'))
       document.getElementById('period-filter').value = 'all';
     window.currentActiveMonths = null;
     setActiveQuickPeriodButton(null);
-    let msg = window._t('toast.import_success', successCount) || `Imported ${successCount} items`;
-    if (skipCount > 0) {
-      msg +=
-        window._t('toast.import_skip', skipCount) ||
-        ` (${skipCount} skipped due to invalid amount)`;
-    }
+    let msg = window._t('toast.import_success', successCount);
+    if (skipCount > 0) msg += window._t('toast.import_skip', skipCount);
     showToast(msg, '<span class="text-green-400">✨</span>');
     triggerHaptic();
   } catch (err) {
@@ -5548,7 +5535,10 @@ async function saveCurrentPreset() {
   let presets = [];
   try {
     presets = JSON.parse(savedJson);
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Ignoring corrupted CSV presets:', e);
+  }
+  if (!Array.isArray(presets)) presets = [];
 
   const newPreset = {
     name: trimmed,
@@ -5592,7 +5582,10 @@ async function deleteCurrentPreset() {
   let presets = [];
   try {
     presets = JSON.parse(savedJson);
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Ignoring corrupted CSV presets:', e);
+  }
+  if (!Array.isArray(presets)) presets = [];
 
   const idx = parseInt(val, 10);
   const target = presets[idx];
