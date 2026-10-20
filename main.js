@@ -9,6 +9,9 @@ let lastUsedAccounts = {};
 let pendingCSVBuffer = null;
 let currentDisplayedTotal = 0;
 let collapsedBlocks = new Set();
+// Blocks whose earlier items the user asked to see (beyond MAX_ITEMS_PER_BLOCK)
+let expandedItemBlocks = new Set();
+const MAX_ITEMS_PER_BLOCK = 200;
 let draftTimer = null;
 let statusTimeoutId = null;
 let isSaving = false;
@@ -1981,10 +1984,20 @@ function renderMultiTotals(totalsMap) {
 }
 
 function toggleBlock(id) {
+  id = parseInt(id, 10);
+  if (Number.isNaN(id)) return;
   if (collapsedBlocks.has(id)) collapsedBlocks.delete(id);
   else collapsedBlocks.add(id);
   const bodyEl = document.getElementById(`block-body-${id}`);
   const iconEl = document.getElementById(`block-icon-${id}`);
+  const blockEl = document.getElementById(`block-${id}`);
+  if (blockEl && blockEl._itemsLazy && !collapsedBlocks.has(id)) {
+    const itemsContainer = blockEl.querySelector('.items-container');
+    const html = blockEl._buildItemsHtml();
+    if (itemsContainer) itemsContainer.innerHTML = html;
+    blockEl._itemsHtml = html;
+    blockEl._itemsLazy = false;
+  }
   if (bodyEl && iconEl) {
     if (collapsedBlocks.has(id)) {
       bodyEl.style.maxHeight = bodyEl.scrollHeight + 'px';
@@ -2675,110 +2688,123 @@ function updateOrCreateBlockElement(block, existingEl = null) {
     </div>
   `;
 
-  // 2. Build item list
+  // 2. Build item list (only the newest items; collapsed blocks build it on expand)
   const memoEmptyClass = 'empty:before:content-[attr(data-empty)]';
-  const emptyMemoText = window._t('csv.memo') || 'Memo'; // Display placeholder like "✎ Memo"
-  const newItemsHtml = block.children
-    .map((item) => {
-      const isCollection = (item.memo || '').match(/(#Receipt|#Payment)(?=\s|$)/i);
-      const isLocked = item.is_exported === 1;
+  const emptyMemoText = window._t('csv.memo');
+  const showAllItems =
+    expandedItemBlocks.has(block.id) || block.children.length <= MAX_ITEMS_PER_BLOCK;
+  const visibleChildren = showAllItems
+    ? block.children
+    : block.children.slice(-MAX_ITEMS_PER_BLOCK);
+  const hiddenCount = block.children.length - visibleChildren.length;
+  const showEarlierHtml =
+    hiddenCount > 0
+      ? `<div class="px-4 sm:px-8 py-2 border-b border-slate-50 text-center"><button type="button" data-action="showAllItems" data-id="${block.id}" class="text-xs font-bold text-blue-600 hover:underline cursor-pointer">${escapeHtml(window._t('btn.show_earlier_items', hiddenCount))}</button></div>`
+      : '';
+  const buildItemsHtml = () =>
+    showEarlierHtml +
+    visibleChildren
+      .map((item) => {
+        const isCollection = isSettlementMemo(item.memo);
+        const isLocked = item.is_exported === 1;
 
-      let dateDisp = '';
-      let badgeHtml = '';
-      let itemYyyy = yyyy;
+        let dateDisp = '';
+        let badgeHtml = '';
+        let itemYyyy = yyyy;
 
-      if (item.created_at) {
-        const dStr = item.created_at.split(' ')[0];
-        const parts = dStr.split('-');
-        if (parts.length === 3) {
-          itemYyyy = escapeHtml(parts[0]);
-          const imm = escapeHtml(parts[1]);
-          const idd = escapeHtml(parts[2]);
-          const itemYear = parseInt(itemYyyy, 10);
-          const itemMonth = parseInt(imm, 10);
-          let itemFiscalYear = itemYear;
-          if (itemMonth < startMonth) itemFiscalYear--;
+        if (item.created_at) {
+          const dStr = item.created_at.split(' ')[0];
+          const parts = dStr.split('-');
+          if (parts.length === 3) {
+            itemYyyy = escapeHtml(parts[0]);
+            const imm = escapeHtml(parts[1]);
+            const idd = escapeHtml(parts[2]);
+            const itemYear = parseInt(itemYyyy, 10);
+            const itemMonth = parseInt(imm, 10);
+            let itemFiscalYear = itemYear;
+            if (itemMonth < startMonth) itemFiscalYear--;
 
-          const diff = currentFiscalYear - itemFiscalYear;
-          if (diff === 1) {
-            badgeHtml = `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 mr-1.5 shrink-0 select-none" title="Record from prior year">Prior</span>`;
-          } else if (diff >= 2) {
-            badgeHtml = `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 mr-1.5 shrink-0 select-none" title="Record from older years">Older</span>`;
+            const diff = currentFiscalYear - itemFiscalYear;
+            if (diff === 1) {
+              badgeHtml = `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 mr-1.5 shrink-0 select-none" title="${escapeHtml(window._t('badge.prior_title'))}">${escapeHtml(window._t('badge.prior'))}</span>`;
+            } else if (diff >= 2) {
+              badgeHtml = `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 mr-1.5 shrink-0 select-none" title="${escapeHtml(window._t('badge.older_title'))}">${escapeHtml(window._t('badge.older'))}</span>`;
+            }
+
+            const dateEditable = isLocked ? 'false' : 'true';
+            let dateClasses =
+              'text-xs font-mono mr-2 sm:mr-3 border px-1.5 py-0.5 rounded outline-none focus:ring-2 cursor-text transition-colors';
+
+            if (isLocked) {
+              dateClasses +=
+                ' text-slate-400 bg-slate-100 border-slate-100 cursor-not-allowed opacity-70';
+            } else if (dStr > todayStr) {
+              dateClasses +=
+                ' text-red-600 bg-red-50 border-red-200 focus:ring-red-300 hover:bg-red-100 font-bold';
+            } else {
+              dateClasses += isCollection
+                ? ' text-slate-400 bg-transparent border-transparent hover:bg-slate-100'
+                : ' text-slate-500 bg-slate-100 border-slate-200 focus:ring-blue-200 hover:bg-slate-200';
+            }
+
+            const currentAppLang = (window.I18n && window.I18n.getLang()) || 'en';
+            const isMonthFirst = currentAppLang === 'en' || currentAppLang === 'ja';
+            const dateText = isMonthFirst ? `${imm}/${idd}` : `${idd}/${imm}`;
+            const tooltipText = escapeHtml(
+              window._t(isLocked ? 'label.exported_locked' : 'tooltip.edit_date'),
+            );
+            dateDisp = `${badgeHtml}<span data-id="${item.id}" data-field="created_at" data-year="${itemYyyy}" contenteditable="${dateEditable}" data-action-input="setDirtyContentEditable" data-action-paste="handlePlainTextPaste" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="${dateClasses}" title="${tooltipText}">${dateText}</span>`;
           }
-
-          const dateEditable = isLocked ? 'false' : 'true';
-          let dateClasses =
-            'text-xs font-mono mr-2 sm:mr-3 border px-1.5 py-0.5 rounded outline-none focus:ring-2 cursor-text transition-colors';
-
-          if (isLocked) {
-            dateClasses +=
-              ' text-slate-400 bg-slate-100 border-slate-100 cursor-not-allowed opacity-70';
-          } else if (dStr > todayStr) {
-            dateClasses +=
-              ' text-red-600 bg-red-50 border-red-200 focus:ring-red-300 hover:bg-red-100 font-bold';
-          } else {
-            dateClasses += isCollection
-              ? ' text-slate-400 bg-transparent border-transparent hover:bg-slate-100'
-              : ' text-slate-500 bg-slate-100 border-slate-200 focus:ring-blue-200 hover:bg-slate-200';
-          }
-
-          const currentAppLang = (window.I18n && window.I18n.getLang()) || 'en';
-          const isMonthFirst = currentAppLang === 'en' || currentAppLang === 'ja';
-          const dateText = isMonthFirst ? `${imm}/${idd}` : `${idd}/${imm}`;
-          const editDateTooltip =
-            window._t('tooltip.edit_date') || 'Click to edit date (Supports YYYY/MM/DD)';
-          const tooltipText = isLocked ? 'Exported & Locked' : editDateTooltip;
-          dateDisp = `${badgeHtml}<span data-id="${item.id}" data-field="created_at" data-year="${itemYyyy}" contenteditable="${dateEditable}" data-action-input="setDirtyContentEditable" data-action-paste="handlePlainTextPaste" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="${dateClasses}" title="${tooltipText}">${dateText}</span>`;
         }
-      }
 
-      const accStr = item.account || '';
-      let accClasses = '';
-      if (isLocked) {
-        accClasses = 'text-slate-400 bg-slate-50 border-slate-100 cursor-not-allowed opacity-70';
-      } else {
-        accClasses = isCollection
-          ? 'text-slate-400 bg-transparent border-transparent hover:bg-slate-100 focus:bg-slate-100'
-          : 'text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100 focus:bg-blue-100';
-      }
+        const accStr = item.account || '';
+        let accClasses = '';
+        if (isLocked) {
+          accClasses = 'text-slate-400 bg-slate-50 border-slate-100 cursor-not-allowed opacity-70';
+        } else {
+          accClasses = isCollection
+            ? 'text-slate-400 bg-transparent border-transparent hover:bg-slate-100 focus:bg-slate-100'
+            : 'text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100 focus:bg-blue-100';
+        }
 
-      const accDisabled = isLocked ? 'disabled' : '';
-      const taxStr = item.tax_rate || '';
-      const taxDisabled = isLocked ? 'disabled' : '';
-      const taxClasses = isLocked
-        ? 'text-slate-400 bg-slate-50 border-slate-100 cursor-not-allowed opacity-70'
-        : 'text-emerald-600 bg-emerald-50 border-emerald-200 hover:bg-emerald-100 focus:bg-emerald-100';
+        const accDisabled = isLocked ? 'disabled' : '';
+        const taxStr = item.tax_rate || '';
+        const taxDisabled = isLocked ? 'disabled' : '';
+        const taxClasses = isLocked
+          ? 'text-slate-400 bg-slate-50 border-slate-100 cursor-not-allowed opacity-70'
+          : 'text-emerald-600 bg-emerald-50 border-emerald-200 hover:bg-emerald-100 focus:bg-emerald-100';
 
-      const taxDisp = `<select data-id="${item.id}" data-field="tax_rate" ${taxDisabled} data-action-change="updateRecord" class="text-xs px-1 py-0.5 rounded mr-2 outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer transition-colors w-[70px] sm:w-[85px] shrink-0 text-left border ${taxClasses}">${getTaxOptionsHtml(taxStr)}</select>`;
+        const taxDisp = `<select data-id="${item.id}" data-field="tax_rate" ${taxDisabled} data-action-change="updateRecord" class="text-xs px-1 py-0.5 rounded mr-2 outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer transition-colors w-[70px] sm:w-[85px] shrink-0 text-left border ${taxClasses}">${getTaxOptionsHtml(taxStr)}</select>`;
 
-      const accPlaceholder = window._t('placeholder.account');
-      let accountDisp = `<input type="text" data-id="${item.id}" data-field="account" list="account-suggestions" value="${escapeHtml(accStr)}" placeholder="${accPlaceholder}" ${accDisabled} data-action-focus="select" data-action-input="setDirty" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="text-xs px-1.5 py-0.5 rounded mr-2 outline-none focus:ring-2 focus:ring-blue-400 cursor-text transition-colors w-[84px] sm:w-[100px] shrink-0 text-left placeholder-blue-300 border ${accClasses}">`;
+        const accPlaceholder = escapeHtml(window._t('placeholder.account'));
+        let accountDisp = `<input type="text" data-id="${item.id}" data-field="account" list="account-suggestions" value="${escapeHtml(accStr)}" placeholder="${accPlaceholder}" ${accDisabled} data-action-focus="select" data-action-input="setDirty" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="text-xs px-1.5 py-0.5 rounded mr-2 outline-none focus:ring-2 focus:ring-blue-400 cursor-text transition-colors w-[84px] sm:w-[100px] shrink-0 text-left placeholder-blue-300 border ${accClasses}">`;
 
-      let actionButtonsHtml = '';
-      if (isLocked) {
-        actionButtonsHtml = `
-        <span class="text-slate-400 p-1.5" title="Exported & Locked">
+        let actionButtonsHtml = '';
+        const lockedTitle = escapeHtml(window._t('label.exported_locked'));
+        if (isLocked) {
+          actionButtonsHtml = `
+        <span class="text-slate-400 p-1.5" title="${lockedTitle}" aria-label="${lockedTitle}">
           <svg aria-hidden="true" class="w-4 h-4"><use href="#icon-lock"></use></svg>
         </span>
       `;
-      } else {
-        let checkBtnHtml = '';
-        if (!isCollection) {
-          checkBtnHtml = `<button data-action="createCollectionRecord" data-id="${item.id}" aria-label="Create settlement" class="text-slate-300 hover:text-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 rounded p-1.5 sm:p-2 -m-1 transition-colors cursor-pointer" title="Auto-generate settlement record"><svg aria-hidden="true" class="w-4 h-4 pointer-events-none"><use href="#icon-check-circle"></use></svg></button>`;
-        }
-        actionButtonsHtml = `
+        } else {
+          let checkBtnHtml = '';
+          if (!isCollection) {
+            checkBtnHtml = `<button data-action="createCollectionRecord" data-id="${item.id}" aria-label="${escapeHtml(window._t('title.create_settlement'))}" class="text-slate-300 hover:text-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 rounded p-1.5 sm:p-2 -m-1 transition-colors cursor-pointer" title="${escapeHtml(window._t('title.create_settlement'))}"><svg aria-hidden="true" class="w-4 h-4 pointer-events-none"><use href="#icon-check-circle"></use></svg></button>`;
+          }
+          actionButtonsHtml = `
         <div class="flex items-center space-x-0.5 sm:space-x-1 md:opacity-0 md:group-hover/item:opacity-100 focus-within:opacity-100 transition-opacity">
           ${checkBtnHtml}
-          <button data-action="duplicateRecord" data-id="${item.id}" aria-label="Duplicate" class="text-slate-300 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/30 rounded p-1.5 sm:p-2 -m-1 transition-colors cursor-pointer" title="Duplicate"><svg aria-hidden="true" class="w-4 h-4 pointer-events-none"><use href="#icon-copy"></use></svg></button>
-          <button data-action="deleteRecord" data-id="${item.id}" aria-label="Delete" class="text-slate-300 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 rounded transition-colors text-xl sm:text-2xl leading-none p-1.5 sm:p-2 -m-1 cursor-pointer" title="Delete">&times;</button>
+          <button data-action="duplicateRecord" data-id="${item.id}" aria-label="${escapeHtml(window._t('title.duplicate'))}" class="text-slate-300 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/30 rounded p-1.5 sm:p-2 -m-1 transition-colors cursor-pointer" title="${escapeHtml(window._t('title.duplicate'))}"><svg aria-hidden="true" class="w-4 h-4 pointer-events-none"><use href="#icon-copy"></use></svg></button>
+          <button data-action="deleteRecord" data-id="${item.id}" aria-label="${escapeHtml(window._t('title.delete'))}" class="text-slate-300 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 rounded transition-colors text-xl sm:text-2xl leading-none p-1.5 sm:p-2 -m-1 cursor-pointer" title="${escapeHtml(window._t('title.delete'))}">&times;</button>
         </div>
       `;
-      }
+        }
 
-      const memoEditable = isLocked ? 'false' : 'true';
-      const amountDisabled = isLocked ? 'disabled' : '';
+        const memoEditable = isLocked ? 'false' : 'true';
+        const amountDisabled = isLocked ? 'disabled' : '';
 
-      return `
+        return `
       <div class="flex justify-between items-center px-4 sm:px-8 py-3 sm:py-3.5 border-b border-slate-50 group/item transition-colors ${isLocked ? 'bg-slate-100/30 opacity-75' : isCollection ? 'bg-slate-50/60' : 'hover:bg-slate-50/80'}">
         <div class="flex items-center flex-1 min-w-0">
           ${dateDisp}
@@ -2787,13 +2813,16 @@ function updateOrCreateBlockElement(block, existingEl = null) {
           <span data-id="${item.id}" data-empty="✎ ${escapeHtml(emptyMemoText)}" data-field="memo" contenteditable="${memoEditable}" data-action-input="setDirtyContentEditable" data-action-paste="handlePlainTextPaste" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="${isLocked ? 'text-slate-400 cursor-not-allowed' : isCollection ? 'text-slate-500' : 'text-blue-950'} font-medium truncate outline-none focus:bg-blue-50 focus:ring-2 focus:ring-blue-200 px-1 rounded cursor-text transition-colors empty:inline-block empty:min-w-12 empty:bg-slate-100 empty:before:text-slate-400 empty:before:text-xs empty:before:font-normal empty:before:pointer-events-none empty:focus:before:opacity-50 ${memoEmptyClass}">${formatMemoHtml(item.memo)}</span>
         </div>
         <div class="flex items-center space-x-1.5 sm:space-x-4 ml-2 sm:ml-auto shrink-0">
-          <input type="text" data-id="${item.id}" data-field="amount" inputmode="decimal" placeholder="0" title="${isLocked ? 'Exported & Locked' : 'Supports math (e.g. 150 EUR * 1.08)'}" value="${item.amount !== null && item.amount !== '' && item.amount !== undefined ? formatCurrency(item.amount, block.currency || 'USD') : ''}" ${amountDisabled} data-action-input="setDirty" data-action-focus="select" data-action-paste="handlePlainTextPaste" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="bg-transparent border-0 p-0 font-medium tabular-nums tracking-tight ${isLocked ? 'text-slate-400 cursor-not-allowed' : isCollection ? 'text-slate-400' : 'text-blue-950'} text-right outline-none focus:bg-blue-50 focus:ring-2 focus:ring-blue-200 px-1 rounded cursor-text transition-colors w-[50px] sm:w-[80px]">
+          <input type="text" data-id="${item.id}" data-field="amount" inputmode="decimal" placeholder="0" title="${isLocked ? lockedTitle : escapeHtml(window._t('tooltip.amount_math'))}" value="${item.amount !== null && item.amount !== '' && item.amount !== undefined ? formatCurrency(item.amount, block.currency || 'USD') : ''}" ${amountDisabled} data-action-input="setDirty" data-action-focus="select" data-action-paste="handlePlainTextPaste" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="bg-transparent border-0 p-0 font-medium tabular-nums tracking-tight ${isLocked ? 'text-slate-400 cursor-not-allowed' : isCollection ? 'text-slate-400' : 'text-blue-950'} text-right outline-none focus:bg-blue-50 focus:ring-2 focus:ring-blue-200 px-1 rounded cursor-text transition-colors w-[50px] sm:w-[80px]">
           ${actionButtonsHtml}
         </div>
       </div>
     `;
-    })
-    .join('');
+      })
+      .join('');
+  const newItemsHtml = isCollapsed ? '' : buildItemsHtml();
+  blockEl._buildItemsHtml = buildItemsHtml;
+  blockEl._itemsLazy = isCollapsed;
 
   if (isNew) {
     blockEl.innerHTML = `
@@ -2812,15 +2841,21 @@ function updateOrCreateBlockElement(block, existingEl = null) {
         </div>
       </div>
     `;
+    blockEl._headerHtml = headerHtml;
+    blockEl._itemsHtml = newItemsHtml;
   } else {
+    // Compare with the HTML we generated last time; innerHTML is normalized by the browser
+    // and never matches, which rebuilt every block on every render
     const headerContainer = blockEl.querySelector('.block-header-container');
-    if (headerContainer && headerContainer.innerHTML !== headerHtml) {
+    if (headerContainer && blockEl._headerHtml !== headerHtml) {
       headerContainer.innerHTML = headerHtml;
+      blockEl._headerHtml = headerHtml;
     }
 
     const itemsContainer = blockEl.querySelector('.items-container');
-    if (itemsContainer && itemsContainer.innerHTML !== newItemsHtml) {
+    if (itemsContainer && blockEl._itemsHtml !== newItemsHtml) {
       itemsContainer.innerHTML = newItemsHtml;
+      blockEl._itemsHtml = newItemsHtml;
     }
 
     const bodyEl = blockEl.querySelector(`#block-body-${block.id}`);
@@ -3385,6 +3420,7 @@ async function processFileHandle(handle, isDummy = false) {
     lastUsedDates = {};
     lastUsedAccounts = {};
     collapsedBlocks.clear();
+    expandedItemBlocks.clear();
     window.currentActiveMonths = null;
     currentDisplayedTotal = 0;
 
@@ -4929,6 +4965,8 @@ function filterByTag(tagName) {
   if (data && data.items.length > 0) showTagModal(`#${tagName}`, data);
 }
 
+const MAX_TAG_MODAL_ROWS = 100;
+
 function showTagModal(tag, data) {
   window.isSystemModalOpen = true;
   const modal = document.getElementById('tag-modal');
@@ -4944,25 +4982,32 @@ function showTagModal(tag, data) {
   document.getElementById('tag-modal-total').innerHTML = amountHtml;
 
   const tbody = document.getElementById('tag-modal-body');
-  tbody.innerHTML = '';
   const sortedItems = [...data.items].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const isMonthFirst = ['en', 'ja'].includes((window.I18n && window.I18n.getLang()) || 'en');
 
-  sortedItems.forEach((item) => {
-    let dateDisp = window._t('label.no_date');
+  // Cap rows; building thousands of rows at once stalls the UI
+  const rowsHtml = sortedItems.slice(0, MAX_TAG_MODAL_ROWS).map((item) => {
+    let dateDisp = escapeHtml(window._t('label.no_date'));
     if (item.date) {
       const parts = item.date.split(' ')[0].split('-');
-      if (parts.length === 3) dateDisp = `${escapeHtml(parts[1])}/${escapeHtml(parts[2])}`;
+      if (parts.length === 3) {
+        const [, m, d] = parts.map(escapeHtml);
+        dateDisp = isMonthFirst ? `${m}/${d}` : `${d}/${m}`;
+      }
     }
-    const c = item.currency || 'USD';
-    const amountStr = formatCurrencyAmount(item.amount, c);
-    tbody.innerHTML += `
+    const amountStr = formatCurrencyAmount(item.amount, item.currency || 'USD');
+    return `
       <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
         <td class="py-4 px-6 w-20 text-xs text-slate-400 font-mono">${dateDisp}</td>
         <td class="py-4 px-4 text-slate-700 font-medium">${escapeHtml(item.memo)}</td>
         <td class="py-4 px-6 text-right tabular-nums tracking-tight font-bold text-slate-600">${amountStr}</td>
-      </tr>
-    `;
+      </tr>`;
   });
+  if (sortedItems.length > MAX_TAG_MODAL_ROWS) {
+    rowsHtml.push(`
+      <tr><td colspan="3" class="py-3 px-6 text-center text-xs text-slate-400">${escapeHtml(window._t('label.more_items', sortedItems.length - MAX_TAG_MODAL_ROWS))}</td></tr>`);
+  }
+  tbody.innerHTML = rowsHtml.join('');
 
   modal.classList.remove('hidden');
   modal.classList.add('flex');
@@ -5529,7 +5574,10 @@ document.addEventListener('click', (e) => {
     else if (action === 'deleteRecord') deleteRecord(target.getAttribute('data-id'));
     else if (action === 'saveTemplate') saveTemplate(target.getAttribute('data-id'));
     else if (action === 'toggleBlock') toggleBlock(target.getAttribute('data-id'));
-    else if (action === 'sortBlockByDate') sortBlockByDate(target.getAttribute('data-id'));
+    else if (action === 'showAllItems') {
+      expandedItemBlocks.add(parseInt(target.getAttribute('data-id'), 10));
+      renderData();
+    } else if (action === 'sortBlockByDate') sortBlockByDate(target.getAttribute('data-id'));
     else if (action === 'adjustDate')
       adjustDate(target, parseInt(target.getAttribute('data-delta'), 10));
     else if (action === 'moveCustomDictItem')
@@ -5608,6 +5656,19 @@ document.addEventListener('submit', (e) => {
     }
   }
 });
+
+// A block the user edits no longer matches its cached HTML; force the next render to rebuild it
+function invalidateBlockCache(el) {
+  const blockEl = el && el.closest ? el.closest('.group\\/block') : null;
+  if (blockEl) {
+    blockEl._headerHtml = null;
+    blockEl._itemsHtml = null;
+  }
+}
+
+document.addEventListener('input', (e) => invalidateBlockCache(e.target), true);
+document.addEventListener('change', (e) => invalidateBlockCache(e.target), true);
+document.addEventListener('focusin', (e) => invalidateBlockCache(e.target), true);
 
 document.addEventListener('input', (e) => {
   if (!e.isTrusted && e.detail !== 'custom-paste') return;
