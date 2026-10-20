@@ -474,6 +474,9 @@ function prefersEuropeanNumberFormat() {
 // Convert EU/US/JP digit grouping to a plain decimal (1.234,56 / 1,234.56 -> 1234.56)
 function normalizeNumberSeparators(expr) {
   const european = prefersEuropeanNumberFormat();
+  // A separator is digit grouping only in groups of three (1,234,567); any other pattern is left
+  // unchanged so that evaluation or the CSV check rejects it instead of reading a wrong amount
+  const grouped = (text, sep) => new RegExp(`^\\d{1,3}(\\${sep}\\d{3})+$`).test(text);
   return expr.replace(/(?:\d+[.,])+\d+/g, (match) => {
     // Leading zero means a decimal fraction (0,500 -> 0.500), never thousands
     if (/^0[.,]/.test(match)) {
@@ -484,24 +487,32 @@ function normalizeNumberSeparators(expr) {
     const lastDot = match.lastIndexOf('.');
 
     if (lastComma > lastDot && lastDot !== -1) {
-      return match.replace(/\./g, '').replace(/,/g, '.');
+      const integerPart = match.slice(0, lastComma);
+      return grouped(integerPart, '.')
+        ? integerPart.replace(/\./g, '') + '.' + match.slice(lastComma + 1)
+        : match;
     }
     if (lastDot > lastComma && lastComma !== -1) {
-      return match.replace(/,/g, '');
+      const integerPart = match.slice(0, lastDot);
+      return grouped(integerPart, ',')
+        ? integerPart.replace(/,/g, '') + match.slice(lastDot)
+        : match;
     }
     if (lastComma !== -1) {
       const commaCount = (match.match(/,/g) || []).length;
       if (european) {
-        if (commaCount > 1) return match.replace(/,/g, '');
+        if (commaCount > 1) return grouped(match, ',') ? match.replace(/,/g, '') : match;
         return match.replace(/,/g, '.');
       }
-      if (/,\d{3}$/.test(match)) return match.replace(/,/g, '');
+      if (commaCount > 1 || /,\d{3}$/.test(match)) {
+        return grouped(match, ',') ? match.replace(/,/g, '') : match;
+      }
       return match.replace(/,/g, '.');
     }
 
     const dotCount = (match.match(/\./g) || []).length;
-    if (dotCount > 1) return match.replace(/\./g, '');
-    if (european && /\.\d{3}$/.test(match)) return match.replace(/\./g, '');
+    if (dotCount > 1) return grouped(match, '.') ? match.replace(/\./g, '') : match;
+    if (european && /\.\d{3}$/.test(match) && grouped(match, '.')) return match.replace(/\./g, '');
     return match;
   });
 }
@@ -4334,7 +4345,8 @@ async function executeCSVImport() {
       const unmarkedAmount = normalizeNumberSeparators(normalizedAmount)
         .replace(AMOUNT_CURRENCY_TOKENS, '')
         .replace(/\s+/g, '');
-      const amountStr = /[^\d.\-]/.test(unmarkedAmount) ? '' : unmarkedAmount;
+      const hasStrayText = /[^\d.\-]/.test(unmarkedAmount) || (unmarkedAmount.match(/\./g) || []).length > 1;
+      const amountStr = hasStrayText ? '' : unmarkedAmount;
       const isInvalidHyphen =
         (amountStr.match(/-/g) || []).length > 1 ||
         (amountStr.includes('-') && !amountStr.startsWith('-') && !amountStr.endsWith('-'));
