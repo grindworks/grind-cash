@@ -205,8 +205,6 @@ export default {
   'alert.no_export_data': 'Aucune donnée à exporter.',
   'alert.unsupported_file_type':
     'Type de fichier non pris en charge. Veuillez déposer un fichier de type .cash, .grind ou .csv.',
-  'export.generic_headers':
-    '"ID","Date","Compte","Montant","Devise","Taux de taxe","Libellé","Nom du bloc"',
   'prompt.ai_template':
     "Vous êtes un excellent assistant de conversion de données.\nAnalysez le \"sample CSV d'un logiciel de comptabilité inconnu\" que je vais vous présenter, et indiquez-moi le \"mappage des colonnes\" pour l'importer dans GrindCash (une application de gestion de trésorerie).\n\nLes quatre champs de données requis par GrindCash pour l'importation sont :\n- Date\n- Compte (Optionnel)\n- Libellé / Description\n- Montant\n\nJe vais coller le sample CSV ci-dessous. Veuillez l'analyser et m'indiquer quelle colonne (indexée à partir de 1, depuis la gauche) correspond à chacun des quatre champs ci-dessus.\n\n[Collez votre sample CSV ici]",
   'markdown.title': '## Données exportées (Markdown)\n\n',
@@ -314,6 +312,15 @@ export default {
   'btn.undo': 'Annuler',
   'toast.undone': 'Enregistrements supprimés restaurés',
   'toast.undo_failed': 'Impossible de restaurer les enregistrements supprimés.',
+  'confirm.lock_exported':
+    'Verrouiller les {0} enregistrement(s) exporté(s) ?\nLes enregistrements verrouillés ne sont modifiables qu’après déverrouillage depuis la palette de commandes.\n(Choisissez Annuler si le téléchargement a échoué)',
+  'toast.exported_locked': '{0} enregistrement(s) exporté(s) et verrouillé(s)',
+  'error.lock_failed': 'Impossible de verrouiller les enregistrements exportés.',
+  'alert.no_locked_records': 'Aucun enregistrement verrouillé.',
+  'confirm.unlock_exported':
+    'Déverrouiller les {0} enregistrement(s) exporté(s) ?\nIls seront de nouveau inclus dans les exports « non exportés uniquement ».',
+  'toast.unlocked': '{0} enregistrement(s) déverrouillé(s)',
+  'cmd.unlock_title': 'Déverrouiller les enregistrements exportés',
   'cmd.calc_hint': '(Entrée pour appliquer / copier)',
   'confirm.delete_block': 'Supprimer ce bloc et ses {0} élément(s) ?',
   'confirm.restore_draft':

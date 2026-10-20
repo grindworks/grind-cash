@@ -203,8 +203,6 @@ export default {
   'alert.no_export_data': 'No hay datos para exportar.',
   'alert.unsupported_file_type':
     'Tipo de archivo no soportado. Por favor, suelte un archivo de tipo .cash, .grind o .csv.',
-  'export.generic_headers':
-    '"ID","Fecha","Cuenta","Cantidad","Moneda","Tasa de impuestos","Descripción","Nombre del bloque"',
   'prompt.ai_template':
     'Eres un excelente asistente de conversión de datos.\nAnaliza el "sample CSV de un software de contabilidad desconocido" que te presentaré, e indícame la "asignación de columnas" para importarlo a GrindCash (una aplicación de gestión de efectivo).\n\nLos cuatro campos de datos requeridos por GrindCash para la importación son:\n- Fecha\n- Cuenta (Opcional)\n- Descripción\n- Cantidad\n\nPegaré el sample CSV a continuación. Por favor, analízalo e indícame qué columna (indexada desde 1, desde la izquierda) corresponde a cada uno de los cuatro campos anteriores.\n\n[Pega tu sample CSV aquí]',
   'markdown.title': '## Datos exportados (Markdown)\n\n',
@@ -311,6 +309,15 @@ export default {
   'btn.undo': 'Deshacer',
   'toast.undone': 'Registros eliminados restaurados',
   'toast.undo_failed': 'No se pudieron restaurar los registros eliminados.',
+  'confirm.lock_exported':
+    '¿Bloquear los {0} registro(s) exportado(s)?\nLos registros bloqueados no se pueden editar hasta desbloquearlos desde la paleta de comandos.\n(Elija Cancelar si la descarga falló)',
+  'toast.exported_locked': '{0} registro(s) exportado(s) y bloqueado(s)',
+  'error.lock_failed': 'No se pudieron bloquear los registros exportados.',
+  'alert.no_locked_records': 'No hay registros bloqueados.',
+  'confirm.unlock_exported':
+    '¿Desbloquear los {0} registro(s) exportado(s)?\nVolverán a incluirse en las exportaciones de «solo no exportados».',
+  'toast.unlocked': '{0} registro(s) desbloqueado(s)',
+  'cmd.unlock_title': 'Desbloquear registros exportados',
   'cmd.calc_hint': '(Intro para aplicar / copiar)',
   'confirm.delete_block': '¿Eliminar este bloque y sus {0} elemento(s)?',
   'confirm.restore_draft':

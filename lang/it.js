@@ -203,8 +203,6 @@ export default {
   'alert.no_export_data': 'Nessun dato da esportare.',
   'alert.unsupported_file_type':
     'Tipo di file non supportato. Trascina un file di tipo .cash, .grind o .csv.',
-  'export.generic_headers':
-    '"ID","Data","Conto","Importo","Valuta","Aliquota fiscale","Descrizione","Nome blocco"',
   'prompt.ai_template':
     'Sei un eccellente assistente per la conversione dei dati.\nAnalizza il "sample CSV di un software di contabilità sconosciuto" che ti presenterò e indicami la "mappatura delle colonne" per importarlo in GrindCash (un\'applicazione per la gestione della cassa).\n\nI quattro campi dati richiesti da GrindCash per l\'importazione sono:\n- Data\n- Conto (Opzionale)\n- Descrizione\n- Importo\n\nIncollerò il sample CSV qui sotto. Analizzalo e indicami quale colonna (indicizzata a partire da 1, da sinistra) corrisponde a ciascuno dei quattro campi sopra descritti.\n\n[Incolla qui il tuo sample CSV]',
   'markdown.title': '## Dati esportati (Markdown)\n\n',
@@ -311,6 +309,15 @@ export default {
   'btn.undo': 'Annulla',
   'toast.undone': 'Record eliminati ripristinati',
   'toast.undo_failed': 'Impossibile ripristinare i record eliminati.',
+  'confirm.lock_exported':
+    'Bloccare i {0} record esportati?\nI record bloccati non sono modificabili finché non li sblocchi dalla palette dei comandi.\n(Scegli Annulla se il download non è riuscito)',
+  'toast.exported_locked': '{0} record esportato/i e bloccato/i',
+  'error.lock_failed': 'Impossibile bloccare i record esportati.',
+  'alert.no_locked_records': 'Non ci sono record bloccati.',
+  'confirm.unlock_exported':
+    'Sbloccare tutti i {0} record esportati?\nVerranno di nuovo inclusi nelle esportazioni «solo non esportati».',
+  'toast.unlocked': '{0} record sbloccato/i',
+  'cmd.unlock_title': 'Sblocca i record esportati',
   'cmd.calc_hint': '(Invio per applicare / copiare)',
   'confirm.delete_block': 'Eliminare questo blocco e i suoi {0} elemento/i?',
   'confirm.restore_draft':

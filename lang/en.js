@@ -197,8 +197,6 @@ export default {
   'alert.no_export_data': 'No data to export.',
   'alert.unsupported_file_type':
     'Unsupported file type. Please drop a file of type .cash, .grind, or .csv.',
-  'export.generic_headers':
-    '"ID","Date","Account","Amount","Currency","Tax Rate","Memo","Block Name"',
   'prompt.ai_template':
     'You are an excellent data conversion assistant.\nAnalyze the "sample CSV of an unknown accounting software" that I will present to you, and tell me the "column mapping" to import it into GrindCash (a cash management app).\n\nThe four data fields required by GrindCash for import are:\n- Date\n- Account (Optional)\n- Memo / Description\n- Amount\n\nI will paste the sample CSV below. Please analyze and tell me which column (1-indexed, from the left) corresponds to each of the four fields above.\n\n[Paste your sample CSV here]',
   'markdown.title': '## Exported Data (Markdown)\n\n',
@@ -301,6 +299,15 @@ export default {
   'btn.undo': 'Undo',
   'toast.undone': 'Restored the deleted records',
   'toast.undo_failed': 'Could not restore the deleted records.',
+  'confirm.lock_exported':
+    'Lock the {0} exported record(s)?\nLocked records cannot be edited until you unlock them from the Command Palette.\n(Choose Cancel if the download failed)',
+  'toast.exported_locked': 'Exported and locked {0} record(s)',
+  'error.lock_failed': 'Could not lock the exported records.',
+  'alert.no_locked_records': 'There are no locked records.',
+  'confirm.unlock_exported':
+    'Unlock all {0} exported record(s)?\nThey will be included again in "unexported only" exports.',
+  'toast.unlocked': 'Unlocked {0} record(s)',
+  'cmd.unlock_title': 'Unlock Exported Records',
   'cmd.calc_hint': '(Enter to apply / copy)',
   'confirm.delete_block': 'Delete this block and its {0} item(s)?',
   'confirm.restore_draft': 'Unsaved backup data from your last session was found.\n\nRestore it?',

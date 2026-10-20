@@ -203,8 +203,6 @@ export default {
   'alert.no_export_data': 'Keine Daten zum Exportieren.',
   'alert.unsupported_file_type':
     'Nicht unterstützter Dateityp. Bitte ziehen Sie eine Datei vom Typ .cash, .grind oder .csv.',
-  'export.generic_headers':
-    '"ID","Datum","Konto","Betrag","Währung","Steuersatz","Notiz","Blockname"',
   'prompt.ai_template':
     'Sie sind ein hervorragender Datenkonvertierungs-Assistent.\nAnalysieren Sie die "Beispiel-CSV einer unbekannten Buchhaltungssoftware", die ich Ihnen präsentieren werde, und nennen Sie mir die "Spaltenzuordnung", um sie in GrindCash (eine Cash-Management-App) zu importieren.\n\nDie vier von GrindCash für den Import benötigten Datenfelder sind:\n- Datum\n- Konto (Optional)\n- Notiz / Beschreibung\n- Betrag\n\nIch werde die Beispiel-CSV unten einfügen. Bitte analysieren Sie sie und sagen Sie mir, welche Spalte (1-basiert, von links) jedem der vier oben genannten Felder entspricht.\n\n[Fügen Sie hier Ihre Beispiel-CSV ein]',
   'markdown.title': '## Exportierte Daten (Markdown)\n\n',
@@ -311,6 +309,15 @@ export default {
   'btn.undo': 'Rückgängig',
   'toast.undone': 'Gelöschte Datensätze wiederhergestellt',
   'toast.undo_failed': 'Die gelöschten Datensätze konnten nicht wiederhergestellt werden.',
+  'confirm.lock_exported':
+    'Die {0} exportierten Datensätze sperren?\nGesperrte Datensätze können erst nach dem Entsperren über die Befehlspalette bearbeitet werden.\n(Wählen Sie Abbrechen, wenn der Download fehlgeschlagen ist)',
+  'toast.exported_locked': '{0} Datensatz/Datensätze exportiert und gesperrt',
+  'error.lock_failed': 'Die exportierten Datensätze konnten nicht gesperrt werden.',
+  'alert.no_locked_records': 'Es gibt keine gesperrten Datensätze.',
+  'confirm.unlock_exported':
+    'Alle {0} exportierten Datensätze entsperren?\nSie werden bei „nur nicht exportierte“ wieder exportiert.',
+  'toast.unlocked': '{0} Datensatz/Datensätze entsperrt',
+  'cmd.unlock_title': 'Exportierte Datensätze entsperren',
   'cmd.calc_hint': '(Enter zum Übernehmen / Kopieren)',
   'confirm.delete_block': 'Diesen Block und seine {0} Position(en) löschen?',
   'confirm.restore_draft':

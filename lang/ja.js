@@ -199,7 +199,6 @@ export default {
   'alert.no_export_data': 'エクスポートするデータがありません。',
   'alert.unsupported_file_type':
     'サポートされていないファイルです。.cash、.grind または .csv 形式のファイルをドロップしてください。',
-  'export.generic_headers': '"ID","日付","勘定科目","金額","通貨","税率","摘要","ブロック名"',
   'prompt.ai_template':
     'あなたは優秀なデータ変換アシスタントです。\n私から提示する『未知の会計ソフトのサンプルCSV』を解析し、GrindCash（お金管理アプリ）に取り込むための『列の割り当て（マッピング）』を教えてください。\n\nGrindCashがインポートで必要とするデータは以下の4つです：\n・日付\n・勘定科目 (任意)\n・摘要 または メモ\n・金額\n\n以下の枠内にサンプルCSVを貼り付けるので、上記の4つがそれぞれ「左から何列目」にあるかを解析して教えてください。\n\n[ここにサンプルCSVを貼り付けてください]',
   'markdown.title': '## 出力データ (Markdown)\n\n',
@@ -304,6 +303,15 @@ export default {
   'btn.undo': '元に戻す',
   'toast.undone': '削除した明細を元に戻しました',
   'toast.undo_failed': '削除した明細を元に戻せませんでした。',
+  'confirm.lock_exported':
+    'エクスポートした {0} 件をロックしますか？\nロックした明細は、コマンドパレットから解除するまで編集できません。\n（ダウンロードに失敗した場合はキャンセルしてください）',
+  'toast.exported_locked': '{0} 件をエクスポートしてロックしました',
+  'error.lock_failed': 'エクスポートした明細をロックできませんでした。',
+  'alert.no_locked_records': 'ロック中の明細はありません。',
+  'confirm.unlock_exported':
+    'エクスポート済みの {0} 件のロックをすべて解除しますか？\n「未エクスポートのみ」の書き出しに再び含まれます。',
+  'toast.unlocked': '{0} 件のロックを解除しました',
+  'cmd.unlock_title': 'エクスポート済みのロックを解除',
   'cmd.calc_hint': '（Enterで入力 / コピー）',
   'confirm.delete_block': 'このブロックと含まれる {0} 件の明細を削除しますか？',
   'confirm.restore_draft':

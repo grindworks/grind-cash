@@ -3722,11 +3722,8 @@ async function exportCSV(format = 'generic') {
     // QuickBooks Online standard Bank Feed header
     csvRows.push('"Date","Description","Amount"');
   } else {
-    // Generic format
-    const genericHeaders =
-      window._t('export.generic_headers') ||
-      '"ID","Date","Account","Amount","Currency","Tax Rate","Memo","Block Name"';
-    csvRows.push(genericHeaders);
+    // Keep the generic header fixed so files read the same in every UI language
+    csvRows.push('"ID","Date","Account","Amount","Currency","Tax Rate","Memo","Block Name"');
   }
 
   // 2. Map data
@@ -3809,34 +3806,50 @@ async function exportCSV(format = 'generic') {
 
   triggerDownload(blob, `GrindCash_${formatName}_${dateSuffix}.csv`);
 
-  // Lock exported records only after the download has started
+  // The browser does not report whether the download succeeded, so ask before locking
   if (unexportedOnly) {
-    const exportedIds = values.map((row) => row[0]); // Array of c.id
-    if (exportedIds.length > 0) {
+    const exportedIds = values.map((row) => row[0]);
+    if (
+      exportedIds.length > 0 &&
+      (await requestConfirm(window._t('confirm.lock_exported', exportedIds.length)))
+    ) {
       db.run('BEGIN TRANSACTION;');
       let updateStmt;
       try {
         updateStmt = db.prepare('UPDATE records SET is_exported = 1 WHERE id = ?');
-        exportedIds.forEach((id) => {
-          updateStmt.run([id]);
-        });
+        exportedIds.forEach((id) => updateStmt.run([id]));
         db.run('COMMIT;');
         setDirty(true);
-
-        // Update UI to lock state
         renderData();
         showToast(
-          `Exported ${exportedIds.length} items & Locked.`,
+          window._t('toast.exported_locked', exportedIds.length),
           '<span class="text-green-400">🔒</span>',
         );
       } catch (e) {
         db.run('ROLLBACK;');
         console.error('Failed to update export status:', e);
+        await showAlert(window._t('error.lock_failed'));
       } finally {
         if (updateStmt) updateStmt.free();
       }
     }
   }
+}
+
+// Clear the exported lock so records can be corrected and exported again
+async function unlockExportedRecords() {
+  if (!db) return;
+  const res = db.exec('SELECT COUNT(*) FROM records WHERE is_exported = 1');
+  const count = res.length > 0 ? res[0].values[0][0] : 0;
+  if (count === 0) {
+    await showAlert(window._t('alert.no_locked_records'));
+    return;
+  }
+  if (!(await requestConfirm(window._t('confirm.unlock_exported', count)))) return;
+  db.run('UPDATE records SET is_exported = 0 WHERE is_exported = 1');
+  setDirty(true);
+  renderData();
+  showToast(window._t('toast.unlocked', count), '<span class="text-blue-400">🔓</span>');
 }
 
 async function importCSV(event) {
@@ -4503,6 +4516,12 @@ function getCommandsList() {
       icon: '<svg aria-hidden="true" class="w-5 h-5"><use href="#icon-export"></use></svg>',
       title: window._t('cmd.export_title'),
       action: showExportModal,
+    },
+    {
+      id: 'unlock',
+      icon: '<svg aria-hidden="true" class="w-5 h-5"><use href="#icon-lock"></use></svg>',
+      title: window._t('cmd.unlock_title'),
+      action: unlockExportedRecords,
     },
     {
       id: 'editdict',
