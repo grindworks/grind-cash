@@ -300,7 +300,12 @@ export default {
   'label.more_items': '…ほか {0} 件',
   'prompt.tpl_default_name': '{0}（テンプレート）',
   'prompt.input_title': '入力',
+  'toast.deleted': '{0} 件を削除しました',
+  'btn.undo': '元に戻す',
+  'toast.undone': '削除した明細を元に戻しました',
+  'toast.undo_failed': '削除した明細を元に戻せませんでした。',
   'cmd.calc_hint': '（Enterで入力 / コピー）',
+  'confirm.delete_block': 'このブロックと含まれる {0} 件の明細を削除しますか？',
   'confirm.restore_draft':
     '⚠️ 前回終了時の未保存データ（バックアップ）が見つかりました。\n\n復元しますか？',
 };

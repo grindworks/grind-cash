@@ -307,7 +307,12 @@ export default {
   'label.more_items': '…e altri {0}',
   'prompt.tpl_default_name': '{0} (Modello)',
   'prompt.input_title': 'Inserimento',
+  'toast.deleted': '{0} record eliminato/i',
+  'btn.undo': 'Annulla',
+  'toast.undone': 'Record eliminati ripristinati',
+  'toast.undo_failed': 'Impossibile ripristinare i record eliminati.',
   'cmd.calc_hint': '(Invio per applicare / copiare)',
+  'confirm.delete_block': 'Eliminare questo blocco e i suoi {0} elemento/i?',
   'confirm.restore_draft':
     'Sono stati trovati dati di backup non salvati della sessione precedente.\n\nRipristinarli?',
 };

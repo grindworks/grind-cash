@@ -307,7 +307,12 @@ export default {
   'label.more_items': '…y {0} más',
   'prompt.tpl_default_name': '{0} (Plantilla)',
   'prompt.input_title': 'Entrada',
+  'toast.deleted': '{0} registro(s) eliminado(s)',
+  'btn.undo': 'Deshacer',
+  'toast.undone': 'Registros eliminados restaurados',
+  'toast.undo_failed': 'No se pudieron restaurar los registros eliminados.',
   'cmd.calc_hint': '(Intro para aplicar / copiar)',
+  'confirm.delete_block': '¿Eliminar este bloque y sus {0} elemento(s)?',
   'confirm.restore_draft':
     'Se encontraron datos de copia de seguridad no guardados de su última sesión.\n\n¿Restaurarlos?',
 };

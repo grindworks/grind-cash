@@ -310,7 +310,12 @@ export default {
   'label.more_items': '…et {0} de plus',
   'prompt.tpl_default_name': '{0} (Modèle)',
   'prompt.input_title': 'Saisie',
+  'toast.deleted': '{0} enregistrement(s) supprimé(s)',
+  'btn.undo': 'Annuler',
+  'toast.undone': 'Enregistrements supprimés restaurés',
+  'toast.undo_failed': 'Impossible de restaurer les enregistrements supprimés.',
   'cmd.calc_hint': '(Entrée pour appliquer / copier)',
+  'confirm.delete_block': 'Supprimer ce bloc et ses {0} élément(s) ?',
   'confirm.restore_draft':
     'Des données de sauvegarde non enregistrées de votre dernière session ont été trouvées.\n\nLes restaurer ?',
 };

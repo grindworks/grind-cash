@@ -297,6 +297,11 @@ export default {
   'label.more_items': '…and {0} more',
   'prompt.tpl_default_name': '{0} (Template)',
   'prompt.input_title': 'Input',
+  'toast.deleted': 'Deleted {0} record(s)',
+  'btn.undo': 'Undo',
+  'toast.undone': 'Restored the deleted records',
+  'toast.undo_failed': 'Could not restore the deleted records.',
   'cmd.calc_hint': '(Enter to apply / copy)',
+  'confirm.delete_block': 'Delete this block and its {0} item(s)?',
   'confirm.restore_draft': 'Unsaved backup data from your last session was found.\n\nRestore it?',
 };

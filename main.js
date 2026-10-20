@@ -3058,36 +3058,112 @@ async function insertTemplate(templateId) {
 }
 
 async function deleteRecord(id) {
-  if (!(await requestConfirm(window._t('confirm.delete_record')))) return;
+  const recordId = parseInt(id, 10);
+  let childCount = 0;
+  let isBlock = false;
+  let metaStmt;
+  try {
+    metaStmt = db.prepare(
+      'SELECT parent_id IS NULL, (SELECT COUNT(*) FROM records WHERE parent_id = ?) FROM records WHERE id = ?',
+    );
+    metaStmt.bind([recordId, recordId]);
+    if (metaStmt.step()) {
+      const [blockFlag, count] = metaStmt.get();
+      isBlock = !!blockFlag;
+      childCount = count || 0;
+    }
+  } finally {
+    if (metaStmt) metaStmt.free();
+  }
+
+  const confirmMsg =
+    isBlock && childCount > 0
+      ? window._t('confirm.delete_block', childCount)
+      : window._t('confirm.delete_record');
+  if (!(await requestConfirm(confirmMsg))) return;
 
   let checkStmt;
   try {
     checkStmt = db.prepare(
       'SELECT COUNT(*) FROM records WHERE (id = ? OR parent_id = ?) AND is_exported = 1',
     );
-    checkStmt.bind([id, id]);
+    checkStmt.bind([recordId, recordId]);
     if (checkStmt.step() && checkStmt.get()[0] > 0) {
-      await showAlert(
-        window._t('alert.cannot_delete_locked') ||
-          'Cannot delete. This block contains records that have already been exported and locked.',
-      );
+      await showAlert(window._t('alert.cannot_delete_locked'));
       return;
     }
   } finally {
     if (checkStmt) checkStmt.free();
   }
 
+  const snapshot = snapshotRecords(recordId);
   let stmt;
   try {
     stmt = db.prepare('DELETE FROM records WHERE id = ? OR parent_id = ?');
-    stmt.run([id, id]);
+    stmt.run([recordId, recordId]);
   } finally {
     if (stmt) stmt.free();
   }
-  collapsedBlocks.delete(id);
-  delete lastUsedDates[id];
+  collapsedBlocks.delete(recordId);
+  expandedItemBlocks.delete(recordId);
+  delete lastUsedDates[recordId];
+  delete lastUsedAccounts[recordId];
   setDirty(true);
   renderData();
+
+  lastDeletedSnapshot = snapshot;
+  showToast(
+    `<span>${escapeHtml(window._t('toast.deleted', snapshot.rows.length))}</span>
+     <button type="button" id="toast-undo-btn" class="ml-2 font-bold underline cursor-pointer">${escapeHtml(window._t('btn.undo'))}</button>`,
+    '<span class="text-red-400">🗑️</span>',
+    { rawHtml: true, duration: UNDO_TOAST_MS },
+  );
+}
+
+const UNDO_TOAST_MS = 8000;
+let lastDeletedSnapshot = null;
+
+// Copy every column of a record and its children so a delete can be undone with the same ids
+function snapshotRecords(recordId) {
+  const columns = db.exec('PRAGMA table_info(records)')[0].values.map((col) => col[1]);
+  const rows = [];
+  let stmt;
+  try {
+    stmt = db.prepare(
+      `SELECT ${columns.map((c) => `"${c}"`).join(', ')} FROM records WHERE id = ? OR parent_id = ? ORDER BY parent_id IS NOT NULL, id`,
+    );
+    stmt.bind([recordId, recordId]);
+    while (stmt.step()) rows.push(stmt.get());
+  } finally {
+    if (stmt) stmt.free();
+  }
+  return { columns, rows };
+}
+
+function undoLastDelete() {
+  const snapshot = lastDeletedSnapshot;
+  lastDeletedSnapshot = null;
+  if (!db || !snapshot || snapshot.rows.length === 0) return;
+
+  const placeholders = snapshot.columns.map(() => '?').join(', ');
+  const columnList = snapshot.columns.map((c) => `"${c}"`).join(', ');
+  let stmt;
+  db.run('BEGIN TRANSACTION;');
+  try {
+    stmt = db.prepare(`INSERT INTO records (${columnList}) VALUES (${placeholders})`);
+    snapshot.rows.forEach((row) => stmt.run(row));
+    db.run('COMMIT;');
+  } catch (e) {
+    db.run('ROLLBACK;');
+    console.error('Undo failed:', e);
+    showToast(window._t('toast.undo_failed'), '⚠️');
+    return;
+  } finally {
+    if (stmt) stmt.free();
+  }
+  setDirty(true);
+  renderData();
+  showToast(window._t('toast.undone'), '<span class="text-green-400">↺</span>');
 }
 
 async function sortBlockByDate(blockId) {
@@ -3481,6 +3557,7 @@ async function processFileHandle(handle, isDummy = false) {
 
     lastUsedDates = {};
     lastUsedAccounts = {};
+    lastDeletedSnapshot = null;
     collapsedBlocks.clear();
     expandedItemBlocks.clear();
     window.currentActiveMonths = null;
@@ -5569,6 +5646,11 @@ function getCurrencyOptionsHtml(selected) {
 // Global Event Delegation (CSP Hardening)
 // ==========================================
 document.addEventListener('click', (e) => {
+  if (e.target && e.target.id === 'toast-undo-btn') {
+    e.preventDefault();
+    undoLastDelete();
+    return;
+  }
   const target = e.target.closest('[data-action]');
 
   if (target) {
@@ -5718,6 +5800,36 @@ document.addEventListener('submit', (e) => {
     }
   }
 });
+
+// Keep Tab inside the topmost open dialog
+document.addEventListener(
+  'keydown',
+  (e) => {
+    if (e.key !== 'Tab') return;
+    const dialogs = document.querySelectorAll('[role="dialog"].flex');
+    const dialog = dialogs[dialogs.length - 1];
+    if (!dialog) return;
+    const focusable = Array.from(
+      dialog.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), [contenteditable="true"]',
+      ),
+    ).filter((el) => !el.disabled && el.offsetParent !== null && el.tabIndex !== -1);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!dialog.contains(document.activeElement)) {
+      e.preventDefault();
+      first.focus();
+    } else if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  },
+  true,
+);
 
 // A block the user edits no longer matches its cached HTML; force the next render to rebuild it
 function invalidateBlockCache(el) {
@@ -6019,7 +6131,8 @@ function requestConfirm(message, title = window._t('confirm.title')) {
       if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
-        handleOk();
+        if (document.activeElement === okBtn) handleOk();
+        else handleCancel();
       } else if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();

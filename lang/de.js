@@ -307,7 +307,12 @@ export default {
   'label.more_items': '…und {0} weitere',
   'prompt.tpl_default_name': '{0} (Vorlage)',
   'prompt.input_title': 'Eingabe',
+  'toast.deleted': '{0} Datensatz/Datensätze gelöscht',
+  'btn.undo': 'Rückgängig',
+  'toast.undone': 'Gelöschte Datensätze wiederhergestellt',
+  'toast.undo_failed': 'Die gelöschten Datensätze konnten nicht wiederhergestellt werden.',
   'cmd.calc_hint': '(Enter zum Übernehmen / Kopieren)',
+  'confirm.delete_block': 'Diesen Block und seine {0} Position(en) löschen?',
   'confirm.restore_draft':
     'Ungespeicherte Backup-Daten aus Ihrer letzten Sitzung wurden gefunden.\n\nWiederherstellen?',
 };
