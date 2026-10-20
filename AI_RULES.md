@@ -21,7 +21,7 @@
 
 - Look, top bar, shortcuts, toasts, dialogs, wording and languages follow shared §7 UI. Do not restate them here; add only what differs.
 - Product-specific top-bar controls: UI language, dictionary and base currency selectors, placed before the file password field.
-- Extra UI languages beyond English and Japanese (German, Spanish, French, Italian) stay as shipped; do not add more.
+- UI languages: English, Japanese, German, French, Spanish and Italian, in `lang/`, for overseas users. Do not add or drop a language without asking.
 
 ## 4. Code
 
