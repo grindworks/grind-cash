@@ -5243,14 +5243,29 @@ function closeTagModal() {
   }
 }
 
+const SUPPORTED_LANGS = ['en', 'ja', 'de', 'fr', 'es', 'it'];
+
+// Pick the first browser language the app supports; default to English
+function detectBrowserLang() {
+  const candidates =
+    navigator.languages && navigator.languages.length
+      ? navigator.languages
+      : [navigator.language || 'en'];
+  for (const tag of candidates) {
+    const base = String(tag).slice(0, 2).toLowerCase();
+    if (SUPPORTED_LANGS.includes(base)) return base;
+  }
+  return 'en';
+}
+
 async function initApp() {
-  let savedLang = 'en';
+  let savedLang = null;
   try {
-    savedLang = localStorage.getItem('app_lang') || 'en';
+    savedLang = localStorage.getItem('app_lang');
   } catch (e) {
     console.warn('localStorage is not available:', e);
   }
-  await changeAppLanguage(savedLang);
+  await changeAppLanguage(SUPPORTED_LANGS.includes(savedLang) ? savedLang : detectBrowserLang());
 
   if (!window.isSecureContext) {
     await showAlert(window._t('alert.http_desc'));
