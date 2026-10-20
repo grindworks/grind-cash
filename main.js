@@ -3008,30 +3008,53 @@ async function insertTemplate(templateId) {
     return;
   }
 
-  const baseCurrency =
-    typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
-  db.run('INSERT INTO records (memo, amount, currency) VALUES (?, ?, ?)', [
-    tplName,
-    null,
-    baseCurrency,
-  ]);
-  const parentRes = db.exec('SELECT last_insert_rowid()');
-  const parentId = parentRes[0].values[0][0];
+  // Items follow the block currency; keep the template's currency so amounts keep their meaning
+  const tplCurrency = tplData.find((item) => item && symbolMap[item.currency])?.currency;
+  const blockCurrency = tplCurrency || getDbSetting('baseCurrency', 'USD');
 
   const today = new Date();
   const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')} 00:00:00`;
 
+  let parentId;
   let insertStmt = null;
+  db.run('BEGIN TRANSACTION;');
   try {
+    db.run('INSERT INTO records (memo, amount, currency) VALUES (?, ?, ?)', [
+      tplName,
+      null,
+      blockCurrency,
+    ]);
+    parentId = db.exec('SELECT last_insert_rowid()')[0].values[0][0];
+
     insertStmt = db.prepare(
-      'INSERT INTO records (parent_id, memo, amount, account, created_at, tax_rate, currency) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO records (parent_id, memo, amount, account, created_at, tax_rate, currency, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     );
-    for (let item of tplData) {
-      const safeAmount = item.amount === '' || item.amount === undefined ? null : item.amount;
-      const safeTax = item.tax_rate || '';
-      const safeCur = item.currency || 'USD';
-      insertStmt.run([parentId, item.memo, safeAmount, item.account, dateStr, safeTax, safeCur]);
-    }
+    tplData.forEach((item, index) => {
+      if (!item || typeof item !== 'object') throw new Error('Invalid template item');
+      const numericAmount =
+        item.amount === '' || item.amount === null || item.amount === undefined
+          ? null
+          : Number(item.amount);
+      if (numericAmount !== null && !Number.isFinite(numericAmount)) {
+        throw new Error('Invalid template amount');
+      }
+      insertStmt.run([
+        parentId,
+        item.memo == null ? '' : String(item.memo),
+        numericAmount === null ? null : roundAmount(numericAmount, blockCurrency),
+        item.account == null ? null : String(item.account),
+        dateStr,
+        item.tax_rate ? String(item.tax_rate) : '',
+        blockCurrency,
+        index,
+      ]);
+    });
+    db.run('COMMIT;');
+  } catch (e) {
+    db.run('ROLLBACK;');
+    console.error('Template insert failed:', e);
+    await showAlert(window._t('error.tpl_corrupted'));
+    return;
   } finally {
     if (insertStmt) insertStmt.free();
   }
