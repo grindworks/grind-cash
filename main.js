@@ -5985,9 +5985,13 @@ document.addEventListener('keydown', (e) => {
         e.preventDefault();
         return false;
       } else if (e.key === 'Tab' && !e.shiftKey) {
-        e.preventDefault();
+        // Submit only a complete entry; otherwise let Tab move on so keyboard users can leave
         const form = target.closest('form');
-        if (form && typeof form.requestSubmit === 'function') form.requestSubmit();
+        const memo = form?.querySelector('.item-memo')?.value.trim();
+        if (form && memo && target.value.trim() && typeof form.requestSubmit === 'function') {
+          e.preventDefault();
+          form.requestSubmit();
+        }
       }
     }
   }
