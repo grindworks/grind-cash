@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="light" />
     <title>GrindCash - Serverless Edition</title>
 
     <!-- Meta Description for SEO -->
@@ -141,7 +142,7 @@
   </head>
 
   <body
-    class="min-h-[100dvh] overscroll-none bg-slate-50 font-sans text-slate-900 antialiased transition-colors duration-300 selection:bg-blue-600/30"
+    class="min-h-[100dvh] overscroll-none bg-slate-50 font-sans text-slate-900 antialiased transition-colors duration-300 selection:bg-primary/30"
     style="scrollbar-gutter: stable; overscroll-behavior: none"
   >
     <!-- SEO Fallback for Crawlers -->
@@ -495,7 +496,7 @@
                 id="toc-filter"
                 data-i18n-placeholder="toc.filter"
                 placeholder="Filter index..."
-                class="w-full rounded-md border border-slate-200 bg-slate-100 py-1.5 pr-2 pl-7 text-xs text-slate-700 transition-colors outline-none focus:border-blue-600 focus:bg-white"
+                class="w-full rounded-md border border-slate-200 bg-slate-100 py-1.5 pr-2 pl-7 text-xs text-slate-700 transition-colors outline-none focus:border-primary focus:bg-white"
                 autocomplete="off"
               />
             </div>
@@ -513,9 +514,9 @@
           <!-- Left: Title & File Name -->
           <div class="flex max-w-full min-w-0 shrink-0 flex-col gap-2">
             <h1
-              class="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-blue-950 transition-colors"
+              class="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-slate-900 transition-colors"
             >
-              <span class="text-blue-600"
+              <span class="text-primary"
                 ><svg aria-hidden="true" class="h-6 w-6">
                   <use href="#icon-cash"></use></svg
               ></span>
@@ -540,7 +541,7 @@
             <!-- PWA Install Button -->
             <button
               id="install-button"
-              class="hidden shrink-0 rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700"
+              class="hidden shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-hover"
               data-i18n="btn.install"
             >
               ↓ Install App
@@ -551,7 +552,7 @@
             <select
               id="lang-select"
               data-action="changeAppLanguage"
-              class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 shadow-sm transition-colors outline-none focus:border-blue-600"
+              class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 shadow-sm transition-colors outline-none focus:border-primary"
               data-i18n-title="label.language"
               title="Language"
             >
@@ -570,7 +571,7 @@
             <select
               id="dict-select"
               data-action="changeAccountDict"
-              class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 shadow-sm transition-colors outline-none focus:border-blue-600"
+              class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 shadow-sm transition-colors outline-none focus:border-primary"
               data-i18n-title="dict.select_title"
               title="Select a dictionary for auto-suggestions"
             >
@@ -584,7 +585,7 @@
             <select
               id="base-currency-select"
               data-action="changeBaseCurrency"
-              class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 shadow-sm transition-colors outline-none focus:border-blue-600"
+              class="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 shadow-sm transition-colors outline-none focus:border-primary"
               data-i18n-title="currency.base_title"
               title="Select the base currency for total amounts"
             >
@@ -615,7 +616,7 @@
                   placeholder="Encryption Password..."
                   autocomplete="new-password"
                   data-lpignore="true"
-                  class="w-36 rounded-md border border-slate-200 bg-white py-2 pr-8 pl-3 text-sm text-blue-950 placeholder-slate-400 shadow-sm transition-all outline-none focus:border-blue-600"
+                  class="w-36 rounded-md border border-slate-200 bg-white py-2 pr-8 pl-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition-all outline-none focus:border-primary"
                   data-i18n-title="title.password_help"
                   title="Entering a password will strongly encrypt the file upon saving."
                 />
@@ -675,7 +676,7 @@
 
             <button
               data-action="loadGrindFile"
-              class="shrink-0 cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-100 hover:text-blue-950"
+              class="shrink-0 cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-100 hover:text-slate-900"
               data-i18n-title="btn.open"
               title="Open"
               data-i18n-aria-label="btn.open"
@@ -686,7 +687,7 @@
             <button
               id="btn-save"
               data-action="saveGrindFile"
-              class="relative shrink-0 cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-blue-950 shadow-sm transition-colors hover:bg-slate-100"
+              class="relative shrink-0 cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm transition-colors hover:bg-slate-100"
               data-i18n-title="btn.save"
               title="Save"
               data-i18n-aria-label="btn.save"
@@ -704,7 +705,7 @@
             <!-- Command Palette Button -->
             <button
               data-action="toggleCommandPalette"
-              class="flex shrink-0 cursor-pointer items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-100 hover:text-blue-950"
+              class="flex shrink-0 cursor-pointer items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-100 hover:text-slate-900"
               data-i18n-title="title.cmd"
               title="Open Command Palette"
               data-i18n-aria-label="title.cmd"
@@ -782,13 +783,13 @@
                 <select
                   id="period-filter"
                   data-action="handleDropdownChange"
-                  class="w-full cursor-pointer appearance-none bg-transparent pr-6 text-xl font-extrabold text-slate-800 transition-colors outline-none hover:text-blue-600 sm:w-auto sm:text-2xl"
+                  class="w-full cursor-pointer appearance-none bg-transparent pr-6 text-xl font-extrabold text-slate-800 transition-colors outline-none hover:text-primary sm:w-auto sm:text-2xl"
                 >
                   <option value="all" data-i18n="filter.all">All Periods</option>
                 </select>
                 <svg
                   aria-hidden="true"
-                  class="pointer-events-none absolute right-0 bottom-1.5 h-4 w-4 text-slate-400 transition-colors group-hover:text-blue-600"
+                  class="pointer-events-none absolute right-0 bottom-1.5 h-4 w-4 text-slate-400 transition-colors group-hover:text-primary"
                 >
                   <use href="#icon-chevron-down"></use>
                 </svg>
@@ -800,7 +801,7 @@
                   <button
                     data-action="saveGrindFile"
                     id="floating-save-btn"
-                    class="animate-modal-in pointer-events-none z-50 flex items-center gap-1.5 rounded-full bg-blue-600 px-3 py-1 text-[11px] font-bold text-white opacity-0 shadow-sm transition-all hover:bg-blue-700 active:scale-95"
+                    class="animate-modal-in pointer-events-none z-50 flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-[11px] font-bold text-white opacity-0 shadow-sm transition-all hover:bg-primary-hover active:scale-95"
                   >
                     <span class="relative flex h-2 w-2">
                       <span
@@ -843,8 +844,8 @@
               <button
                 data-action="setMultiMonthFilter"
                 data-months="1,2,3"
-                data-active-classes="!bg-blue-600 !text-white !border-blue-600"
-                class="cursor-pointer rounded border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600 shadow-sm transition-colors hover:border-blue-600 hover:bg-blue-600 hover:text-white"
+                data-active-classes="!bg-primary !text-white !border-primary"
+                class="cursor-pointer rounded border border-primary-100 bg-primary-50 px-2 py-1 text-[10px] font-bold text-primary shadow-sm transition-colors hover:border-primary hover:bg-primary hover:text-white"
                 data-i18n="period.jan_mar"
               >
                 Jan-Mar
@@ -852,8 +853,8 @@
               <button
                 data-action="setMultiMonthFilter"
                 data-months="4,5,6"
-                data-active-classes="!bg-blue-600 !text-white !border-blue-600"
-                class="cursor-pointer rounded border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600 shadow-sm transition-colors hover:border-blue-600 hover:bg-blue-600 hover:text-white"
+                data-active-classes="!bg-primary !text-white !border-primary"
+                class="cursor-pointer rounded border border-primary-100 bg-primary-50 px-2 py-1 text-[10px] font-bold text-primary shadow-sm transition-colors hover:border-primary hover:bg-primary hover:text-white"
                 data-i18n="period.apr_jun"
               >
                 Apr-Jun
@@ -861,8 +862,8 @@
               <button
                 data-action="setMultiMonthFilter"
                 data-months="7,8,9"
-                data-active-classes="!bg-blue-600 !text-white !border-blue-600"
-                class="cursor-pointer rounded border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600 shadow-sm transition-colors hover:border-blue-600 hover:bg-blue-600 hover:text-white"
+                data-active-classes="!bg-primary !text-white !border-primary"
+                class="cursor-pointer rounded border border-primary-100 bg-primary-50 px-2 py-1 text-[10px] font-bold text-primary shadow-sm transition-colors hover:border-primary hover:bg-primary hover:text-white"
                 data-i18n="period.jul_sep"
               >
                 Jul-Sep
@@ -870,8 +871,8 @@
               <button
                 data-action="setMultiMonthFilter"
                 data-months="10,11,12"
-                data-active-classes="!bg-blue-600 !text-white !border-blue-600"
-                class="cursor-pointer rounded border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600 shadow-sm transition-colors hover:border-blue-600 hover:bg-blue-600 hover:text-white"
+                data-active-classes="!bg-primary !text-white !border-primary"
+                class="cursor-pointer rounded border border-primary-100 bg-primary-50 px-2 py-1 text-[10px] font-bold text-primary shadow-sm transition-colors hover:border-primary hover:bg-primary hover:text-white"
                 data-i18n="period.oct_dec"
               >
                 Oct-Dec
@@ -921,7 +922,7 @@
           <form data-action="submitAddBlock" class="group relative mb-4">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center">
               <span
-                class="pl-2 text-3xl font-light text-slate-400 transition-colors group-hover:text-blue-600"
+                class="pl-2 text-3xl font-light text-slate-400 transition-colors group-hover:text-primary"
                 >+</span
               >
             </div>
@@ -933,7 +934,7 @@
               data-i18n-placeholder="placeholder.new_block"
               placeholder="Create new block (e.g., May 2026 Business Trip) ..."
               data-action-keydown="keydownAddBlock"
-              class="w-full border-b-2 border-slate-200 bg-transparent py-4 pr-4 pl-10 text-2xl font-extrabold text-blue-950 placeholder-slate-400 transition-colors outline-none focus:border-blue-600"
+              class="w-full border-b-2 border-slate-200 bg-transparent py-4 pr-4 pl-10 text-2xl font-extrabold text-slate-900 placeholder-slate-400 transition-colors outline-none focus:border-primary"
             />
             <button type="submit" class="hidden">Add</button>
           </form>
@@ -943,7 +944,7 @@
             <button
               data-action="toggleAllBlocks"
               data-collapse="false"
-              class="flex cursor-pointer items-center gap-1 text-[11px] font-bold text-slate-400 transition-colors hover:text-slate-700 focus:text-blue-600 focus:outline-none"
+              class="flex cursor-pointer items-center gap-1 text-[11px] font-bold text-slate-400 transition-colors hover:text-slate-700 focus:text-primary focus:outline-none"
             >
               <svg aria-hidden="true" class="h-3.5 w-3.5">
                 <use href="#icon-chevron-down"></use>
@@ -953,7 +954,7 @@
             <button
               data-action="toggleAllBlocks"
               data-collapse="true"
-              class="flex cursor-pointer items-center gap-1 text-[11px] font-bold text-slate-400 transition-colors hover:text-slate-700 focus:text-blue-600 focus:outline-none"
+              class="flex cursor-pointer items-center gap-1 text-[11px] font-bold text-slate-400 transition-colors hover:text-slate-700 focus:text-primary focus:outline-none"
             >
               <svg aria-hidden="true" class="h-3.5 w-3.5 -rotate-90">
                 <use href="#icon-chevron-down"></use>
@@ -976,7 +977,7 @@
           class="fixed inset-0 z-[9999] hidden touch-none flex-col items-center justify-center bg-white px-6 py-20 text-center"
         >
           <div class="mb-4 text-6xl drop-shadow-sm">💥</div>
-          <h2 class="mb-2 text-2xl font-extrabold text-blue-950" data-i18n="error.fatal">
+          <h2 class="mb-2 text-2xl font-extrabold text-slate-900" data-i18n="error.fatal">
             Failed to start application
           </h2>
           <p
@@ -987,7 +988,7 @@
           </p>
           <button
             data-action="reload"
-            class="rounded-lg bg-blue-600 px-6 py-3 font-bold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
+            class="rounded-lg bg-primary px-6 py-3 font-bold text-white shadow-sm transition-all hover:bg-primary-hover active:scale-95"
             data-i18n="btn.reload"
           >
             Reload Page
@@ -1016,7 +1017,7 @@
         class="animate-modal-in flex max-h-[90vh] w-full max-w-2xl touch-auto flex-col overscroll-contain rounded-xl border border-slate-200 bg-white shadow-2xl transition-colors"
       >
         <div class="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-5">
-          <h3 id="csv-modal-title" class="text-lg font-bold text-blue-950" data-i18n="csv.title">
+          <h3 id="csv-modal-title" class="text-lg font-bold text-slate-900" data-i18n="csv.title">
             CSV Import Settings
           </h3>
           <button
@@ -1044,7 +1045,7 @@
               <select
                 id="csv-preset-select"
                 data-action="handlePresetChange"
-                class="w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-blue-950 shadow-sm outline-none focus:border-blue-600"
+                class="w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-primary"
               >
                 <!-- Built dynamically by JS -->
               </select>
@@ -1053,7 +1054,7 @@
               <button
                 type="button"
                 data-action="saveCurrentPreset"
-                class="cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-blue-600 shadow-sm transition-colors hover:bg-slate-100"
+                class="cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-primary shadow-sm transition-colors hover:bg-slate-100"
                 data-i18n="csv.preset_save"
               >
                 Save current
@@ -1081,7 +1082,7 @@
               <select
                 id="map-date"
                 data-action="renderCSVPreview"
-                class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-blue-950 outline-none focus:border-blue-600"
+                class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary"
               ></select>
             </div>
             <div>
@@ -1094,7 +1095,7 @@
               <select
                 id="map-account"
                 data-action="renderCSVPreview"
-                class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-blue-950 outline-none focus:border-blue-600"
+                class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary"
               ></select>
             </div>
             <div>
@@ -1107,7 +1108,7 @@
               <select
                 id="map-memo"
                 data-action="renderCSVPreview"
-                class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-blue-950 outline-none focus:border-blue-600"
+                class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary"
               ></select>
             </div>
             <div>
@@ -1120,7 +1121,7 @@
               <select
                 id="map-amount"
                 data-action="renderCSVPreview"
-                class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-blue-950 outline-none focus:border-blue-600"
+                class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary"
               ></select>
             </div>
           </div>
@@ -1129,7 +1130,7 @@
               >Data Preview</label
             >
             <div
-              class="csv-preview-scroll overflow-x-auto rounded-md border border-slate-200 focus:ring-2 focus:ring-blue-600/50 focus:outline-none"
+              class="csv-preview-scroll overflow-x-auto rounded-md border border-slate-200 focus:ring-2 focus:ring-primary/50 focus:outline-none"
               tabindex="0"
             >
               <table class="w-full text-left text-xs whitespace-nowrap text-slate-500">
@@ -1146,7 +1147,7 @@
               value="1"
               min="0"
               data-action="renderCSVPreview"
-              class="w-16 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-center text-blue-950 outline-none focus:border-blue-600"
+              class="w-16 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-center text-slate-900 outline-none focus:border-primary"
             />
             <span data-i18n="csv.skip_rows">rows</span>
           </div>
@@ -1155,7 +1156,7 @@
             <select
               id="csv-encoding"
               data-action="updateCSVPreview"
-              class="w-auto rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-sm text-blue-950 outline-none focus:border-blue-600"
+              class="w-auto rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-sm text-slate-900 outline-none focus:border-primary"
             >
               <option value="utf-8">UTF-8</option>
               <option value="windows-1252">Windows-1252</option>
@@ -1175,7 +1176,7 @@
           </button>
           <button
             data-action="executeCSVImport"
-            class="rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+            class="rounded-md bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-hover"
             data-i18n="btn.import"
           >
             Import
@@ -1200,7 +1201,7 @@
         <div class="flex items-center justify-between border-b border-slate-100 px-6 py-5">
           <h3
             id="export-modal-title"
-            class="text-lg font-bold text-blue-950"
+            class="text-lg font-bold text-slate-900"
             data-i18n="export.title"
           >
             CSV Export
@@ -1218,7 +1219,7 @@
           </p>
           <div
             id="export-period-info"
-            class="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs font-medium text-blue-700"
+            class="mb-4 rounded-md border border-blue-200 bg-primary-50 px-3 py-2.5 text-xs font-medium text-blue-700"
           ></div>
 
           <!-- Format Selector -->
@@ -1226,7 +1227,7 @@
             <label for="export-format" class="sr-only">Output Format</label>
             <select
               id="export-format"
-              class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-blue-950 outline-none focus:border-blue-600"
+              class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary"
             >
               <option value="generic" data-i18n="export.opt_generic">Generic CSV</option>
               <option value="xero" data-i18n="export.opt_xero">Xero</option>
@@ -1237,7 +1238,7 @@
             <input
               type="checkbox"
               id="export-unexported-only"
-              class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-blue-500"
             />
             <label for="export-unexported-only" data-i18n="export.unexported_only">
               Export unexported records only
@@ -1254,7 +1255,7 @@
           </button>
           <button
             data-action="executeExport"
-            class="rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+            class="rounded-md bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-hover"
             data-i18n="btn.export"
           >
             Export
@@ -1279,10 +1280,10 @@
         <div
           class="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-6 py-5 backdrop-blur-md"
         >
-          <h3 class="flex items-center gap-2 text-lg font-bold text-blue-950">
+          <h3 class="flex items-center gap-2 text-lg font-bold text-slate-900">
             <span
               id="tag-modal-title"
-              class="inline-block max-w-[200px] truncate rounded-md border border-blue-600/20 bg-blue-50 px-2 py-1 align-bottom font-mono text-sm tracking-widest text-blue-600 sm:max-w-xs"
+              class="inline-block max-w-[200px] truncate rounded-md border border-primary/20 bg-primary-50 px-2 py-1 align-bottom font-mono text-sm tracking-widest text-primary sm:max-w-xs"
               >#TAG</span
             >
           </h3>
@@ -1324,7 +1325,7 @@
         <div class="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-5">
           <h3
             id="dict-edit-title"
-            class="text-lg font-bold text-blue-950"
+            class="text-lg font-bold text-slate-900"
             data-i18n="dict_edit.title"
           >
             Edit Custom Dictionary
@@ -1347,7 +1348,7 @@
                 type="button"
                 data-action="setAllCustomAccountsHidden"
                 data-hidden="false"
-                class="rounded-md bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-600 transition-colors hover:text-blue-700"
+                class="rounded-md bg-primary-50 px-2 py-1 text-[11px] font-bold text-primary transition-colors hover:text-blue-700"
                 data-i18n="btn.show_all"
               >
                 Show All
@@ -1356,7 +1357,7 @@
                 type="button"
                 data-action="setAllCustomAccountsHidden"
                 data-hidden="true"
-                class="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600 transition-colors hover:text-blue-950"
+                class="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600 transition-colors hover:text-slate-900"
                 data-i18n="btn.hide_all"
               >
                 Hide All
@@ -1375,11 +1376,11 @@
               id="new-custom-account"
               data-i18n-placeholder="placeholder.new_account"
               placeholder="Add new account"
-              class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-blue-950 outline-none focus:border-blue-600"
+              class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary"
             />
             <button
               type="submit"
-              class="shrink-0 rounded-md bg-blue-600 px-4 py-2 text-sm font-bold whitespace-nowrap text-white shadow-sm transition-colors hover:bg-blue-700"
+              class="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-bold whitespace-nowrap text-white shadow-sm transition-colors hover:bg-primary-hover"
               data-i18n="btn.add"
             >
               Add
@@ -1398,7 +1399,7 @@
           </button>
           <button
             data-action="saveCustomDictAndClose"
-            class="rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+            class="rounded-md bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-hover"
             data-i18n="btn.save_close"
           >
             Save & Close
@@ -1421,7 +1422,7 @@
         <div class="border-b border-slate-100 px-6 py-5">
           <h3
             id="pw-prompt-title"
-            class="text-lg font-bold text-blue-950"
+            class="text-lg font-bold text-slate-900"
             data-i18n="prompt.pw_title"
           >
             Enter Password
@@ -1436,7 +1437,7 @@
               type="password"
               id="password-prompt-input"
               autocomplete="new-password"
-              class="w-full rounded-md border border-slate-200 bg-slate-50 py-2 pr-10 pl-4 text-lg text-blue-950 outline-none focus:border-blue-600"
+              class="w-full rounded-md border border-slate-200 bg-slate-50 py-2 pr-10 pl-4 text-lg text-slate-900 outline-none focus:border-primary"
               data-lpignore="true"
             />
             <button
@@ -1464,7 +1465,7 @@
           </button>
           <button
             id="password-prompt-submit"
-            class="rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+            class="rounded-md bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-hover"
             data-i18n="btn.ok"
           >
             OK
@@ -1488,7 +1489,7 @@
         <div class="border-b border-slate-100 px-6 py-5">
           <h3
             id="text-prompt-title"
-            class="text-lg font-bold text-blue-950"
+            class="text-lg font-bold text-slate-900"
             data-i18n="prompt.input_title"
           >
             Input
@@ -1500,7 +1501,7 @@
             type="text"
             id="text-prompt-input"
             autocomplete="off"
-            class="w-full rounded-md border border-slate-200 bg-slate-50 px-4 py-2 text-lg text-blue-950 outline-none focus:border-blue-600"
+            class="w-full rounded-md border border-slate-200 bg-slate-50 px-4 py-2 text-lg text-slate-900 outline-none focus:border-primary"
           />
         </form>
         <div class="flex justify-end space-x-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
@@ -1513,7 +1514,7 @@
           </button>
           <button
             id="text-prompt-submit"
-            class="rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+            class="rounded-md bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-hover"
             data-i18n="btn.ok"
           >
             OK
@@ -1526,10 +1527,10 @@
     <div
       id="drop-overlay"
       data-action="closeDropOverlay"
-      class="fixed inset-0 z-[200] hidden cursor-pointer touch-none items-center justify-center border-4 border-dashed border-blue-600 bg-slate-900/80 backdrop-blur-sm transition-opacity"
+      class="fixed inset-0 z-[200] hidden cursor-pointer touch-none items-center justify-center border-4 border-dashed border-primary bg-slate-900/80 backdrop-blur-sm transition-opacity"
     >
       <div class="pointer-events-none text-center">
-        <svg aria-hidden="true" class="mx-auto mb-4 h-16 w-16 text-blue-600">
+        <svg aria-hidden="true" class="mx-auto mb-4 h-16 w-16 text-primary">
           <use href="#icon-folder"></use>
         </svg>
         <h2 class="text-3xl font-extrabold tracking-tight text-white" data-i18n="drop.title">
@@ -1570,7 +1571,7 @@
             autocomplete="off"
             spellcheck="false"
             data-lpignore="true"
-            class="w-full bg-transparent font-sans text-xl font-medium text-blue-950 placeholder-slate-400 outline-none"
+            class="w-full bg-transparent font-sans text-xl font-medium text-slate-900 placeholder-slate-400 outline-none"
           />
           <span
             class="absolute right-4 rounded bg-slate-100 px-2 py-1 font-mono text-[10px] text-slate-400"
@@ -1597,12 +1598,12 @@
       <div
         class="w-full max-w-sm touch-auto overscroll-contain rounded-2xl bg-white p-6 shadow-2xl"
       >
-        <h3 class="mb-4 text-xl font-extrabold text-blue-950" id="custom-alert-title">Alert</h3>
+        <h3 class="mb-4 text-xl font-extrabold text-slate-900" id="custom-alert-title">Alert</h3>
         <p class="mb-6 text-sm text-slate-600" id="custom-alert-message"></p>
         <div class="flex justify-end">
           <button
             id="custom-alert-ok-btn"
-            class="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
+            class="rounded-lg bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-hover active:scale-95"
           >
             OK
           </button>
@@ -1620,7 +1621,7 @@
       <div
         class="w-full max-w-sm touch-auto overscroll-contain rounded-2xl bg-white p-6 shadow-2xl"
       >
-        <h3 class="mb-4 text-xl font-extrabold text-blue-950" id="custom-confirm-title">Confirm</h3>
+        <h3 class="mb-4 text-xl font-extrabold text-slate-900" id="custom-confirm-title">Confirm</h3>
         <p class="mb-6 text-sm text-slate-600" id="custom-confirm-message"></p>
         <div class="flex justify-end gap-3">
           <button
@@ -1631,7 +1632,7 @@
           </button>
           <button
             id="custom-confirm-ok-btn"
-            class="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
+            class="rounded-lg bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-hover active:scale-95"
           >
             OK
           </button>

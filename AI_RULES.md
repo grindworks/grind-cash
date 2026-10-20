@@ -29,9 +29,7 @@
 
 ## 5. Known gaps against shared §7
 
-- Colors use `blue-600` (63 places) instead of the `primary` token; `input.css` has no `primary` token set. Because `primary` equals `blue-600`, migrate by replacing the classes without changing the look.
 - The unsaved marker is a badge near the total, not a file-name badge in the top bar; add the shared badge.
-- Fonts: `--font-sans` differs from the shared stack.
 - Dialogs use the product's own modal code, not `appAlert()`, `appConfirm()` and `appPrompt()`.
 - `showToast` takes an options object instead of `type`; toast position and animation follow the shared rule already.
 - Tailwind is pinned at 4.3.1 through npm; `build.sh` runs `npx tailwindcss` instead of the pinned binary.

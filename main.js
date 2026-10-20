@@ -1939,7 +1939,7 @@ function updateTagsOnly() {
         const a = document.createElement('a');
         a.className =
           'toc-tag-item group block px-2 py-1.5 hover:bg-slate-100 rounded transition-colors cursor-pointer flex justify-between items-center';
-        a.innerHTML = `<span class="text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors truncate">${escapeHtml(tag)}</span><span class="text-[10px] tabular-nums tracking-tight font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded group-hover:bg-white transition-colors">${amountHtml}</span>`;
+        a.innerHTML = `<span class="text-sm font-medium text-slate-600 group-hover:text-primary transition-colors truncate">${escapeHtml(tag)}</span><span class="text-[10px] tabular-nums tracking-tight font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded group-hover:bg-white transition-colors">${amountHtml}</span>`;
         a.onclick = (e) => {
           e.preventDefault();
           showTagModal(tag, data);
@@ -1969,7 +1969,7 @@ function updateTagsOnly() {
       const card = document.createElement('div');
       card.className =
         'bg-slate-50 p-3 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors border border-slate-100';
-      card.innerHTML = `<div class="text-sm font-bold text-blue-950 truncate mb-1">${escapeHtml(tag)}</div><div class="text-[11px] font-bold text-slate-500 tabular-nums">${amountHtml}</div>`;
+      card.innerHTML = `<div class="text-sm font-bold text-slate-900 truncate mb-1">${escapeHtml(tag)}</div><div class="text-[11px] font-bold text-slate-500 tabular-nums">${amountHtml}</div>`;
       card.onclick = () => showTagModal(tag, data);
       grid.appendChild(card);
     });
@@ -2041,7 +2041,7 @@ function renderMultiTotals(totalsMap) {
 
     const amountEl = document.createElement('p');
     amountEl.className =
-      'text-3xl font-black tracking-tight text-blue-950 tabular-nums sm:text-4xl md:text-5xl';
+      'text-3xl font-black tracking-tight text-slate-900 tabular-nums sm:text-4xl md:text-5xl';
 
     const symbolSpan = document.createElement('span');
     symbolSpan.className = 'mr-1 align-baseline font-sans text-lg font-bold text-slate-400';
@@ -2192,9 +2192,9 @@ function updatePeriodDropdown() {
     customOpt.disabled = true;
     select.insertBefore(customOpt, select.firstChild);
     select.value = 'custom';
-    select.classList.add('!text-blue-600');
+    select.classList.add('!text-primary');
   } else {
-    select.classList.remove('!text-blue-600');
+    select.classList.remove('!text-primary');
     if (select.querySelector(`option[value="${currentVal}"]`)) {
       select.value = currentVal;
     } else {
@@ -2220,11 +2220,11 @@ function setActiveQuickPeriodButton(btn, keepYear = false) {
     }
     b.classList.remove(
       'ring-2',
-      'ring-blue-600',
+      'ring-primary',
       'ring-offset-1',
-      '!bg-blue-600',
+      '!bg-primary',
       '!text-white',
-      '!border-blue-600',
+      '!border-primary',
     );
     const activeClasses = b.getAttribute('data-active-classes');
     if (activeClasses) b.classList.remove(...activeClasses.split(' ').filter(Boolean));
@@ -2459,7 +2459,7 @@ function renderData(focusBlockId = null) {
       a.href = `#block-${block.id}`;
       a.setAttribute('data-block-id', block.id);
       a.className =
-        'toc-item block px-2 py-1 hover:text-blue-950 hover:bg-slate-100 rounded truncate transition-colors text-slate-500 cursor-pointer text-sm font-medium';
+        'toc-item block px-2 py-1 hover:text-slate-900 hover:bg-slate-100 rounded truncate transition-colors text-slate-500 cursor-pointer text-sm font-medium';
       a.textContent = block.memo;
       a.title = block.memo;
       a.onclick = (e) => {
@@ -2508,7 +2508,7 @@ function renderData(focusBlockId = null) {
                   <svg aria-hidden="true" class="w-8 h-8 text-slate-500"><use href="#icon-search"></use></svg>
                 </div>
               </div>
-              <h2 class="text-2xl sm:text-3xl font-extrabold text-blue-950 mb-3 tracking-tight">${window._t('filter_empty.title')}</h2>
+              <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-3 tracking-tight">${window._t('filter_empty.title')}</h2>
               <p class="text-sm text-slate-500 max-w-sm mx-auto leading-relaxed mb-8">${window._t('filter_empty.desc')}</p>
               <button data-action="setPeriodFilter" data-period="all" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-6 py-2.5 rounded-full text-sm font-bold shadow-sm transition-all active:scale-95">${window._t('filter_empty.show_all')}</button>
            </div>
@@ -2531,17 +2531,17 @@ function renderData(focusBlockId = null) {
            <div class="absolute inset-0 pointer-events-none bg-gradient-to-b from-slate-50 via-transparent to-slate-50 opacity-80"></div>
            <div class="relative z-10 flex flex-col items-center">
               <div class="relative flex items-center justify-center mb-6">
-                <div class="relative w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center border border-blue-200">
-                  <svg aria-hidden="true" class="w-8 h-8 text-blue-600"><use href="#icon-cash"></use></svg>
+                <div class="relative w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center border border-blue-200">
+                  <svg aria-hidden="true" class="w-8 h-8 text-primary"><use href="#icon-cash"></use></svg>
                 </div>
               </div>
-              <h2 class="text-2xl sm:text-3xl font-extrabold text-blue-950 mb-3 tracking-tight">${window._t('welcome.title')}</h2>
+              <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-3 tracking-tight">${window._t('welcome.title')}</h2>
               <p class="text-sm text-slate-500 max-w-md mx-auto leading-relaxed mb-8">${window._t('welcome.desc')}</p>
               <div class="flex flex-col sm:flex-row items-center gap-3">
-                <button data-action="focusNewBlockMemo" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-sm font-bold shadow-sm transition-all active:scale-95 flex items-center gap-2">
+                <button data-action="focusNewBlockMemo" class="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-full text-sm font-bold shadow-sm transition-all active:scale-95 flex items-center gap-2">
                   <span class="text-lg font-light leading-none mb-0.5">+</span> ${window._t('welcome.new_block')}
                 </button>
-                <button data-action="triggerCsvInputClick" class="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 px-6 py-3 rounded-full text-sm font-bold shadow-sm transition-all active:scale-95 flex items-center gap-2">
+                <button data-action="triggerCsvInputClick" class="bg-white hover:bg-primary-50 text-blue-700 border border-blue-200 px-6 py-3 rounded-full text-sm font-bold shadow-sm transition-all active:scale-95 flex items-center gap-2">
                   <svg aria-hidden="true" class="w-4 h-4"><use href="#icon-import"></use></svg> ${window._t('welcome.import_csv')}
                 </button>
               </div>
@@ -2598,13 +2598,13 @@ function renderData(focusBlockId = null) {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             document.querySelectorAll('.toc-item').forEach((el) => {
-              el.classList.remove('text-blue-600', 'bg-blue-50', 'font-bold');
+              el.classList.remove('text-primary', 'bg-primary-50', 'font-bold');
               el.classList.add('text-slate-500', 'font-medium');
             });
             const activeToc = document.querySelector(`.toc-item[href="#${entry.target.id}"]`);
             if (activeToc) {
               activeToc.classList.remove('text-slate-500', 'font-medium');
-              activeToc.classList.add('text-blue-600', 'bg-blue-50', 'font-bold');
+              activeToc.classList.add('text-primary', 'bg-primary-50', 'font-bold');
               const tocContainer = document.getElementById('toc-container');
               if (tocContainer && !tocContainer.matches(':hover')) {
                 const scrollPos =
@@ -2649,19 +2649,19 @@ function generateBlockFormHtml(blockId, defaultDate, defaultAccount) {
     typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
   return `
     <form id="block-form-${blockId}" data-action="addItem" data-id="${blockId}" class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 px-3 py-2 -mx-3 rounded-md transition-all focus-within:bg-slate-50 focus-within:ring-1 focus-within:ring-slate-200">
-      <span class="text-blue-600 text-xl leading-none font-light hidden sm:inline">+</span>
+      <span class="text-primary text-xl leading-none font-light hidden sm:inline">+</span>
       <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-        <button type="submit" class="text-blue-600 bg-blue-600/10 hover:bg-blue-600/20 rounded-full w-8 h-8 flex items-center justify-center text-xl leading-none font-light sm:hidden transition-colors outline-none focus:ring-2 focus:ring-blue-600/50 shrink-0">+</button>
+        <button type="submit" class="text-primary bg-primary/10 hover:bg-primary/20 rounded-full w-8 h-8 flex items-center justify-center text-xl leading-none font-light sm:hidden transition-colors outline-none focus:ring-2 focus:ring-primary/50 shrink-0">+</button>
         <div class="flex items-center bg-slate-50 rounded-md px-1 py-1 border border-slate-200 transition-colors">
           <button type="button" data-action="adjustDate" data-delta="-1" class="text-slate-400 hover:text-slate-800 w-8 h-8 hidden sm:flex items-center justify-center font-bold cursor-pointer outline-none transition-colors touch-manipulation">-</button>
           <input type="date" class="${dateInputClass}" value="${defaultDate}" aria-label="${escapeHtml(window._t('label.date'))}" data-action-input="setDirtyAndCheckFutureDate">
           <button type="button" data-action="adjustDate" data-delta="1" class="text-slate-400 hover:text-slate-800 w-8 h-8 hidden sm:flex items-center justify-center font-bold cursor-pointer outline-none transition-colors touch-manipulation">+</button>
         </div>
-        <input type="text" placeholder="${escapeHtml(window._t('placeholder.account'))}" aria-label="${escapeHtml(window._t('placeholder.account'))}" value="${escapeHtml(defaultAccount)}" spellcheck="false" autocomplete="off" list="account-suggestions" data-action-input="setDirty" data-action-focus="select" data-action-keydown="focusNextMemo" class="item-account bg-transparent border-0 focus:ring-2 focus:ring-blue-100 focus:bg-blue-50/50 p-0 text-slate-600 placeholder-slate-400 w-20 shrink-0 text-sm outline-none text-center" style="min-width: 60px;">
+        <input type="text" placeholder="${escapeHtml(window._t('placeholder.account'))}" aria-label="${escapeHtml(window._t('placeholder.account'))}" value="${escapeHtml(defaultAccount)}" spellcheck="false" autocomplete="off" list="account-suggestions" data-action-input="setDirty" data-action-focus="select" data-action-keydown="focusNextMemo" class="item-account bg-transparent border-0 focus:ring-2 focus:ring-primary-100 focus:bg-primary-50/50 p-0 text-slate-600 placeholder-slate-400 w-20 shrink-0 text-sm outline-none text-center" style="min-width: 60px;">
       </div>
       <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:flex-1 pl-6 sm:pl-0 mt-2 sm:mt-0">
-        <input type="text" placeholder="${escapeHtml(window._t('placeholder.add_entry'))}" aria-label="${escapeHtml(window._t('placeholder.add_entry'))}" list="memo-suggestions" data-action-input="setDirty" data-action-blur="autoSuggestAccount" data-action-focus="scrollIntoView" data-action-keydown="focusNextAmount" class="item-memo bg-transparent border-0 focus:ring-2 focus:ring-blue-100 focus:bg-blue-50/50 px-1 rounded-sm p-0 text-blue-950 placeholder-slate-400 flex-1 text-sm font-medium outline-none min-w-[100px]">
-        <input type="text" inputmode="decimal" placeholder="${escapeHtml(window._t('placeholder.amount'))}" aria-label="${escapeHtml(window._t('placeholder.amount'))}" spellcheck="false" autocomplete="off" title="${escapeHtml(window._t('tooltip.amount_math'))}" class="item-amount bg-transparent border-0 focus:ring-2 focus:ring-blue-100 focus:bg-blue-50/50 px-1 rounded-sm p-0 text-right tabular-nums tracking-tight text-blue-950 placeholder-slate-400 w-24 sm:w-32 shrink-0 text-sm outline-none" style="min-width: 104px;" data-action-input="setDirty" data-action-focus="scrollIntoView" data-action-keydown="submitOnTab">
+        <input type="text" placeholder="${escapeHtml(window._t('placeholder.add_entry'))}" aria-label="${escapeHtml(window._t('placeholder.add_entry'))}" list="memo-suggestions" data-action-input="setDirty" data-action-blur="autoSuggestAccount" data-action-focus="scrollIntoView" data-action-keydown="focusNextAmount" class="item-memo bg-transparent border-0 focus:ring-2 focus:ring-primary-100 focus:bg-primary-50/50 px-1 rounded-sm p-0 text-slate-900 placeholder-slate-400 flex-1 text-sm font-medium outline-none min-w-[100px]">
+        <input type="text" inputmode="decimal" placeholder="${escapeHtml(window._t('placeholder.amount'))}" aria-label="${escapeHtml(window._t('placeholder.amount'))}" spellcheck="false" autocomplete="off" title="${escapeHtml(window._t('tooltip.amount_math'))}" class="item-amount bg-transparent border-0 focus:ring-2 focus:ring-primary-100 focus:bg-primary-50/50 px-1 rounded-sm p-0 text-right tabular-nums tracking-tight text-slate-900 placeholder-slate-400 w-24 sm:w-32 shrink-0 text-sm outline-none" style="min-width: 104px;" data-action-input="setDirty" data-action-focus="scrollIntoView" data-action-keydown="submitOnTab">
       </div>
       <button type="submit" class="hidden">${escapeHtml(window._t('btn.add'))}</button>
     </form>
@@ -2743,7 +2743,7 @@ function updateOrCreateBlockElement(block, existingEl = null) {
     <div data-action="toggleBlock" data-id="${block.id}" class="bg-slate-50/50 px-8 py-5 border-b border-slate-100 flex justify-between items-center transition-colors cursor-pointer select-none group/header hover:bg-slate-100">
       <div class="flex items-center gap-3 overflow-hidden min-w-0 flex-1">
         <svg aria-hidden="true" id="block-icon-${block.id}" class="w-5 h-5 text-slate-400 transition-transform duration-200" style="transform: ${iconRotation};"><use href="#icon-chevron-down"></use></svg>
-        <h2 data-id="${block.id}" data-empty="✎ ${escapeHtml(untitledText)}" data-field="memo" contenteditable="true" data-action-input="setDirtyContentEditable" data-action-paste="handlePlainTextPaste" data-stop-propagation="true" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="select-text text-xl font-extrabold text-blue-950 tracking-tight outline-none focus:bg-white focus:ring-2 focus:ring-blue-600/30 px-1 rounded cursor-text truncate transition-colors empty:inline-block empty:min-w-20 empty:bg-slate-100 empty:before:text-slate-400 empty:before:text-sm empty:before:font-normal empty:before:pointer-events-none empty:focus:before:opacity-50 ${blockTitleEmptyClass}">${formatMemoHtml(block.memo)}</h2>
+        <h2 data-id="${block.id}" data-empty="✎ ${escapeHtml(untitledText)}" data-field="memo" contenteditable="true" data-action-input="setDirtyContentEditable" data-action-paste="handlePlainTextPaste" data-stop-propagation="true" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="select-text text-xl font-extrabold text-slate-900 tracking-tight outline-none focus:bg-white focus:ring-2 focus:ring-primary/30 px-1 rounded cursor-text truncate transition-colors empty:inline-block empty:min-w-20 empty:bg-slate-100 empty:before:text-slate-400 empty:before:text-sm empty:before:font-normal empty:before:pointer-events-none empty:focus:before:opacity-50 ${blockTitleEmptyClass}">${formatMemoHtml(block.memo)}</h2>
 
         <select data-id="${block.id}" data-field="currency" data-action-change="updateRecord" data-stop-propagation="true" class="text-xs px-2 py-1 rounded bg-white border border-slate-200 text-slate-500 outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer ml-2 shadow-sm font-bold">
           ${getCurrencyOptionsHtml(block.currency)}
@@ -2752,7 +2752,7 @@ function updateOrCreateBlockElement(block, existingEl = null) {
         ${blockBadgeHtml}
       </div>
       <div class="flex items-center shrink-0">
-        <div class="font-bold tabular-nums tracking-tight text-blue-950 text-lg flex flex-wrap justify-end items-baseline gap-x-2">
+        <div class="font-bold tabular-nums tracking-tight text-slate-900 text-lg flex flex-wrap justify-end items-baseline gap-x-2">
           <span class="text-slate-400 text-sm font-sans mr-0.5">${blockTotal < 0 ? '-' : ''}${getCurrencySymbol(block.currency || 'USD')}</span>
           <span id="block-total-${block.id}" class="flex flex-wrap justify-end gap-x-3">${formatCurrency(Math.abs(blockTotal), block.currency || 'USD')}</span>
         </div>
@@ -2779,7 +2779,7 @@ function updateOrCreateBlockElement(block, existingEl = null) {
   const hiddenCount = block.children.length - visibleChildren.length;
   const showEarlierHtml =
     hiddenCount > 0
-      ? `<div class="px-4 sm:px-8 py-2 border-b border-slate-50 text-center"><button type="button" data-action="showAllItems" data-id="${block.id}" class="text-xs font-bold text-blue-600 hover:underline cursor-pointer">${escapeHtml(window._t('btn.show_earlier_items', hiddenCount))}</button></div>`
+      ? `<div class="px-4 sm:px-8 py-2 border-b border-slate-50 text-center"><button type="button" data-action="showAllItems" data-id="${block.id}" class="text-xs font-bold text-primary hover:underline cursor-pointer">${escapeHtml(window._t('btn.show_earlier_items', hiddenCount))}</button></div>`
       : '';
   const buildItemsHtml = () =>
     showEarlierHtml +
@@ -2844,7 +2844,7 @@ function updateOrCreateBlockElement(block, existingEl = null) {
         } else {
           accClasses = isCollection
             ? 'text-slate-400 bg-transparent border-transparent hover:bg-slate-100 focus:bg-slate-100'
-            : 'text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100 focus:bg-blue-100';
+            : 'text-primary bg-primary-50 border-blue-200 hover:bg-primary-100 focus:bg-primary-100';
         }
 
         const accDisabled = isLocked ? 'disabled' : '';
@@ -2875,7 +2875,7 @@ function updateOrCreateBlockElement(block, existingEl = null) {
           actionButtonsHtml = `
         <div class="flex items-center space-x-0.5 sm:space-x-1 md:opacity-0 md:group-hover/item:opacity-100 focus-within:opacity-100 transition-opacity">
           ${checkBtnHtml}
-          <button data-action="duplicateRecord" data-id="${item.id}" aria-label="${escapeHtml(window._t('title.duplicate'))}" class="text-slate-300 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/30 rounded p-1.5 sm:p-2 -m-1 transition-colors cursor-pointer" title="${escapeHtml(window._t('title.duplicate'))}"><svg aria-hidden="true" class="w-4 h-4 pointer-events-none"><use href="#icon-copy"></use></svg></button>
+          <button data-action="duplicateRecord" data-id="${item.id}" aria-label="${escapeHtml(window._t('title.duplicate'))}" class="text-slate-300 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 rounded p-1.5 sm:p-2 -m-1 transition-colors cursor-pointer" title="${escapeHtml(window._t('title.duplicate'))}"><svg aria-hidden="true" class="w-4 h-4 pointer-events-none"><use href="#icon-copy"></use></svg></button>
           <button data-action="deleteRecord" data-id="${item.id}" aria-label="${escapeHtml(window._t('title.delete'))}" class="text-slate-300 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 rounded transition-colors text-xl sm:text-2xl leading-none p-1.5 sm:p-2 -m-1 cursor-pointer" title="${escapeHtml(window._t('title.delete'))}">&times;</button>
         </div>
       `;
@@ -2890,10 +2890,10 @@ function updateOrCreateBlockElement(block, existingEl = null) {
           ${dateDisp}
           ${accountDisp}
           ${taxDisp}
-          <span data-id="${item.id}" data-empty="✎ ${escapeHtml(emptyMemoText)}" data-field="memo" contenteditable="${memoEditable}" data-action-input="setDirtyContentEditable" data-action-paste="handlePlainTextPaste" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="${isLocked ? 'text-slate-400 cursor-not-allowed' : isCollection ? 'text-slate-500' : 'text-blue-950'} font-medium truncate outline-none focus:bg-blue-50 focus:ring-2 focus:ring-blue-200 px-1 rounded cursor-text transition-colors empty:inline-block empty:min-w-12 empty:bg-slate-100 empty:before:text-slate-400 empty:before:text-xs empty:before:font-normal empty:before:pointer-events-none empty:focus:before:opacity-50 ${memoEmptyClass}">${formatMemoHtml(item.memo)}</span>
+          <span data-id="${item.id}" data-empty="✎ ${escapeHtml(emptyMemoText)}" data-field="memo" contenteditable="${memoEditable}" data-action-input="setDirtyContentEditable" data-action-paste="handlePlainTextPaste" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="${isLocked ? 'text-slate-400 cursor-not-allowed' : isCollection ? 'text-slate-500' : 'text-slate-900'} font-medium truncate outline-none focus:bg-primary-50 focus:ring-2 focus:ring-blue-200 px-1 rounded cursor-text transition-colors empty:inline-block empty:min-w-12 empty:bg-slate-100 empty:before:text-slate-400 empty:before:text-xs empty:before:font-normal empty:before:pointer-events-none empty:focus:before:opacity-50 ${memoEmptyClass}">${formatMemoHtml(item.memo)}</span>
         </div>
         <div class="flex items-center space-x-1.5 sm:space-x-4 ml-2 sm:ml-auto shrink-0">
-          <input type="text" data-id="${item.id}" data-field="amount" inputmode="decimal" placeholder="0" title="${isLocked ? lockedTitle : escapeHtml(window._t('tooltip.amount_math'))}" value="${item.amount !== null && item.amount !== '' && item.amount !== undefined ? formatCurrency(item.amount, block.currency || 'USD') : ''}" ${amountDisabled} data-action-input="setDirty" data-action-focus="select" data-action-paste="handlePlainTextPaste" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="bg-transparent border-0 p-0 font-medium tabular-nums tracking-tight ${isLocked ? 'text-slate-400 cursor-not-allowed' : isCollection ? 'text-slate-400' : 'text-blue-950'} text-right outline-none focus:bg-blue-50 focus:ring-2 focus:ring-blue-200 px-1 rounded cursor-text transition-colors w-[50px] sm:w-[80px]">
+          <input type="text" data-id="${item.id}" data-field="amount" inputmode="decimal" placeholder="0" title="${isLocked ? lockedTitle : escapeHtml(window._t('tooltip.amount_math'))}" value="${item.amount !== null && item.amount !== '' && item.amount !== undefined ? formatCurrency(item.amount, block.currency || 'USD') : ''}" ${amountDisabled} data-action-input="setDirty" data-action-focus="select" data-action-paste="handlePlainTextPaste" data-action-keydown="blurOnEnter" data-action-blur="updateRecord" class="bg-transparent border-0 p-0 font-medium tabular-nums tracking-tight ${isLocked ? 'text-slate-400 cursor-not-allowed' : isCollection ? 'text-slate-400' : 'text-slate-900'} text-right outline-none focus:bg-primary-50 focus:ring-2 focus:ring-blue-200 px-1 rounded cursor-text transition-colors w-[50px] sm:w-[80px]">
           ${actionButtonsHtml}
         </div>
       </div>
@@ -2906,7 +2906,7 @@ function updateOrCreateBlockElement(block, existingEl = null) {
 
   if (isNew) {
     blockEl.innerHTML = `
-      <button data-stop-propagation="true" data-action="saveTemplate" data-id="${block.id}" class="absolute -top-3 -left-3 opacity-100 md:opacity-0 group-hover/block:opacity-100 bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-600/50 hover:shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:scale-110 p-2 rounded-xl transition-all duration-300 cursor-pointer flex items-center justify-center z-10" title="${escapeHtml(window._t('title.save_template'))}" aria-label="${escapeHtml(window._t('title.save_template'))}">
+      <button data-stop-propagation="true" data-action="saveTemplate" data-id="${block.id}" class="absolute -top-3 -left-3 opacity-100 md:opacity-0 group-hover/block:opacity-100 bg-white border border-slate-200 text-slate-400 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:scale-110 p-2 rounded-xl transition-all duration-300 cursor-pointer flex items-center justify-center z-10" title="${escapeHtml(window._t('title.save_template'))}" aria-label="${escapeHtml(window._t('title.save_template'))}">
         <svg aria-hidden="true" class="w-5 h-5"><use href="#icon-squares-plus"></use></svg>
       </button>
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all hover:border-slate-300 hover:shadow-md">
@@ -4147,7 +4147,7 @@ function renderCSVPreview() {
     let badgeClass = 'bg-slate-200 text-slate-500';
     if (i === mapDate) {
       label = 'Date';
-      badgeClass = 'bg-blue-100 text-blue-700';
+      badgeClass = 'bg-primary-100 text-blue-700';
     } else if (i === mapAccount) {
       label = 'Account';
       badgeClass = 'bg-purple-100 text-purple-700';
@@ -4179,7 +4179,7 @@ function renderCSVPreview() {
       const displayVal = val.length > 20 ? val.substring(0, 20) + '...' : val;
       let highlightClass = '';
       if (i === mapDate || i === mapAccount || i === mapMemo || i === mapAmount) {
-        highlightClass = 'text-blue-950 font-medium bg-slate-50/50';
+        highlightClass = 'text-slate-900 font-medium bg-slate-50/50';
       }
       tdHtml += `<td class="px-3 py-2 truncate max-w-[150px] ${highlightClass}" title="${escapeHtml(val)}">${escapeHtml(displayVal)}</td>`;
     }
@@ -4745,10 +4745,10 @@ function renderCommandList(query = '') {
   filtered.forEach((cmd, i) => {
     const div = document.createElement('div');
     const isSelected = i === selectedCommandIndex;
-    div.className = `px-4 py-3 my-1 flex justify-between items-center rounded-md cursor-pointer transition-colors ${isSelected ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-100 hover:text-blue-950'}`;
+    div.className = `px-4 py-3 my-1 flex justify-between items-center rounded-md cursor-pointer transition-colors ${isSelected ? 'bg-primary-50 text-primary' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`;
     let innerHtml = `<div class="flex items-center gap-3"><span class="text-xl">${cmd.icon}</span><span class="font-medium tracking-wide">${cmd.title}</span></div>`;
     if (cmd.shortcut)
-      innerHtml += `<kbd class="font-mono text-[10px] bg-white border border-slate-200 px-1.5 py-0.5 rounded shadow-sm ${isSelected ? 'text-blue-600 border-blue-600/20' : 'text-slate-400'}">${cmd.shortcut}</kbd>`;
+      innerHtml += `<kbd class="font-mono text-[10px] bg-white border border-slate-200 px-1.5 py-0.5 rounded shadow-sm ${isSelected ? 'text-primary border-primary/20' : 'text-slate-400'}">${cmd.shortcut}</kbd>`;
     div.innerHTML = innerHtml;
     div.onclick = () => {
       if (!cmd.keepOpen) toggleCommandPalette();
@@ -5189,7 +5189,7 @@ function formatMemoHtml(memo) {
     result += escapeHtml(text.slice(lastIndex, match.index));
     const hash = escapeHtml(match[1]);
     const tag = escapeHtml(match[2]);
-    result += `<span class="text-blue-500 bg-blue-50 px-1 rounded cursor-pointer hover:bg-blue-100 transition-colors" data-action="filterByTag" data-tag="${tag}">${hash}${tag}</span>`;
+    result += `<span class="text-blue-500 bg-primary-50 px-1 rounded cursor-pointer hover:bg-primary-100 transition-colors" data-action="filterByTag" data-tag="${tag}">${hash}${tag}</span>`;
     lastIndex = match.index + match[0].length;
   }
   result += escapeHtml(text.slice(lastIndex));
