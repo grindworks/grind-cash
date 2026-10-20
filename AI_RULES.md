@@ -29,8 +29,6 @@
 
 ## 5. Known gaps against shared §7
 
-- The unsaved marker is a badge near the total, not a file-name badge in the top bar; add the shared badge.
-- Dialogs use the product's own modal code, not `appAlert()`, `appConfirm()` and `appPrompt()`.
 - `showToast` takes an options object instead of `type`; toast position and animation follow the shared rule already.
 - Tailwind is pinned at 4.3.1 through npm; `build.sh` runs `npx tailwindcss` instead of the pinned binary.
 - `i18n.js` differs from grind-people's copy (default language `en` vs `ja`); make the two identical.

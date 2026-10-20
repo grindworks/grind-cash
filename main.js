@@ -649,6 +649,13 @@ function requestTextPrompt(message, defaultValue = '') {
   });
 }
 
+// Shared dialog API: appPrompt(message, defaultValue, { type: 'text' | 'password' }) resolves with the text, or null on cancel
+function appPrompt(message, defaultValue = '', { type = 'text' } = {}) {
+  return type === 'password'
+    ? requestPasswordPrompt(message)
+    : requestTextPrompt(message, defaultValue);
+}
+
 function handlePlainTextPaste(event) {
   event.preventDefault();
   const clipboard = event.clipboardData || window.clipboardData;
@@ -829,7 +836,7 @@ async function initSQLite() {
     let initialData = null;
     const draft = await loadDraft();
     if (draft) {
-      if (await requestConfirm(window._t('confirm.restore_draft'))) {
+      if (await appConfirm(window._t('confirm.restore_draft'))) {
         initialData = draft;
         let Uints = draft;
         const magic = Uints.slice(0, 8);
@@ -854,9 +861,9 @@ async function initSQLite() {
                 if (attemptCount > 0) {
                   promptMsg = window._t('alert.pw_incorrect') + '\n\n' + promptMsg;
                 }
-                password = await requestPasswordPrompt(promptMsg);
+                password = await appPrompt(promptMsg, '', { type: 'password' });
                 if (password === null) {
-                  await showAlert(window._t('alert.cancel_startup_desc'));
+                  await appAlert(window._t('alert.cancel_startup_desc'));
                   document.body.innerHTML = `<h1 style='text-align:center; margin-top:20vh;'>${window._t('error.security_stop_desc')}</h1>`;
                   return;
                 }
@@ -871,7 +878,7 @@ async function initSQLite() {
           }
         }
         initialData = Uints;
-      } else if (await requestConfirm(window._t('confirm.discard_draft'))) {
+      } else if (await appConfirm(window._t('confirm.discard_draft'))) {
         await clearDraft();
       }
     }
@@ -886,7 +893,7 @@ async function initSQLite() {
         showToast(window._t('toast.restored'), '<span class="text-orange-400">↺</span>');
       } catch (dbError) {
         console.error('Draft restore failed', dbError);
-        await showAlert(window._t('alert.restore_fail'));
+        await appAlert(window._t('alert.restore_fail'));
         await clearDraft();
         if (db) {
           try {
@@ -979,7 +986,7 @@ function handleLaunchFiles() {
     window.launchQueue.setConsumer(async (launchParams) => {
       if (!launchParams.files || launchParams.files.length === 0) return;
       if (isDirty) {
-        if (!(await requestConfirm(window._t('confirm.discard_changes')))) return;
+        if (!(await appConfirm(window._t('confirm.discard_changes')))) return;
       }
       await processFileHandle(launchParams.files[0]);
     });
@@ -1263,7 +1270,7 @@ async function insertRecord(
   // Numbers pass through untouched so "1.234" is never re-read with locale rules
   const parsedAmount = evaluateMath(amountExpr, { raw: true });
   if (amountExpr !== null && amountExpr !== '' && parsedAmount === null) {
-    await showAlert(window._t('alert.invalid_amount_or_formula'));
+    await appAlert(window._t('alert.invalid_amount_or_formula'));
     return false;
   }
   insertRecordRow(parentId, memo, parsedAmount, dateStr, accountStr, taxRate, currency);
@@ -1504,7 +1511,7 @@ async function updateRecord(id, field, newValue, element) {
     );
     checkExportStmt.bind([id, id]);
     if (checkExportStmt.step() && checkExportStmt.get()[0] > 0) {
-      await showAlert(window._t('error.record_locked'));
+      await appAlert(window._t('error.record_locked'));
       renderData();
       return;
     }
@@ -1537,7 +1544,7 @@ async function updateRecord(id, field, newValue, element) {
         if (element) {
           element.classList.add('!bg-red-100', '!text-red-600');
         }
-        await showAlert(window._t('alert.invalid_amount_or_formula'));
+        await appAlert(window._t('alert.invalid_amount_or_formula'));
         return;
       }
 
@@ -1592,7 +1599,7 @@ async function updateRecord(id, field, newValue, element) {
         dateObj.getMonth() !== m - 1 ||
         dateObj.getDate() !== d
       ) {
-        await showAlert(
+        await appAlert(
           window._t('alert.invalid_date') +
             ' ' +
             window._t('alert.detected_date_format', isMonthFirst ? 'MM/DD' : 'DD/MM'),
@@ -1614,13 +1621,13 @@ async function updateRecord(id, field, newValue, element) {
           dateObj.getMonth() !== m - 1 ||
           dateObj.getDate() !== d
         ) {
-          await showAlert(window._t('alert.invalid_date'));
+          await appAlert(window._t('alert.invalid_date'));
           renderData();
           return;
         }
         val = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')} 00:00:00`;
       } else {
-        await showAlert(window._t('alert.invalid_date_format'));
+        await appAlert(window._t('alert.invalid_date_format'));
         renderData();
         return;
       }
@@ -1671,7 +1678,7 @@ async function updateRecord(id, field, newValue, element) {
 
     if (
       roundedChildren.length > 0 &&
-      !(await requestConfirm(window._t('confirm.currency_round', val, roundedChildren.length)))
+      !(await appConfirm(window._t('confirm.currency_round', val, roundedChildren.length)))
     ) {
       renderData();
       return;
@@ -2305,7 +2312,7 @@ function updateFiscalYearButton() {
 
 async function changeFiscalMonth() {
   const current = getDbSetting('fiscalMonth', '1');
-  const input = await requestTextPrompt(window._t('prompt.fiscal_month'), current);
+  const input = await appPrompt(window._t('prompt.fiscal_month'), current);
   if (input !== null) {
     const month = parseInt(input, 10);
     if (month >= 1 && month <= 12) {
@@ -2325,7 +2332,7 @@ async function changeFiscalMonth() {
         renderDataWithTransition();
       }
     } else {
-      await showAlert(window._t('alert.invalid_fiscal_month'));
+      await appAlert(window._t('alert.invalid_fiscal_month'));
     }
   }
 }
@@ -2982,7 +2989,7 @@ async function saveTemplate(blockId) {
     if (itemsStmt) itemsStmt.free();
   }
 
-  let tplName = await requestTextPrompt(
+  let tplName = await appPrompt(
     window._t('prompt.save_tpl_title'),
     window._t('prompt.tpl_default_name', blockMemo),
   );
@@ -2998,7 +3005,7 @@ async function saveTemplate(blockId) {
     if (stmt) stmt.free();
   }
   setDirty(true);
-  await showAlert(window._t('toast.tpl_saved', tplName));
+  await appAlert(window._t('toast.tpl_saved', tplName));
 }
 
 async function insertTemplate(templateId) {
@@ -3021,11 +3028,11 @@ async function insertTemplate(templateId) {
   try {
     tplData = JSON.parse(rawData || '[]');
   } catch (e) {
-    await showAlert(window._t('error.tpl_load'));
+    await appAlert(window._t('error.tpl_load'));
     return;
   }
   if (!Array.isArray(tplData)) {
-    await showAlert(window._t('error.tpl_corrupted'));
+    await appAlert(window._t('error.tpl_corrupted'));
     return;
   }
 
@@ -3074,7 +3081,7 @@ async function insertTemplate(templateId) {
   } catch (e) {
     db.run('ROLLBACK;');
     console.error('Template insert failed:', e);
-    await showAlert(window._t('error.tpl_corrupted'));
+    await appAlert(window._t('error.tpl_corrupted'));
     return;
   } finally {
     if (insertStmt) insertStmt.free();
@@ -3161,7 +3168,7 @@ async function deleteRecord(id) {
     isBlock && childCount > 0
       ? window._t('confirm.delete_block', childCount)
       : window._t('confirm.delete_record');
-  if (!(await requestConfirm(confirmMsg))) return;
+  if (!(await appConfirm(confirmMsg))) return;
 
   let checkStmt;
   try {
@@ -3170,7 +3177,7 @@ async function deleteRecord(id) {
     );
     checkStmt.bind([recordId, recordId]);
     if (checkStmt.step() && checkStmt.get()[0] > 0) {
-      await showAlert(window._t('alert.cannot_delete_locked'));
+      await appAlert(window._t('alert.cannot_delete_locked'));
       return;
     }
   } finally {
@@ -3255,7 +3262,7 @@ async function sortBlockByDate(blockId) {
     lockStmt = db.prepare('SELECT COUNT(*) FROM records WHERE parent_id = ? AND is_exported = 1');
     lockStmt.bind([blockId]);
     if (lockStmt.step() && lockStmt.get()[0] > 0) {
-      await showAlert(window._t('error.record_locked'));
+      await appAlert(window._t('error.record_locked'));
       return;
     }
   } catch (e) {
@@ -3265,7 +3272,7 @@ async function sortBlockByDate(blockId) {
     if (lockStmt) lockStmt.free();
   }
 
-  if (!(await requestConfirm(window._t('confirm.sort_by_date')))) return;
+  if (!(await appConfirm(window._t('confirm.sort_by_date')))) return;
   let stmt;
   let items = [];
   try {
@@ -3405,10 +3412,10 @@ async function saveGrindFile(isSaveAs = false) {
     const pwInput = document.getElementById('file-password');
     const typedPassword = pwInput ? pwInput.value : '';
     if (typedPassword) {
-      const confirmPw = await requestPasswordPrompt(window._t('prompt.pw_new'));
+      const confirmPw = await appPrompt(window._t('prompt.pw_new'), '', { type: 'password' });
       if (confirmPw === null) return;
       if (confirmPw !== typedPassword) {
-        await showAlert(window._t('alert.pw_mismatch'));
+        await appAlert(window._t('alert.pw_mismatch'));
         return;
       }
       await setMasterPassword(typedPassword);
@@ -3416,8 +3423,8 @@ async function saveGrindFile(isSaveAs = false) {
 
     // Warn before removing encryption from a protected file
     if (currentMasterKeyHash !== '' && !currentMasterKey) {
-      if (!(await requestConfirm(window._t('confirm.pw_empty')))) {
-        await showAlert(window._t('alert.pw_empty_canceled'));
+      if (!(await appConfirm(window._t('confirm.pw_empty')))) {
+        await appAlert(window._t('alert.pw_empty_canceled'));
         return;
       }
       currentMasterKeyHash = '';
@@ -3492,7 +3499,7 @@ async function saveGrindFile(isSaveAs = false) {
         );
         if (
           dirtyEpoch === epochAtExport &&
-          (await requestConfirm(window._t('confirm.mark_downloaded_saved')))
+          (await appConfirm(window._t('confirm.mark_downloaded_saved')))
         ) {
           setDirty(false);
         }
@@ -3509,7 +3516,7 @@ async function saveGrindFile(isSaveAs = false) {
           if (request !== 'granted') throw new Error('Write permission denied');
         }
       } catch (e) {
-        await showAlert(window._t('alert.write_permission_fail'));
+        await appAlert(window._t('alert.write_permission_fail'));
         return;
       }
     }
@@ -3554,14 +3561,14 @@ async function saveGrindFile(isSaveAs = false) {
 
 async function processFileHandle(handle, isDummy = false) {
   if (!SQL) {
-    await showAlert(window._t('alert.db_engine_starting'));
+    await appAlert(window._t('alert.db_engine_starting'));
     return;
   }
 
   try {
     const file = await handle.getFile();
     if (file.size > 50 * 1024 * 1024) {
-      await showAlert(window._t('alert.file_too_large'));
+      await appAlert(window._t('alert.file_too_large'));
       return;
     }
 
@@ -3593,7 +3600,7 @@ async function processFileHandle(handle, isDummy = false) {
             if (attemptCount > silentAttempts) {
               promptMsg = window._t('alert.pw_incorrect') + '\n\n' + promptMsg;
             }
-            const password = await requestPasswordPrompt(promptMsg);
+            const password = await appPrompt(promptMsg, '', { type: 'password' });
             if (password === null) {
               throw new Error('Canceled');
             }
@@ -3659,14 +3666,14 @@ async function processFileHandle(handle, isDummy = false) {
     else renderData();
   } catch (err) {
     console.error('processFileHandle error:', err);
-    await showAlert(window._t('alert.file_load_fail'));
+    await appAlert(window._t('alert.file_load_fail'));
   }
 }
 
 async function loadGrindFile() {
   if (isFrozenByOtherTab) return;
   if (isDirty) {
-    if (!(await requestConfirm(window._t('confirm.discard_changes')))) return;
+    if (!(await appConfirm(window._t('confirm.discard_changes')))) return;
   }
 
   if ('showOpenFilePicker' in window) {
@@ -3766,7 +3773,7 @@ async function exportCSV(format = 'generic') {
   }
 
   if (values.length === 0) {
-    await showAlert(window._t('alert.no_export_data'));
+    await appAlert(window._t('alert.no_export_data'));
     return;
   }
 
@@ -3869,7 +3876,7 @@ async function exportCSV(format = 'generic') {
     const exportedIds = values.map((row) => row[0]);
     if (
       exportedIds.length > 0 &&
-      (await requestConfirm(window._t('confirm.lock_exported', exportedIds.length)))
+      (await appConfirm(window._t('confirm.lock_exported', exportedIds.length)))
     ) {
       db.run('BEGIN TRANSACTION;');
       let updateStmt;
@@ -3886,7 +3893,7 @@ async function exportCSV(format = 'generic') {
       } catch (e) {
         db.run('ROLLBACK;');
         console.error('Failed to update export status:', e);
-        await showAlert(window._t('error.lock_failed'));
+        await appAlert(window._t('error.lock_failed'));
       } finally {
         if (updateStmt) updateStmt.free();
       }
@@ -3900,10 +3907,10 @@ async function unlockExportedRecords() {
   const res = db.exec('SELECT COUNT(*) FROM records WHERE is_exported = 1');
   const count = res.length > 0 ? res[0].values[0][0] : 0;
   if (count === 0) {
-    await showAlert(window._t('alert.no_locked_records'));
+    await appAlert(window._t('alert.no_locked_records'));
     return;
   }
-  if (!(await requestConfirm(window._t('confirm.unlock_exported', count)))) return;
+  if (!(await appConfirm(window._t('confirm.unlock_exported', count)))) return;
   db.run('UPDATE records SET is_exported = 0 WHERE is_exported = 1');
   setDirty(true);
   renderData();
@@ -3915,7 +3922,7 @@ async function importCSV(event) {
   if (!file) return;
 
   if (file.size > 5242880) {
-    await showAlert(window._t('alert.csv_too_large'));
+    await appAlert(window._t('alert.csv_too_large'));
     event.target.value = '';
     return;
   }
@@ -3928,7 +3935,7 @@ async function importCSV(event) {
     inputEl.value = '';
   };
   reader.onerror = async function () {
-    await showAlert(window._t('alert.file_load_fail_memory'));
+    await appAlert(window._t('alert.file_load_fail_memory'));
     inputEl.value = '';
   };
   reader.readAsArrayBuffer(file);
@@ -4211,14 +4218,14 @@ async function executeCSVImport() {
   const skipRows = parseInt(document.getElementById('csv-skip-rows').value, 10) || 0;
 
   if (mapMemo === -1 || mapAmount === -1) {
-    await showAlert(window._t('alert.memo_and_amount_required'));
+    await appAlert(window._t('alert.memo_and_amount_required'));
     return;
   }
 
   const selectedCols = [mapDate, mapAccount, mapMemo, mapAmount].filter((val) => val !== -1);
   const uniqueCols = new Set(selectedCols);
   if (selectedCols.length !== uniqueCols.size) {
-    await showAlert(window._t('alert.duplicate_columns_mapped'));
+    await appAlert(window._t('alert.duplicate_columns_mapped'));
     return;
   }
 
@@ -4234,7 +4241,7 @@ async function executeCSVImport() {
   const MAX_IMPORT_ROWS = 3000;
   const rowsToProcess = dataToImport.length - startIndex;
   if (rowsToProcess > MAX_IMPORT_ROWS) {
-    await showAlert(window._t('alert.too_many_import_rows', rowsToProcess, MAX_IMPORT_ROWS));
+    await appAlert(window._t('alert.too_many_import_rows', rowsToProcess, MAX_IMPORT_ROWS));
   }
   const endIndex = Math.min(dataToImport.length, startIndex + MAX_IMPORT_ROWS);
 
@@ -4388,7 +4395,7 @@ async function executeCSVImport() {
           if (dateStr.trim() !== '') {
             db.run('ROLLBACK;');
             const errMsg = window._t('error.csv_invalid_date', i + 1, dateStr);
-            await showAlert(`${errMsg}\n` + window._t('error.csv_abort'));
+            await appAlert(`${errMsg}\n` + window._t('error.csv_abort'));
             return;
           }
           const today = new Date();
@@ -4418,7 +4425,7 @@ async function executeCSVImport() {
     triggerHaptic();
   } catch (err) {
     db.run('ROLLBACK;');
-    await showAlert(window._t('error.import_fail'));
+    await appAlert(window._t('error.import_fail'));
     console.error(err);
   } finally {
     if (suggestStmt) suggestStmt.free();
@@ -4446,7 +4453,7 @@ async function copyAsMarkdown() {
     'SELECT created_at, account, memo, amount, currency FROM records WHERE parent_id IS NOT NULL ORDER BY created_at DESC',
   );
   if (res.length === 0) {
-    await showAlert(window._t('toast.no_copy_data'));
+    await appAlert(window._t('toast.no_copy_data'));
     return;
   }
   let markdown = window._t('markdown.title');
@@ -4502,7 +4509,7 @@ document.addEventListener('DOMContentLoaded', () => {
       installBtn.removeAttribute('data-i18n');
       installBtn.textContent = window._t('prompt.ios_install_btn');
       installBtn.onclick = () => {
-        showAlert(window._t('prompt.ios_install'));
+        appAlert(window._t('prompt.ios_install'));
       };
     }
   }
@@ -4660,7 +4667,7 @@ function getDynamicCommands() {
             title: `<span class="text-slate-400">${window._t('cmd.delete', escapeHtml(row[1]))}</span>`,
             keepOpen: true,
             action: async () => {
-              if (await requestConfirm(window._t('confirm.delete_tpl', row[1]))) {
+              if (await appConfirm(window._t('confirm.delete_tpl', row[1]))) {
                 db.run('DELETE FROM templates WHERE id = ?', [row[0]]);
                 setDirty(true);
                 renderCommandList(document.getElementById('cmd-input').value);
@@ -4877,7 +4884,7 @@ if (typeof BroadcastChannel !== 'undefined') {
         if (!hasAlerted) {
           hasAlerted = true;
           isFrozenByOtherTab = true;
-          await showAlert(window._t('alert.multi_tab'));
+          await appAlert(window._t('alert.multi_tab'));
           document.body.style.opacity = '0.5';
           document.body.style.pointerEvents = 'none';
           // inert also blocks keyboard focus and shortcuts reaching the app
@@ -5157,7 +5164,7 @@ function moveCustomDictItem(index, direction) {
 
 async function deleteCustomDictItem(index) {
   if (
-    await requestConfirm(window._t('confirm.delete_custom_account', customAccountDict[index].name))
+    await appConfirm(window._t('confirm.delete_custom_account', customAccountDict[index].name))
   ) {
     customAccountDict.splice(index, 1);
     renderCustomDictEditor();
@@ -5289,7 +5296,7 @@ async function initApp() {
   await changeAppLanguage(SUPPORTED_LANGS.includes(savedLang) ? savedLang : detectBrowserLang());
 
   if (!window.isSecureContext) {
-    await showAlert(window._t('alert.http_desc'));
+    await appAlert(window._t('alert.http_desc'));
     showToast(window._t('error.http_required'), '<span class="text-red-400">⚠️</span>');
   } else {
     await initSQLite();
@@ -5397,7 +5404,7 @@ document.addEventListener('drop', async (e) => {
     lowerName.endsWith('.sqlite')
   ) {
     if (isDirty) {
-      if (!(await requestConfirm(window._t('confirm.discard_changes')))) return;
+      if (!(await appConfirm(window._t('confirm.discard_changes')))) return;
     }
     if (handle && handle.kind === 'file') await processFileHandle(handle);
     else {
@@ -5412,7 +5419,7 @@ document.addEventListener('drop', async (e) => {
       csvInput.files = dataTransfer.files;
       csvInput.dispatchEvent(new Event('change', { bubbles: true }));
     }
-  } else await showAlert(window._t('alert.unsupported_file_type'));
+  } else await appAlert(window._t('alert.unsupported_file_type'));
 });
 
 const shortcutEl = document.getElementById('cmd-shortcut-key');
@@ -5428,7 +5435,7 @@ async function applyFeeSplit(rate, fixed, label) {
   // Get focused element before opening palette
   const activeEl = prePaletteActiveElement;
   if (!activeEl) {
-    await showAlert(window._t('error.split_no_focus'));
+    await appAlert(window._t('error.split_no_focus'));
     return;
   }
 
@@ -5451,13 +5458,13 @@ async function applyFeeSplit(rate, fixed, label) {
   }
 
   if (!amountVal) {
-    await showAlert(window._t('error.split_no_amount'));
+    await appAlert(window._t('error.split_no_amount'));
     return;
   }
 
   const rawGross = evaluateMath(amountVal, { raw: true });
   if (rawGross === null) {
-    await showAlert(window._t('error.split_invalid'));
+    await appAlert(window._t('error.split_invalid'));
     return;
   }
 
@@ -5465,7 +5472,7 @@ async function applyFeeSplit(rate, fixed, label) {
 
   // Fixed fees are defined in USD only
   if (fixed !== 0 && recordCurrency !== 'USD') {
-    await showAlert(window._t('error.split_usd_only', recordCurrency));
+    await appAlert(window._t('error.split_usd_only', recordCurrency));
     return;
   }
 
@@ -5500,7 +5507,7 @@ async function applyFeeSplit(rate, fixed, label) {
     } catch (e) {
       db.run('ROLLBACK;');
       console.error('Fee split failed:', e);
-      await showAlert(window._t('error.split_failed'));
+      await appAlert(window._t('error.split_failed'));
       return;
     }
 
@@ -5534,7 +5541,7 @@ async function applyFeeSplit(rate, fixed, label) {
 
     // Check the row and its block in SQL; the disabled input is not a lock
     if (isRecordLocked(id)) {
-      await showAlert(window._t('error.split_locked'));
+      await appAlert(window._t('error.split_locked'));
       return;
     }
 
@@ -5555,7 +5562,7 @@ async function applyFeeSplit(rate, fixed, label) {
     } catch (e) {
       db.run('ROLLBACK;');
       console.error('Fee split failed:', e);
-      await showAlert(window._t('error.split_failed'));
+      await appAlert(window._t('error.split_failed'));
       return;
     }
 
@@ -5613,11 +5620,11 @@ function handlePresetChange() {
 
 // 3. Save current mapping settings
 async function saveCurrentPreset() {
-  const name = await requestTextPrompt(window._t('prompt.preset_name'));
+  const name = await appPrompt(window._t('prompt.preset_name'));
   if (name === null) return;
   const trimmed = name.trim();
   if (!trimmed) {
-    await showAlert(window._t('alert.preset_name_required'));
+    await appAlert(window._t('alert.preset_name_required'));
     return;
   }
 
@@ -5690,7 +5697,7 @@ async function deleteCurrentPreset() {
   const target = presets[idx];
   if (!target) return;
 
-  if (!(await requestConfirm(window._t('confirm.delete_preset', target.name)))) return;
+  if (!(await appConfirm(window._t('confirm.delete_preset', target.name)))) return;
 
   presets.splice(idx, 1);
   setDbSetting('csv_presets', JSON.stringify(presets));
@@ -6144,7 +6151,7 @@ if ('serviceWorker' in navigator) {
 // ==========================================
 // Custom Alert / Confirm Modals
 // ==========================================
-function showAlert(message, title = window._t('alert.title')) {
+function appAlert(message, title = window._t('alert.title')) {
   return new Promise((resolve) => {
     window.isSystemModalOpen = true;
     document.body.style.overflow = 'hidden';
@@ -6189,7 +6196,7 @@ function showAlert(message, title = window._t('alert.title')) {
   });
 }
 
-function requestConfirm(message, title = window._t('confirm.title')) {
+function appConfirm(message, title = window._t('confirm.title')) {
   return new Promise((resolve) => {
     window.isSystemModalOpen = true;
     document.body.style.overflow = 'hidden';
