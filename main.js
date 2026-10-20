@@ -556,6 +556,7 @@ function setAppInert(state) {
 
 function requestPasswordPrompt(message) {
   return new Promise((resolve) => {
+    const previousFocus = document.activeElement;
     window.isSystemModalOpen = true;
     const modal = document.getElementById('password-prompt-modal');
     const msgEl = document.getElementById('password-prompt-message');
@@ -580,18 +581,24 @@ function requestPasswordPrompt(message) {
       }
       btnSubmit.removeEventListener('click', onSubmit);
       btnCancel.removeEventListener('click', onCancel);
-      input.removeEventListener('keydown', onKeyDown);
+      modal.removeEventListener('keydown', onKeyDown);
+      if (previousFocus && previousFocus.focus) previousFocus.focus({ preventScroll: true });
     };
     const onSubmit = () => {
+      const pwd = input.value;
+      input.value = '';
       cleanup();
-      resolve(input.value);
+      resolve(pwd);
     };
     const onCancel = () => {
+      input.value = '';
       cleanup();
       resolve(null);
     };
+    // The handler is on the modal so Escape works from the buttons too; Enter submits only from the field
     const onKeyDown = (e) => {
       if (e.isComposing || (e.key !== 'Enter' && e.key !== 'Escape')) return;
+      if (e.key === 'Enter' && e.target !== input) return;
       // Keep the global Escape handler from also closing the modal underneath
       e.stopPropagation();
       if (e.key === 'Enter') onSubmit();
@@ -600,7 +607,7 @@ function requestPasswordPrompt(message) {
 
     btnSubmit.addEventListener('click', onSubmit);
     btnCancel.addEventListener('click', onCancel);
-    input.addEventListener('keydown', onKeyDown);
+    modal.addEventListener('keydown', onKeyDown);
   });
 }
 
@@ -6193,8 +6200,13 @@ if ('serviceWorker' in navigator) {
 // ==========================================
 // Custom Alert / Confirm Modals
 // ==========================================
+// An open alert or confirm is closed as cancelled when a newer dialog replaces it
+let pendingAppDialog = null;
+
 function appAlert(message, title = window._t('alert.title')) {
   return new Promise((resolve) => {
+    if (pendingAppDialog) pendingAppDialog();
+    const previousFocus = document.activeElement;
     window.isSystemModalOpen = true;
     document.body.style.overflow = 'hidden';
 
@@ -6205,6 +6217,7 @@ function appAlert(message, title = window._t('alert.title')) {
 
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+    setAppInert(true);
 
     const okBtn = document.getElementById('custom-alert-ok-btn');
 
@@ -6222,16 +6235,20 @@ function appAlert(message, title = window._t('alert.title')) {
     };
 
     const cleanup = () => {
+      pendingAppDialog = null;
       modal.classList.add('hidden');
       modal.classList.remove('flex');
       if (!document.querySelector('.flex[role="dialog"]')) {
         window.isSystemModalOpen = false;
         document.body.style.overflow = '';
+        setAppInert(false);
       }
       okBtn.removeEventListener('click', handleOk);
       document.removeEventListener('keydown', handleKeydown, true);
+      if (previousFocus && previousFocus.focus) previousFocus.focus({ preventScroll: true });
     };
 
+    pendingAppDialog = handleOk;
     okBtn.addEventListener('click', handleOk);
     document.addEventListener('keydown', handleKeydown, true);
     setTimeout(() => okBtn.focus(), 10);
@@ -6240,6 +6257,8 @@ function appAlert(message, title = window._t('alert.title')) {
 
 function appConfirm(message, title = window._t('confirm.title')) {
   return new Promise((resolve) => {
+    if (pendingAppDialog) pendingAppDialog();
+    const previousFocus = document.activeElement;
     window.isSystemModalOpen = true;
     document.body.style.overflow = 'hidden';
 
@@ -6250,6 +6269,7 @@ function appConfirm(message, title = window._t('confirm.title')) {
 
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+    setAppInert(true);
 
     const okBtn = document.getElementById('custom-confirm-ok-btn');
     const cancelBtn = document.getElementById('custom-confirm-cancel-btn');
@@ -6277,17 +6297,21 @@ function appConfirm(message, title = window._t('confirm.title')) {
     };
 
     const cleanup = () => {
+      pendingAppDialog = null;
       modal.classList.add('hidden');
       modal.classList.remove('flex');
       if (!document.querySelector('.flex[role="dialog"]')) {
         window.isSystemModalOpen = false;
         document.body.style.overflow = '';
+        setAppInert(false);
       }
       okBtn.removeEventListener('click', handleOk);
       cancelBtn.removeEventListener('click', handleCancel);
       document.removeEventListener('keydown', handleKeydown, true);
+      if (previousFocus && previousFocus.focus) previousFocus.focus({ preventScroll: true });
     };
 
+    pendingAppDialog = handleCancel;
     okBtn.addEventListener('click', handleOk);
     cancelBtn.addEventListener('click', handleCancel);
     document.addEventListener('keydown', handleKeydown, true);
