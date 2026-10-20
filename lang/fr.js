@@ -308,6 +308,8 @@ export default {
   'btn.show_earlier_items': 'Afficher {0} élément(s) précédent(s)',
   'label.exported_locked': 'Exporté et verrouillé',
   'label.more_items': '…et {0} de plus',
+  'prompt.tpl_default_name': '{0} (Modèle)',
+  'prompt.input_title': 'Saisie',
   'cmd.calc_hint': '(Entrée pour appliquer / copier)',
   'confirm.restore_draft':
     'Des données de sauvegarde non enregistrées de votre dernière session ont été trouvées.\n\nLes restaurer ?',

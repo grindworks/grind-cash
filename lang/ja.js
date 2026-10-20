@@ -298,6 +298,8 @@ export default {
   'btn.show_earlier_items': '以前の {0} 件を表示',
   'label.exported_locked': 'エクスポート済み・ロック中',
   'label.more_items': '…ほか {0} 件',
+  'prompt.tpl_default_name': '{0}（テンプレート）',
+  'prompt.input_title': '入力',
   'cmd.calc_hint': '（Enterで入力 / コピー）',
   'confirm.restore_draft':
     '⚠️ 前回終了時の未保存データ（バックアップ）が見つかりました。\n\n復元しますか？',

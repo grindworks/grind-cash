@@ -1442,6 +1442,55 @@
       </div>
     </div>
 
+    <!-- Text Prompt Modal -->
+    <div
+      id="text-prompt-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="text-prompt-title"
+      aria-describedby="text-prompt-message"
+      class="fixed inset-0 z-[200] hidden touch-none items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+    >
+      <div
+        class="animate-modal-in flex w-full max-w-sm touch-auto flex-col overflow-hidden overscroll-contain rounded-xl border border-slate-200 bg-white shadow-2xl"
+      >
+        <div class="border-b border-slate-100 px-6 py-5">
+          <h3
+            id="text-prompt-title"
+            class="text-lg font-bold text-blue-950"
+            data-i18n="prompt.input_title"
+          >
+            Input
+          </h3>
+        </div>
+        <form class="space-y-4 px-6 py-6" data-action="preventDefaultSubmit">
+          <p id="text-prompt-message" class="text-sm whitespace-pre-line text-slate-600"></p>
+          <input
+            type="text"
+            id="text-prompt-input"
+            autocomplete="off"
+            class="w-full rounded-md border border-slate-200 bg-slate-50 px-4 py-2 text-lg text-blue-950 outline-none focus:border-blue-600"
+          />
+        </form>
+        <div class="flex justify-end space-x-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+          <button
+            id="text-prompt-cancel"
+            class="rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200"
+            data-i18n="btn.cancel"
+          >
+            Cancel
+          </button>
+          <button
+            id="text-prompt-submit"
+            class="rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+            data-i18n="btn.ok"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Drop Overlay -->
     <div
       id="drop-overlay"

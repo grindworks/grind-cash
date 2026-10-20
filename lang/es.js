@@ -305,6 +305,8 @@ export default {
   'btn.show_earlier_items': 'Mostrar {0} elemento(s) anterior(es)',
   'label.exported_locked': 'Exportado y bloqueado',
   'label.more_items': '…y {0} más',
+  'prompt.tpl_default_name': '{0} (Plantilla)',
+  'prompt.input_title': 'Entrada',
   'cmd.calc_hint': '(Intro para aplicar / copiar)',
   'confirm.restore_draft':
     'Se encontraron datos de copia de seguridad no guardados de su última sesión.\n\n¿Restaurarlos?',

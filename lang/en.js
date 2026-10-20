@@ -295,6 +295,8 @@ export default {
   'btn.show_earlier_items': 'Show {0} earlier item(s)',
   'label.exported_locked': 'Exported & locked',
   'label.more_items': '…and {0} more',
+  'prompt.tpl_default_name': '{0} (Template)',
+  'prompt.input_title': 'Input',
   'cmd.calc_hint': '(Enter to apply / copy)',
   'confirm.restore_draft': 'Unsaved backup data from your last session was found.\n\nRestore it?',
 };

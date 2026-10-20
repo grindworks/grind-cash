@@ -305,6 +305,8 @@ export default {
   'btn.show_earlier_items': '{0} frühere Position(en) anzeigen',
   'label.exported_locked': 'Exportiert & gesperrt',
   'label.more_items': '…und {0} weitere',
+  'prompt.tpl_default_name': '{0} (Vorlage)',
+  'prompt.input_title': 'Eingabe',
   'cmd.calc_hint': '(Enter zum Übernehmen / Kopieren)',
   'confirm.restore_draft':
     'Ungespeicherte Backup-Daten aus Ihrer letzten Sitzung wurden gefunden.\n\nWiederherstellen?',

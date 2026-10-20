@@ -305,6 +305,8 @@ export default {
   'btn.show_earlier_items': 'Mostra {0} voce/i precedente/i',
   'label.exported_locked': 'Esportato e bloccato',
   'label.more_items': '…e altri {0}',
+  'prompt.tpl_default_name': '{0} (Modello)',
+  'prompt.input_title': 'Inserimento',
   'cmd.calc_hint': '(Invio per applicare / copiare)',
   'confirm.restore_draft':
     'Sono stati trovati dati di backup non salvati della sessione precedente.\n\nRipristinarli?',

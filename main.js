@@ -580,8 +580,67 @@ function requestPasswordPrompt(message) {
       resolve(null);
     };
     const onKeyDown = (e) => {
+      if (e.key !== 'Enter' && e.key !== 'Escape') return;
+      // Keep the global Escape handler from also closing the modal underneath
+      e.stopPropagation();
       if (e.key === 'Enter') onSubmit();
-      if (e.key === 'Escape') onCancel();
+      else onCancel();
+    };
+
+    btnSubmit.addEventListener('click', onSubmit);
+    btnCancel.addEventListener('click', onCancel);
+    input.addEventListener('keydown', onKeyDown);
+  });
+}
+
+// In-app replacement for window.prompt(); resolve with the text, or null on cancel
+function requestTextPrompt(message, defaultValue = '') {
+  return new Promise((resolve) => {
+    window.isSystemModalOpen = true;
+    const modal = document.getElementById('text-prompt-modal');
+    const msgEl = document.getElementById('text-prompt-message');
+    const input = document.getElementById('text-prompt-input');
+    const btnSubmit = document.getElementById('text-prompt-submit');
+    const btnCancel = document.getElementById('text-prompt-cancel');
+    const previousFocus = document.activeElement;
+
+    msgEl.textContent = message;
+    input.value = defaultValue;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setAppInert(true);
+    setTimeout(() => {
+      input.focus();
+      input.select();
+    }, 50);
+
+    const cleanup = () => {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      if (!document.querySelector('.flex[role="dialog"]')) {
+        window.isSystemModalOpen = false;
+        document.body.style.overflow = '';
+        setAppInert(false);
+      }
+      btnSubmit.removeEventListener('click', onSubmit);
+      btnCancel.removeEventListener('click', onCancel);
+      input.removeEventListener('keydown', onKeyDown);
+      if (previousFocus && previousFocus.focus) previousFocus.focus({ preventScroll: true });
+    };
+    const onSubmit = () => {
+      cleanup();
+      resolve(input.value);
+    };
+    const onCancel = () => {
+      cleanup();
+      resolve(null);
+    };
+    const onKeyDown = (e) => {
+      if (e.isComposing || (e.key !== 'Enter' && e.key !== 'Escape')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === 'Enter') onSubmit();
+      else onCancel();
     };
 
     btnSubmit.addEventListener('click', onSubmit);
@@ -2225,7 +2284,7 @@ function updateFiscalYearButton() {
 
 async function changeFiscalMonth() {
   const current = getDbSetting('fiscalMonth', '1');
-  const input = prompt(window._t('prompt.fiscal_month'), current);
+  const input = await requestTextPrompt(window._t('prompt.fiscal_month'), current);
   if (input !== null) {
     const month = parseInt(input, 10);
     if (month >= 1 && month <= 12) {
@@ -2902,7 +2961,10 @@ async function saveTemplate(blockId) {
     if (itemsStmt) itemsStmt.free();
   }
 
-  let tplName = prompt(window._t('prompt.save_tpl_title'), blockMemo + ' (Template)');
+  let tplName = await requestTextPrompt(
+    window._t('prompt.save_tpl_title'),
+    window._t('prompt.tpl_default_name', blockMemo),
+  );
   if (!tplName) return;
   tplName = tplName.trim().slice(0, 50);
   if (!tplName) return;
@@ -5388,7 +5450,7 @@ function handlePresetChange() {
 
 // 3. Save current mapping settings
 async function saveCurrentPreset() {
-  const name = prompt(window._t('prompt.preset_name'));
+  const name = await requestTextPrompt(window._t('prompt.preset_name'));
   if (name === null) return;
   const trimmed = name.trim();
   if (!trimmed) {
