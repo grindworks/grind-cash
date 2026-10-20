@@ -6,7 +6,7 @@
 
 - Vanilla JavaScript, no frontend framework.
 - Wasm SQLite (`sql.js`): the database lives in memory. Manage memory explicitly (`stmt.free()`, `db.close()` before re-instantiating) to prevent leaks.
-- Tailwind CSS v4.3.1 from npm devDependencies (`@tailwindcss/cli`, `tailwindcss`, pinned); `./build.sh` or `npm run build` regenerates `styles.css`. npm is a development tool only; nothing from `node_modules` ships.
+- Tailwind CSS v4.3.1. `./build.sh` (or `npm run build`, which runs it) downloads the standalone binary for the current OS on first run and checks its pinned SHA-256. The binary is git-ignored. npm is a development tool only (Prettier); nothing from `node_modules` ships.
 
 ## 2. Data and files
 
@@ -29,6 +29,4 @@
 
 ## 5. Known gaps against shared §7
 
-- `showToast` takes an options object instead of `type`; toast position and animation follow the shared rule already.
-- Tailwind is pinned at 4.3.1 through npm; `build.sh` runs `npx tailwindcss` instead of the pinned binary.
 - Japanese outside `lang/`: the default Japanese account dictionaries and CSV header/date patterns in `main.js` (data, not UI strings), and the `lang="ja"` SEO text in the `<noscript>` block of `index.html`.

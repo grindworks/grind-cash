@@ -7,7 +7,9 @@
 # Local development scripts
 export_ai.md
 export_ai.sh
-build.sh
+
+# Tailwind standalone CLI binaries
+tailwindcss-*
 
 # OS generating files
 .DS_Store

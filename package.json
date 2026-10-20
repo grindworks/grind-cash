@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "build": "tailwindcss -i ./input.css -o ./styles.css --minify",
+    "build": "./build.sh",
     "format": "prettier --write \"*.{js,html,css,md,json}\" \"lang/*.js\"",
     "format:check": "prettier --check \"*.{js,html,css,md,json}\" \"lang/*.js\""
   },
