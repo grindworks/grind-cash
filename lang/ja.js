@@ -274,7 +274,10 @@ export default {
     '削除できません。エクスポート済みでロックされた明細が含まれています。',
   'prompt.ios_install':
     'インストール手順: 共有ボタンをタップし、「ホーム画面に追加」を選択してください。',
+  'settlement.bank_account': '普通預金',
+  'settlement.reconciliation': '消込',
   'alert.detected_date_format': '（判定した形式: {0}）',
+  'toc.projects': 'プロジェクト',
   'period.calendar_year_label': '{0}年（1月〜12月）',
   'period.fiscal_year_label': '{0}年度（{1}月始まり）',
   'period.custom': 'カスタム期間',

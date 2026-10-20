@@ -280,7 +280,10 @@ export default {
   'alert.cannot_delete_locked':
     'Impossibile eliminare. Questo blocco contiene record già esportati e bloccati.',
   'prompt.ios_install': 'Per installare: tocca Condividi, poi scegli «Aggiungi a Home».',
+  'settlement.bank_account': 'Banca',
+  'settlement.reconciliation': 'Riconciliazione',
   'alert.detected_date_format': '(Formato rilevato: {0})',
+  'toc.projects': 'Progetti',
   'period.calendar_year_label': '{0} (gen.–dic.)',
   'period.fiscal_year_label': 'Esercizio {0} (dal mese {1})',
   'period.custom': 'Periodo personalizzato',

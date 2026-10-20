@@ -280,7 +280,10 @@ export default {
   'alert.cannot_delete_locked':
     'Löschen nicht möglich. Dieser Block enthält bereits exportierte und gesperrte Datensätze.',
   'prompt.ios_install': 'Installation: Tippen Sie auf Teilen und wählen Sie „Zum Home-Bildschirm“.',
+  'settlement.bank_account': 'Bank',
+  'settlement.reconciliation': 'Abgleich',
   'alert.detected_date_format': '(Erkanntes Format: {0})',
+  'toc.projects': 'Projekte',
   'period.calendar_year_label': '{0} (Jan.–Dez.)',
   'period.fiscal_year_label': 'GJ {0} (ab Monat {1})',
   'period.custom': 'Benutzerdefinierter Zeitraum',

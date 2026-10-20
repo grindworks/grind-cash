@@ -283,7 +283,10 @@ export default {
     'Suppression impossible. Ce bloc contient des enregistrements déjà exportés et verrouillés.',
   'prompt.ios_install':
     'Pour installer : appuyez sur Partager, puis choisissez « Sur l’écran d’accueil ».',
+  'settlement.bank_account': 'Banque',
+  'settlement.reconciliation': 'Rapprochement',
   'alert.detected_date_format': '(Format détecté : {0})',
+  'toc.projects': 'Projets',
   'period.calendar_year_label': '{0} (janv.–déc.)',
   'period.fiscal_year_label': 'Exercice {0} (dès le mois {1})',
   'period.custom': 'Période personnalisée',

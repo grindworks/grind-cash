@@ -271,7 +271,10 @@ export default {
   'alert.cannot_delete_locked':
     'Cannot delete. This block contains records that have already been exported and locked.',
   'prompt.ios_install': 'To install: tap the Share button, then choose "Add to Home Screen".',
+  'settlement.bank_account': 'Bank',
+  'settlement.reconciliation': 'Reconciliation',
   'alert.detected_date_format': '(Detected format: {0})',
+  'toc.projects': 'Projects',
   'period.calendar_year_label': '{0} (Jan-Dec)',
   'period.fiscal_year_label': 'FY {0} (from month {1})',
   'period.custom': 'Custom period',

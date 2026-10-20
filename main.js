@@ -459,6 +459,23 @@ function normalizeNumberSeparators(expr) {
   });
 }
 
+// Settlement rule shared by JS and SQL: #Payment / #Receipt (# or ＃, ASCII case-insensitive)
+// followed by a space, tab, line break or the end of the memo
+function isSettlementMemo(memo) {
+  if (!memo) return false;
+  return /[#＃](?:payment|receipt)(?=[ \t\r\n]|$)/i.test(String(memo));
+}
+
+// Keep in sync with isSettlementMemo
+function settlementSqlExclusion(alias = '') {
+  const col = alias ? `${alias}.memo` : 'memo';
+  const m = `LOWER(REPLACE(REPLACE(REPLACE(COALESCE(${col}, ''), char(9), ' '), char(10), ' '), char(13), ' '))`;
+  const patterns = ['#payment', '#receipt', '＃payment', '＃receipt']
+    .flatMap((tag) => [`'*${tag}'`, `'*${tag} *'`])
+    .map((p) => `${m} GLOB ${p}`);
+  return `AND NOT (${patterns.join(' OR ')})`;
+}
+
 function triggerDownload(blob, fileName) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1233,6 +1250,37 @@ async function autoSuggestAccount(memoInput) {
   }
 }
 
+// Income-side account names in every UI language; prefixes cover "Revenue - Affiliate" style names
+const INCOME_ACCOUNT_PREFIXES = [
+  'revenue',
+  'sales',
+  'income',
+  'accounts receivable',
+  '売上',
+  '売掛金',
+  '収入',
+  'umsatz',
+  'erlös',
+  'erträge',
+  'forderungen',
+  'ventes',
+  "chiffre d'affaires",
+  'produits',
+  'créances',
+  'ventas',
+  'ingresos',
+  'cuentas por cobrar',
+  'vendite',
+  'ricavi',
+  'crediti',
+];
+
+function isIncomeAccount(account) {
+  const name = (account || '').trim().toLowerCase();
+  if (!name) return false;
+  return INCOME_ACCOUNT_PREFIXES.some((prefix) => name.startsWith(prefix));
+}
+
 window.createCollectionRecord = function (id) {
   if (!db) return;
   let stmt;
@@ -1255,25 +1303,21 @@ window.createCollectionRecord = function (id) {
       const safeAmount = amount ? parseFloat(amount) : 0;
       let isIncome = safeAmount >= 0;
 
-      // Guess simple expense accounts
-      const isDebitAccount = ![
-        'Revenue',
-        'Sales',
-        'Accounts Receivable',
-        '売上',
-        '売上高',
-        '売掛金',
-      ].includes(account);
-
-      if (isDebitAccount) {
+      if (!isIncomeAccount(account)) {
         isIncome = !isIncome;
       }
 
+      // Tags stay in English: totals and isSettlementMemo match on them
       const tag = isIncome ? '#Receipt' : '#Payment';
-      const newAccount = 'Bank';
+      const newAccount = window._t('settlement.bank_account');
 
-      const cleanMemo = memo ? memo.replace(/(#Receipt|#Payment)(?=\s|$)/gi, '').trim() : '';
-      const newMemo = `${cleanMemo} (Reconciliation) ${tag}`;
+      const cleanMemo = memo
+        ? memo
+            .replace(/(?:#|＃)(Receipt|Payment)(?=\s|$)/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+        : '';
+      const newMemo = `${cleanMemo} (${window._t('settlement.reconciliation')}) ${tag}`.trim();
 
       let maxSort = -1;
       let sortStmt = null;
@@ -1608,22 +1652,7 @@ async function updateRecord(id, field, newValue, element) {
 
 function updateTotalsOnly() {
   if (!db) return;
-  const filterVal = document.getElementById('period-filter')?.value || 'all';
-  let whereClause = '';
-  let params = [];
-
-  if (window.currentActiveMonths) {
-    const orConditions = window.currentActiveMonths
-      .map((m) => {
-        params.push(`${m}%`);
-        return 'c.created_at LIKE ?'; // Attach table alias "c."
-      })
-      .join(' OR ');
-    whereClause = ` AND (${orConditions})`;
-  } else if (filterVal !== 'all') {
-    whereClause = ` AND c.created_at LIKE ?`;
-    params.push(`${filterVal}%`);
-  }
+  const { clause: whereClause, params } = getPeriodWhereClause();
 
   let stmtTotal;
   let stmtBlock;
@@ -1633,8 +1662,7 @@ function updateTotalsOnly() {
       FROM records c
       JOIN records p ON c.parent_id = p.id
       WHERE c.parent_id IS NOT NULL
-        AND COALESCE(c.memo, '') NOT LIKE '%#Payment%'
-        AND COALESCE(c.memo, '') NOT LIKE '%#Receipt%'
+        ${settlementSqlExclusion('c')}
         ${whereClause}
       GROUP BY p.currency
     `;
@@ -1658,7 +1686,7 @@ function updateTotalsOnly() {
     renderMultiTotals(currencyTotals);
 
     stmtBlock = db.prepare(
-      `SELECT SUM(amount) FROM records WHERE parent_id = ? AND COALESCE(memo, '') NOT LIKE '%#Payment%' AND COALESCE(memo, '') NOT LIKE '%#Receipt%' ${whereClause.replace(/c\./g, '')}`,
+      `SELECT SUM(amount) FROM records WHERE parent_id = ? ${settlementSqlExclusion()} ${whereClause.replace(/c\./g, '')}`,
     );
     const blocksRes = db.exec('SELECT id, currency FROM records WHERE parent_id IS NULL');
     if (blocksRes.length > 0) {
@@ -1689,12 +1717,11 @@ function updateTotalsOnly() {
   updateTagsOnly();
 }
 
-function updateTagsOnly() {
-  if (!db) return;
+// Build the period filter for item rows (alias "c") shared by totals, tags and export
+function getPeriodWhereClause() {
   const filterVal = document.getElementById('period-filter')?.value || 'all';
-  let whereClause = '';
-  let params = [];
-
+  const params = [];
+  let clause = '';
   if (window.currentActiveMonths) {
     const orConditions = window.currentActiveMonths
       .map((m) => {
@@ -1702,48 +1729,48 @@ function updateTagsOnly() {
         return 'c.created_at LIKE ?';
       })
       .join(' OR ');
-    whereClause = ` AND (${orConditions})`;
+    clause = ` AND (${orConditions})`;
   } else if (filterVal !== 'all') {
-    whereClause = ` AND c.created_at LIKE ?`;
+    clause = ' AND c.created_at LIKE ?';
     params.push(`${filterVal}%`);
   }
+  return { clause, params };
+}
 
+const TAG_PATTERN = /[#＃][\p{L}\p{N}_\-ー]+/gu;
+
+// Aggregate tag totals for the active period: item tags plus the block's tags, settlements excluded.
+// Amounts use the block currency, the same as the grand total
+function collectTagTotals() {
+  const { clause, params } = getPeriodWhereClause();
   const query = `
-    SELECT p.memo AS p_memo, c.created_at, c.memo, c.amount, c.currency
+    SELECT p.memo AS p_memo, c.created_at, c.memo, c.amount, p.currency
     FROM records c
     JOIN records p ON c.parent_id = p.id
     WHERE c.parent_id IS NOT NULL
       AND (c.memo LIKE '%#%' OR c.memo LIKE '%＃%' OR p.memo LIKE '%#%' OR p.memo LIKE '%＃%')
-      ${whereClause}
+      ${settlementSqlExclusion('c')}
+      ${clause}
   `;
 
-  let tagTotals = Object.create(null);
+  const tagTotals = new Map();
   let stmt;
   try {
     stmt = db.prepare(query);
     stmt.bind(params);
     while (stmt.step()) {
-      const row = stmt.getAsObject();
-      const safeAmount = parseFloat(row.amount || 0);
-      const isCollection = (row.memo || '').match(/(#Receipt|#Payment)(?=\s|$)/i);
-
-      const safeMemoStr = (row.memo || '').slice(0, 1000);
-      const safeBlockMemoStr = (row.p_memo || '').slice(0, 1000);
-      const tags = safeMemoStr.match(/[#＃][\p{L}\p{N}_\-ー]+/gu) || [];
-      const blockTags = safeBlockMemoStr.match(/[#＃][\p{L}\p{N}_\-ー]+/gu) || [];
-      const rawTags = [...tags, ...blockTags].map((t) => t.replace('＃', '#'));
-      const allTags = [...new Set(rawTags)];
+      const [blockMemo, createdAt, memo, amount, currency] = stmt.get();
+      const safeAmount = parseFloat(amount || 0);
+      const tags = (memo || '').slice(0, 1000).match(TAG_PATTERN) || [];
+      const blockTags = (blockMemo || '').slice(0, 1000).match(TAG_PATTERN) || [];
+      const allTags = new Set([...tags, ...blockTags].map((t) => t.replace('＃', '#')));
 
       allTags.forEach((tag) => {
-        if (!tagTotals[tag]) tagTotals[tag] = { totals: {}, items: [] };
-        const c = row.currency || 'USD';
-        tagTotals[tag].totals[c] = (tagTotals[tag].totals[c] || 0) + safeAmount;
-        tagTotals[tag].items.push({
-          date: row.created_at,
-          memo: row.memo,
-          amount: safeAmount,
-          currency: c,
-        });
+        if (!tagTotals.has(tag)) tagTotals.set(tag, { totals: Object.create(null), items: [] });
+        const entry = tagTotals.get(tag);
+        const c = currency || 'USD';
+        entry.totals[c] = (entry.totals[c] || 0) + safeAmount;
+        entry.items.push({ date: createdAt, memo, amount: safeAmount, currency: c });
       });
     }
   } catch (e) {
@@ -1751,6 +1778,23 @@ function updateTagsOnly() {
   } finally {
     if (stmt) stmt.free();
   }
+  return tagTotals;
+}
+
+const MAX_TAGS_SHOWN = 10;
+
+function getSortedTagEntries(tagTotals) {
+  const weight = (data) => Object.values(data.totals).reduce((acc, v) => acc + Math.abs(v || 0), 0);
+  return [...tagTotals.entries()]
+    .sort((a, b) => weight(b[1]) - weight(a[1]))
+    .slice(0, MAX_TAGS_SHOWN);
+}
+
+function updateTagsOnly() {
+  if (!db) return;
+  const tagTotals = collectTagTotals();
+  const sortedTags = getSortedTagEntries(tagTotals);
+  const projectsLabel = escapeHtml(window._t('toc.projects'));
 
   const tocContainer = document.getElementById('toc-container');
   const tocList = document.getElementById('toc-list');
@@ -1760,35 +1804,28 @@ function updateTagsOnly() {
     const existingTags = tocList ? tocList.querySelectorAll('.toc-tag-item') : [];
     existingTags.forEach((el) => el.remove());
 
-    if (Object.keys(tagTotals).length > 0) {
+    if (sortedTags.length > 0) {
       const tagDivider = document.createElement('div');
       tagDivider.id = 'toc-tag-divider';
       tagDivider.className =
         'mt-8 font-bold text-slate-400 mb-2 px-2 uppercase text-[10px] tracking-widest flex items-center gap-1';
-      tagDivider.innerHTML = `<svg aria-hidden="true" class="w-3 h-3"><use href="#icon-folder"></use></svg> PROJECTS`;
+      tagDivider.innerHTML = `<svg aria-hidden="true" class="w-3 h-3"><use href="#icon-folder"></use></svg> ${projectsLabel}`;
       tocContainer.appendChild(tagDivider);
 
-      Object.entries(tagTotals)
-        .sort((a, b) => {
-          const sumA = Object.values(a[1].totals).reduce((acc, v) => acc + (Math.abs(v) || 0), 0);
-          const sumB = Object.values(b[1].totals).reduce((acc, v) => acc + (Math.abs(v) || 0), 0);
-          return (sumB || 0) - (sumA || 0);
-        })
-        .slice(0, 10)
-        .forEach(([tag, data]) => {
-          const amountHtml = Object.entries(data.totals)
-            .map(([cur, amt]) => formatCurrencyAmount(amt, cur))
-            .join(' / ');
-          const a = document.createElement('a');
-          a.className =
-            'toc-tag-item group block px-2 py-1.5 hover:bg-slate-100 rounded transition-colors cursor-pointer flex justify-between items-center';
-          a.innerHTML = `<span class="text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors truncate">${escapeHtml(tag)}</span><span class="text-[10px] tabular-nums tracking-tight font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded group-hover:bg-white transition-colors">${amountHtml}</span>`;
-          a.onclick = (e) => {
-            e.preventDefault();
-            showTagModal(tag, data);
-          };
-          if (tocList) tocList.appendChild(a);
-        });
+      sortedTags.forEach(([tag, data]) => {
+        const amountHtml = Object.entries(data.totals)
+          .map(([cur, amt]) => formatCurrencyAmount(amt, cur))
+          .join(' / ');
+        const a = document.createElement('a');
+        a.className =
+          'toc-tag-item group block px-2 py-1.5 hover:bg-slate-100 rounded transition-colors cursor-pointer flex justify-between items-center';
+        a.innerHTML = `<span class="text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors truncate">${escapeHtml(tag)}</span><span class="text-[10px] tabular-nums tracking-tight font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded group-hover:bg-white transition-colors">${amountHtml}</span>`;
+        a.onclick = (e) => {
+          e.preventDefault();
+          showTagModal(tag, data);
+        };
+        if (tocList) tocList.appendChild(a);
+      });
     }
   }
 
@@ -1796,32 +1833,26 @@ function updateTagsOnly() {
   let mobileTagContainer = document.getElementById('mobile-tag-container');
   if (mobileTagContainer) mobileTagContainer.remove();
 
-  if (Object.keys(tagTotals).length > 0 && blocksContainer) {
+  if (sortedTags.length > 0 && blocksContainer) {
     mobileTagContainer = document.createElement('div');
     mobileTagContainer.id = 'mobile-tag-container';
     mobileTagContainer.className =
       'xl:hidden mt-12 mb-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm';
-    mobileTagContainer.innerHTML = `<h3 class="text-xs font-bold text-slate-400 mb-4 tracking-widest flex items-center gap-1"><svg aria-hidden="true" class="w-4 h-4"><use href="#icon-folder"></use></svg> PROJECTS (TAGS)</h3>`;
+    mobileTagContainer.innerHTML = `<h3 class="text-xs font-bold text-slate-400 mb-4 tracking-widest flex items-center gap-1"><svg aria-hidden="true" class="w-4 h-4"><use href="#icon-folder"></use></svg> ${projectsLabel}</h3>`;
     const grid = document.createElement('div');
     grid.className = 'grid grid-cols-2 gap-3';
 
-    Object.entries(tagTotals)
-      .sort((a, b) => {
-        const sumA = Object.values(a[1].totals).reduce((acc, v) => acc + (Math.abs(v) || 0), 0);
-        const sumB = Object.values(b[1].totals).reduce((acc, v) => acc + (Math.abs(v) || 0), 0);
-        return (sumB || 0) - (sumA || 0);
-      })
-      .forEach(([tag, data]) => {
-        const amountHtml = Object.entries(data.totals)
-          .map(([cur, amt]) => formatCurrencyAmount(amt, cur))
-          .join(' / ');
-        const card = document.createElement('div');
-        card.className =
-          'bg-slate-50 p-3 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors border border-slate-100';
-        card.innerHTML = `<div class="text-sm font-bold text-blue-950 truncate mb-1">${escapeHtml(tag)}</div><div class="text-[11px] font-bold text-slate-500 tabular-nums">${amountHtml}</div>`;
-        card.onclick = () => showTagModal(tag, data);
-        grid.appendChild(card);
-      });
+    sortedTags.forEach(([tag, data]) => {
+      const amountHtml = Object.entries(data.totals)
+        .map(([cur, amt]) => formatCurrencyAmount(amt, cur))
+        .join(' / ');
+      const card = document.createElement('div');
+      card.className =
+        'bg-slate-50 p-3 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors border border-slate-100';
+      card.innerHTML = `<div class="text-sm font-bold text-blue-950 truncate mb-1">${escapeHtml(tag)}</div><div class="text-[11px] font-bold text-slate-500 tabular-nums">${amountHtml}</div>`;
+      card.onclick = () => showTagModal(tag, data);
+      grid.appendChild(card);
+    });
     mobileTagContainer.appendChild(grid);
     blocksContainer.parentNode.insertBefore(mobileTagContainer, blocksContainer.nextSibling);
   }
@@ -2514,8 +2545,7 @@ function updateOrCreateBlockElement(block, existingEl = null) {
   }
 
   const blockTotal = block.children.reduce((sum, item) => {
-    const isCollection = (item.memo || '').match(/(#Receipt|#Payment)(?=\s|$)/i);
-    return isCollection ? sum : sum + parseFloat(item.amount || 0);
+    return isSettlementMemo(item.memo) ? sum : sum + parseFloat(item.amount || 0);
   }, 0);
 
   const today = new Date();
@@ -3403,27 +3433,13 @@ async function executeExport() {
 async function exportCSV(format = 'generic') {
   if (!db) return;
 
-  const filterVal = document.getElementById('period-filter')?.value || 'all';
   const unexportedOnly = document.getElementById('export-unexported-only')?.checked || false;
 
-  let whereClause = '';
-  let params = [];
-
+  const period = getPeriodWhereClause();
+  const params = period.params;
+  let whereClause = period.clause;
   if (unexportedOnly) {
     whereClause += ' AND c.is_exported = 0';
-  }
-
-  if (window.currentActiveMonths) {
-    const orConditions = window.currentActiveMonths
-      .map((m) => {
-        params.push(`${m}%`);
-        return 'c.created_at LIKE ?';
-      })
-      .join(' OR ');
-    whereClause += ` AND (${orConditions})`;
-  } else if (filterVal !== 'all') {
-    whereClause += ` AND c.created_at LIKE ?`;
-    params.push(`${filterVal.replace(/[^0-9-]/g, '')}%`);
   }
 
   let query = `SELECT c.id, c.created_at, c.account, c.amount, c.memo, p.memo AS parent_memo, c.is_exported, c.tax_rate, c.currency
@@ -4850,41 +4866,11 @@ function formatMemoHtml(memo) {
   );
 }
 
+// Use the same aggregation as the index so both show the same numbers
 function filterByTag(tagName) {
-  if (!db) return;
-  let stmt;
-  try {
-    stmt = db.prepare(
-      "SELECT created_at, memo, amount, currency FROM records WHERE parent_id IS NOT NULL AND (memo LIKE ? ESCAPE '\\' OR memo LIKE ? ESCAPE '\\')",
-    );
-    // Fix: Add backslash itself to escape targets to prevent SQL crashes
-    const escapedTag = tagName.replace(/([\\_%])/g, '\\$1');
-    stmt.bind([`%#${escapedTag}%`, `%＃${escapedTag}%`]);
-
-    // LIKE is a prefix match (#food hits #foodie), so confirm with the display tag pattern
-    const targetTag = tagName.toLowerCase();
-    let totals = Object.create(null); // Replace with safe dictionary
-    let items = [];
-    while (stmt.step()) {
-      const [date, memo, amount, currency] = stmt.get();
-      const memoTags = Array.from((memo || '').matchAll(/(?:#|＃)([\p{L}\p{N}_\-ー]+)/gu), (m) =>
-        m[1].toLowerCase(),
-      );
-      if (!memoTags.includes(targetTag)) continue;
-      const safeAmount = parseFloat(amount || 0);
-      const c = currency || 'USD';
-      totals[c] = (totals[c] || 0) + safeAmount;
-      items.push({ date, memo, amount: safeAmount, currency: c });
-    }
-
-    if (items.length > 0) {
-      showTagModal('#' + tagName, { totals: totals, items: items });
-    }
-  } catch (e) {
-    console.error('Filter failed:', e);
-  } finally {
-    if (stmt) stmt.free();
-  }
+  if (!db || !tagName) return;
+  const data = collectTagTotals().get(`#${tagName}`);
+  if (data && data.items.length > 0) showTagModal(`#${tagName}`, data);
 }
 
 function showTagModal(tag, data) {

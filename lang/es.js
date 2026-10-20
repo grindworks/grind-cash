@@ -280,7 +280,10 @@ export default {
   'alert.cannot_delete_locked':
     'No se puede eliminar. Este bloque contiene registros ya exportados y bloqueados.',
   'prompt.ios_install': 'Para instalar: toca Compartir y elige «Añadir a pantalla de inicio».',
+  'settlement.bank_account': 'Banco',
+  'settlement.reconciliation': 'Conciliación',
   'alert.detected_date_format': '(Formato detectado: {0})',
+  'toc.projects': 'Proyectos',
   'period.calendar_year_label': '{0} (ene.–dic.)',
   'period.fiscal_year_label': 'Ejercicio {0} (desde el mes {1})',
   'period.custom': 'Periodo personalizado',
