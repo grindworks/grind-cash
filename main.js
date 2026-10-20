@@ -14,6 +14,8 @@ let statusTimeoutId = null;
 let isSaving = false;
 let dirtyEpoch = 0;
 let draftPausedNotified = false;
+// Set when another tab owns the data; blocks every write path in this tab
+let isFrozenByOtherTab = false;
 let currentMasterKey = null; // CryptoKey (extractable: false)
 let currentMasterKeyHash = '';
 
@@ -3096,7 +3098,7 @@ function duplicateRecord(id) {
 }
 
 async function saveGrindFile(isSaveAs = false) {
-  if (!db) return;
+  if (!db || isFrozenByOtherTab) return;
   if (isSaving) return;
   isSaving = true;
 
@@ -3406,6 +3408,7 @@ async function processFileHandle(handle, isDummy = false) {
 }
 
 async function loadGrindFile() {
+  if (isFrozenByOtherTab) return;
   if (isDirty) {
     if (!(await requestConfirm(window._t('confirm.discard_changes')))) return;
   }
@@ -4491,33 +4494,9 @@ function renderCommandList(query = '') {
 }
 
 document.addEventListener('keydown', (e) => {
-  if (window.isSystemModalOpen) return;
   if (e.isComposing || e.keyCode === 229) return;
-  const key = e.key?.toLowerCase();
-  if (!key) return;
-  if ((e.metaKey || e.ctrlKey) && (key === 'k' || key === 'ｋ' || e.code === 'KeyK')) {
+  if (isFrozenByOtherTab) {
     e.preventDefault();
-    toggleCommandPalette();
-    return;
-  }
-  if (
-    (e.metaKey || e.ctrlKey) &&
-    e.shiftKey &&
-    (key === 'n' || key === 'ｎ' || e.code === 'KeyN')
-  ) {
-    e.preventDefault();
-    document.getElementById('new-block-memo').focus();
-    return;
-  }
-  if ((e.metaKey || e.ctrlKey) && (key === 's' || key === 'ｓ' || e.code === 'KeyS')) {
-    e.preventDefault();
-    if (e.shiftKey) saveGrindFile(true);
-    else saveGrindFile();
-    return;
-  }
-  if ((e.metaKey || e.ctrlKey) && (key === 'o' || key === 'ｏ' || e.code === 'KeyO')) {
-    e.preventDefault();
-    loadGrindFile();
     return;
   }
 
@@ -4554,6 +4533,32 @@ document.addEventListener('keydown', (e) => {
       closeAccountDictEditor();
       return;
     }
+  }
+
+  if (window.isSystemModalOpen) return;
+  const key = e.key?.toLowerCase();
+  if (!key) return;
+  if ((e.metaKey || e.ctrlKey) && (key === 'k' || key === 'ｋ' || e.code === 'KeyK')) {
+    e.preventDefault();
+    toggleCommandPalette();
+    return;
+  }
+  if (e.altKey && !e.metaKey && !e.ctrlKey && (key === 'n' || key === 'ｎ' || e.code === 'KeyN')) {
+    e.preventDefault();
+    const newBlockMemo = document.getElementById('new-block-memo');
+    if (newBlockMemo) newBlockMemo.focus();
+    return;
+  }
+  if ((e.metaKey || e.ctrlKey) && (key === 's' || key === 'ｓ' || e.code === 'KeyS')) {
+    e.preventDefault();
+    if (e.shiftKey) saveGrindFile(true);
+    else saveGrindFile();
+    return;
+  }
+  if ((e.metaKey || e.ctrlKey) && (key === 'o' || key === 'ｏ' || e.code === 'KeyO')) {
+    e.preventDefault();
+    loadGrindFile();
+    return;
   }
 
   if (isCommandPaletteOpen) {
@@ -4605,9 +4610,12 @@ if (typeof BroadcastChannel !== 'undefined') {
       } else if (e.data === 'pong') {
         if (!hasAlerted) {
           hasAlerted = true;
+          isFrozenByOtherTab = true;
           await showAlert(window._t('alert.multi_tab'));
           document.body.style.opacity = '0.5';
           document.body.style.pointerEvents = 'none';
+          // inert also blocks keyboard focus and shortcuts reaching the app
+          document.body.inert = true;
         }
       }
     };
