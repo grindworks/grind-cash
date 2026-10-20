@@ -26,7 +26,7 @@ Once you "Install as app" from your browser, it launches and operates instantly 
 ### 3. File System Access API & Strong Encryption Protection
 
 Directly read and write the `.cash` file located on your OS locally from the browser.
-Upon saving, powerful encryption using `AES-256-GCM` via the Web Crypto API is applied. Even if the file is leaked, it can absolutely never be decrypted without the password.
+Upon saving, strong encryption using `AES-256-GCM` via the Web Crypto API is applied. Without the password, practical decryption is infeasible; still use a strong password (weak passwords can be attacked offline).
 
 - **🚨 Warning:** If you forget your password, data recovery is technically 100% impossible due to the encryption mechanism. Please manage your password with extreme care.
 - **💡 Recommended Browsers:** We strongly recommend using **Chrome** or **Edge**, which fully support direct overwrite saving (File System Access API). (Safari/Firefox will prompt a download save every time).
@@ -34,6 +34,16 @@ Upon saving, powerful encryption using `AES-256-GCM` via the Web Crypto API is a
 ### 4. High-Speed Operation via Command Palette
 
 Access all major features—such as saving, CSV export, and template loading—using only the keyboard via the Command Palette invoked by `Cmd+K` (Ctrl+K). Minimize mouse usage and achieve high-speed data entry without interrupting your flow of thought.
+
+The palette also offers:
+
+- **Fee split:** split a Stripe (2.9% + $0.30) or PayPal (3.49% + $0.49) fee off the focused amount into its own row. Fixed fees are in USD, so these presets apply to USD blocks only.
+- **Calculator:** type a formula such as `150*1.08` and press Enter to insert or copy the result.
+- **Privacy mode:** hide all numbers on screen.
+- **Copy as Markdown** and **Copy AI prompt** (see BYO-AI below).
+- **Unlock exported records:** clear the export lock (see section 13).
+
+Shortcuts: `Cmd/Ctrl+K` palette, `Cmd/Ctrl+S` save, `Cmd/Ctrl+Shift+S` save as, `Cmd/Ctrl+O` open, `Alt+N` (`⌥N`) new block.
 
 ### 5. Block Editor & Template Features
 
@@ -45,7 +55,7 @@ Simply add a hashtag like `#ProjectA` or `#TaxFiling` in the memo field, and the
 
 ### 7. Flexible Period Filters & High-Speed Incremental Search
 
-Rest assured even if you accumulate 10 years of data. Features an incremental search from the left table of contents, and a quick selector to instantly switch accounting periods such as "This Year (Jan Start)" or "Q1 (Jan-Mar)". All UIs interlock with zero reloading.
+Large files stay responsive: collapsed blocks are rendered only when you expand them, and each block shows its latest 200 items first (older items load on request). Features an incremental search from the left table of contents, and a quick selector to instantly switch accounting periods such as "This Year (Jan Start)" or "Q1 (Jan-Mar)". All UIs interlock with zero reloading.
 
 ### 8. "Relay Hub" Function to Connect with Any Accounting System
 
@@ -67,21 +77,32 @@ Drafts are saved asynchronously to IndexedDB 15 seconds after you stop typing, p
 
 Encryption and decryption (AES-256-GCM with PBKDF2, 600,000 iterations) use the browser's native, asynchronous Web Crypto API. The password is held only in memory as a non-extractable `CryptoKey`, and the heavy key derivation runs inside the browser's crypto engine, so the UI stays responsive while saving or loading.
 
+### 13. Settlements, Export Lock and Undo
+
+- **Settlement records:** the check button on an item adds a matching bank row tagged `#Payment` or `#Receipt`. It copies the original amount and sign as-is and is excluded from block totals, the grand total and tag totals, so it never double-counts. Any memo whose `#Payment` / `#Receipt` tag is followed by a space or the end of the memo counts as a settlement; `#Payments` or `#Receipts` are ordinary tags.
+- **Export lock:** with "Export unexported records only", GrindCash asks after the download whether to lock the exported rows. Locked rows cannot be edited or deleted. Use **Unlock Exported Records** in the Command Palette to undo the lock.
+- **Undo delete:** after deleting a row or block, click **Undo** in the notification (8 seconds) to restore it.
+
 ## How to Use
 
 1. For security reasons, please always access `index.html` in an **HTTPS environment** (GitHub Pages, Vercel, etc.) or local `localhost`.
 2. From the address bar icon or the on-screen button, "Install App" as a PWA.
 3. From then on, you can use it completely offline as a native PC application.
 
-* No npm or complex build tools are required. Just download and open it in your browser.
+- No runtime npm/bundler is required. Serve over HTTPS or localhost (`file://` will not work).
+- To rebuild the CSS after changing classes: `npm install` once, then `npm run build`. `npm run format` applies Prettier.
 
 ## File Structure
 
 - `index.html` : Main UI
 - `main.js` : Application logic (Wasm SQLite control, CSV export)
+- `i18n.js` / `lang/` : Multi-language strings
+- `input.css` : Tailwind source (`npm run build` → `styles.css`)
 - `styles.css` : Styles generated by Tailwind CSS
+- `assets/` : Bundled sql.js Wasm
 - `sw.js` : Service Worker for PWA (fully offline, cache management)
 - `manifest.json` : PWA Manifest (File Handling API registration)
+- `AI_RULES.md` : Product rules for contributors and AI agents
 
 ## Development Background
 
@@ -134,7 +155,7 @@ PHPもデータベースサーバーも不要です。
 ### 3. File System Access API & 強固な暗号化による保護
 
 OSのローカルにある `.cash` ファイルをブラウザから直接読み書きします。
-保存時には Web Crypto API を用いた `AES-256-GCM` による強力な暗号化が施されるため、万が一ファイルが流出してもパスワードがない限り絶対に解読されません。
+保存時には Web Crypto API を用いた `AES-256-GCM` による強力な暗号化が施されます。パスワードがなければ現実的な解読は困難ですが、弱いパスワードはオフライン攻撃の対象になり得るため、十分に強いパスワードを使ってください。
 
 - **🚨 警告:** パスワードを忘れた場合、暗号化の仕組み上、データの復元は技術的に100%不可能です。パスワードの管理には十分ご注意ください。
 - **💡 推奨ブラウザ:** 直接の上書き保存（File System Access API）をフルサポートしている **Chrome** または **Edge** のご利用を強く推奨します（Safari/Firefoxでは毎回ダウンロード保存となります）。
@@ -142,6 +163,16 @@ OSのローカルにある `.cash` ファイルをブラウザから直接読み
 ### 4. コマンドパレットによる高速操作
 
 `Cmd+K` (Ctrl+K) で呼び出せるコマンドパレットから、保存、CSVエクスポート、テンプレートの呼び出しなど、すべての主要機能にキーボードだけでアクセスできます。マウス操作を最小限に抑え、思考を止めない高速な入力を実現します。
+
+コマンドパレットには次の機能もあります。
+
+- **手数料の分割:** フォーカス中の金額から Stripe（2.9% + $0.30）または PayPal（3.49% + $0.49）の手数料を別の行に分けます。固定手数料が USD 建てのため、USD のブロックにだけ使えます。
+- **電卓:** `150*1.08` のような式を入力して Enter で、結果を入力欄に入れるかコピーします。
+- **プライバシーモード:** 画面上の数字をすべて隠します。
+- **Markdown でコピー** と **AI 用プロンプトのコピー**（下記の BYO-AI を参照）。
+- **エクスポート済みのロックを解除**（13 を参照）。
+
+ショートカット: `Cmd/Ctrl+K` パレット、`Cmd/Ctrl+S` 保存、`Cmd/Ctrl+Shift+S` 別名で保存、`Cmd/Ctrl+O` 開く、`Alt+N`（`⌥N`）新規ブロック。
 
 ### 5. ブロックエディタとテンプレート機能
 
@@ -153,7 +184,7 @@ Excelのようなレガシーな表入力ではなく、「出張」や「月次
 
 ### 7. 柔軟な期間フィルターと高速なインクリメンタル検索
 
-10年分のデータが溜まっても安心です。左側の目次からのインクリメンタル検索や、「今年度 (1月始)」「Q1 (1-3月)」といった会計期間を一瞬で切り替えるクイック・セレクターを搭載。すべてのUIが再読み込みゼロで連動します。
+データが増えても軽快に動くよう、折りたたんだブロックは開いたときに描画し、各ブロックは最新の 200 件を先に表示します（それより前は必要なときに読み込みます）。左側の目次からのインクリメンタル検索や、「今年度 (1月始)」「Q1 (1-3月)」といった会計期間を一瞬で切り替えるクイック・セレクターを搭載。すべてのUIが再読み込みゼロで連動します。
 
 ### 8. あらゆる会計システムと繋がる「中継ハブ」機能
 
@@ -176,21 +207,32 @@ XeroやQuickBooksなどの標準的な勘定科目に加え、自分だけのカ
 
 暗号化・復号（AES-256-GCM、PBKDF2 60万回ストレッチング）は、ブラウザ標準の非同期 Web Crypto API で実行します。パスワードは取り出し不可の `CryptoKey` としてメモリ上にのみ保持され、重い鍵導出はブラウザの暗号エンジン内で処理されるため、保存・読み込み中も UI の応答性を保ちます。
 
+### 13. 消込・エクスポートのロック・削除の取り消し
+
+- **消込レコード:** 明細のチェックボタンで、`#Payment` または `#Receipt` タグ付きの銀行側の行を追加します。元の金額と符号をそのままコピーし、ブロック合計・総合計・タグ集計からは除外するため、二重計上になりません。`#Payment` / `#Receipt` の直後が空白またはメモの末尾であれば消込として扱い、`#Payments` や `#Receipts` は通常のタグです。
+- **エクスポートのロック:** 「未エクスポートのみ」で書き出すと、ダウンロード後に書き出した行をロックするか確認します。ロックした行は編集・削除できません。コマンドパレットの **エクスポート済みのロックを解除** で戻せます。
+- **削除の取り消し:** 行やブロックを削除したあと、通知の **元に戻す**（8 秒間）で復元できます。
+
 ## 使い方
 
 1. セキュリティの都合上、必ず **HTTPS環境**（GitHub Pages, Vercel等）またはローカルの `localhost` で `index.html` にアクセスしてください。
 2. アドレスバーのアイコン、または画面のボタンから、PWAとして「アプリをインストール」します。
 3. 以降はPCのアプリケーションとして完全にオフラインで利用できます。
 
-※ npm や複雑なビルドツールすら不要です。ダウンロードしてブラウザで開くだけで動きます。
+※ ランタイム用の npm / バンドラは不要です。HTTPS または localhost で配信してください（`file://` では起動しません）。
+※ クラスを変更して CSS を再生成するときは、初回に `npm install`、以降は `npm run build` を実行します。`npm run format` で Prettier を適用します。
 
 ## ファイル構成
 
 - `index.html` : UI本体
 - `main.js` : アプリケーションロジック（Wasm SQLite制御、CSV出力）
+- `i18n.js` / `lang/` : 多言語リソース
+- `input.css` : Tailwind ソース（`npm run build` → `styles.css`）
 - `styles.css` : Tailwind CSSによって生成されたスタイル
+- `assets/` : 同梱の sql.js Wasm
 - `sw.js` : PWA用の Service Worker（完全オフライン化、キャッシュ管理）
 - `manifest.json` : PWAマニフェスト（File Handling APIの登録）
+- `AI_RULES.md` : コントリビュータ / AI 向けルール
 
 ## 開発の背景
 
