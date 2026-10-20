@@ -319,6 +319,11 @@ export default {
   'toast.unlocked': '{0} record sbloccato/i',
   'cmd.unlock_title': 'Sblocca i record esportati',
   'cmd.calc_hint': '(Invio per applicare / copiare)',
+  'fee.account': 'Commissioni di transazione',
+  'fee.default_memo': 'Vendite',
+  'fee.revenue_account': 'Ricavi',
+  'error.split_failed':
+    'La suddivisione delle commissioni non è riuscita. Non è stato modificato nulla.',
   'confirm.delete_block': 'Eliminare questo blocco e i suoi {0} elemento/i?',
   'confirm.restore_draft':
     'Sono stati trovati dati di backup non salvati della sessione precedente.\n\nRipristinarli?',

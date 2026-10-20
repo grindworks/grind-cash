@@ -313,6 +313,10 @@ export default {
   'toast.unlocked': '{0} 件のロックを解除しました',
   'cmd.unlock_title': 'エクスポート済みのロックを解除',
   'cmd.calc_hint': '（Enterで入力 / コピー）',
+  'fee.account': '支払手数料',
+  'fee.default_memo': '売上',
+  'fee.revenue_account': '売上高',
+  'error.split_failed': '手数料の分割に失敗しました。変更は行われていません。',
   'confirm.delete_block': 'このブロックと含まれる {0} 件の明細を削除しますか？',
   'confirm.restore_draft':
     '⚠️ 前回終了時の未保存データ（バックアップ）が見つかりました。\n\n復元しますか？',

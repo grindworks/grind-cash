@@ -309,6 +309,10 @@ export default {
   'toast.unlocked': 'Unlocked {0} record(s)',
   'cmd.unlock_title': 'Unlock Exported Records',
   'cmd.calc_hint': '(Enter to apply / copy)',
+  'fee.account': 'Transaction Fees',
+  'fee.default_memo': 'Sales',
+  'fee.revenue_account': 'Revenue',
+  'error.split_failed': 'The fee split failed. Nothing was changed.',
   'confirm.delete_block': 'Delete this block and its {0} item(s)?',
   'confirm.restore_draft': 'Unsaved backup data from your last session was found.\n\nRestore it?',
 };

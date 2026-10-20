@@ -322,6 +322,10 @@ export default {
   'toast.unlocked': '{0} enregistrement(s) déverrouillé(s)',
   'cmd.unlock_title': 'Déverrouiller les enregistrements exportés',
   'cmd.calc_hint': '(Entrée pour appliquer / copier)',
+  'fee.account': 'Frais de transaction',
+  'fee.default_memo': 'Ventes',
+  'fee.revenue_account': 'Chiffre d’affaires',
+  'error.split_failed': 'La répartition des frais a échoué. Rien n’a été modifié.',
   'confirm.delete_block': 'Supprimer ce bloc et ses {0} élément(s) ?',
   'confirm.restore_draft':
     'Des données de sauvegarde non enregistrées de votre dernière session ont été trouvées.\n\nLes restaurer ?',

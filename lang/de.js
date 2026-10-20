@@ -319,6 +319,10 @@ export default {
   'toast.unlocked': '{0} Datensatz/Datensätze entsperrt',
   'cmd.unlock_title': 'Exportierte Datensätze entsperren',
   'cmd.calc_hint': '(Enter zum Übernehmen / Kopieren)',
+  'fee.account': 'Transaktionsgebühren',
+  'fee.default_memo': 'Umsatz',
+  'fee.revenue_account': 'Umsatzerlöse',
+  'error.split_failed': 'Die Gebührenaufteilung ist fehlgeschlagen. Es wurde nichts geändert.',
   'confirm.delete_block': 'Diesen Block und seine {0} Position(en) löschen?',
   'confirm.restore_draft':
     'Ungespeicherte Backup-Daten aus Ihrer letzten Sitzung wurden gefunden.\n\nWiederherstellen?',

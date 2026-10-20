@@ -1251,8 +1251,23 @@ async function insertRecord(
     await showAlert(window._t('alert.invalid_amount_or_formula'));
     return false;
   }
+  insertRecordRow(parentId, memo, parsedAmount, dateStr, accountStr, taxRate, currency);
+  setDirty(true);
+  return true;
+}
 
-  let finalAmount = roundAmount(parsedAmount, currency);
+// Insert one item synchronously so callers can group several inserts in a transaction.
+// Return the new row id; the caller must call setDirty(true)
+function insertRecordRow(
+  parentId,
+  memo,
+  amount,
+  dateStr = null,
+  accountStr = null,
+  taxRate = '',
+  currency = 'USD',
+) {
+  const finalAmount = roundAmount(amount, currency);
 
   let maxSort = -1;
   if (parentId) {
@@ -1264,8 +1279,6 @@ async function insertRecord(
         const val = checkStmt.get()[0];
         if (val !== null) maxSort = val;
       }
-    } catch (e) {
-      console.warn(e);
     } finally {
       if (checkStmt) checkStmt.free();
     }
@@ -1289,8 +1302,7 @@ async function insertRecord(
   } finally {
     if (stmt) stmt.free();
   }
-  setDirty(true);
-  return true;
+  return db.exec('SELECT last_insert_rowid()')[0].values[0][0];
 }
 
 let renderMemoSuggestionsTimeout = null;
@@ -1519,15 +1531,7 @@ async function updateRecord(id, field, newValue, element) {
       }
     }
 
-    let recordCurrency = 'USD';
-    try {
-      const curStmt = db.prepare('SELECT currency FROM records WHERE id = ?');
-      curStmt.bind([id]);
-      if (curStmt.step()) {
-        recordCurrency = curStmt.get()[0] || 'USD';
-      }
-      curStmt.free();
-    } catch (e) {}
+    const recordCurrency = getRecordCurrency(id, 'USD');
 
     if (val !== null) {
       val = roundAmount(val, recordCurrency);
@@ -3078,6 +3082,43 @@ async function insertTemplate(templateId) {
 
   setDirty(true);
   renderData(parentId);
+}
+
+function getRecordCurrency(id, fallback = 'USD') {
+  let stmt;
+  try {
+    stmt = db.prepare('SELECT currency FROM records WHERE id = ?');
+    stmt.bind([id]);
+    if (stmt.step()) return stmt.get()[0] || fallback;
+  } finally {
+    if (stmt) stmt.free();
+  }
+  return fallback;
+}
+
+// Lock checks read is_exported from SQL; UI attributes are never trusted
+function isRecordLocked(id) {
+  let stmt;
+  try {
+    stmt = db.prepare('SELECT is_exported FROM records WHERE id = ?');
+    stmt.bind([id]);
+    return stmt.step() && stmt.get()[0] === 1;
+  } finally {
+    if (stmt) stmt.free();
+  }
+}
+
+function isBlockLocked(blockId) {
+  let stmt;
+  try {
+    stmt = db.prepare(
+      'SELECT COUNT(*) FROM records WHERE (id = ? OR parent_id = ?) AND is_exported = 1',
+    );
+    stmt.bind([blockId, blockId]);
+    return stmt.step() && stmt.get()[0] > 0;
+  } finally {
+    if (stmt) stmt.free();
+  }
 }
 
 async function deleteRecord(id) {
@@ -5376,26 +5417,13 @@ async function applyFeeSplit(rate, fixed, label) {
     return;
   }
 
-  // Strip currency symbols and normalize digit grouping before evaluation
-  const cleanVal = normalizeNumberSeparators(amountVal.replace(/[$€£¥]/g, '').trim());
-  const gross = evaluateMath(cleanVal);
-  if (gross === null || isNaN(gross)) {
-    await showAlert(window._t('error.split_invalid') || 'Invalid amount value.');
+  const rawGross = evaluateMath(amountVal, { raw: true });
+  if (rawGross === null) {
+    await showAlert(window._t('error.split_invalid'));
     return;
   }
 
-  // Calculate fee
-  let recordCurrency =
-    typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
-  if (db) {
-    try {
-      const targetId = id || blockId;
-      const curStmt = db.prepare('SELECT currency FROM records WHERE id = ?');
-      curStmt.bind([targetId]);
-      if (curStmt.step()) recordCurrency = curStmt.get()[0] || recordCurrency;
-      curStmt.free();
-    } catch (e) {}
-  }
+  const recordCurrency = getRecordCurrency(id || blockId, getDbSetting('baseCurrency', 'USD'));
 
   // Fixed fees are defined in USD only
   if (fixed !== 0 && recordCurrency !== 'USD') {
@@ -5403,76 +5431,56 @@ async function applyFeeSplit(rate, fixed, label) {
     return;
   }
 
-  let fee = gross * rate + fixed;
-
-  // Fix: Unify logic using the existing roundAmount helper (DRY principle)
-  fee = roundAmount(fee, recordCurrency);
-  const netFee = -Math.abs(fee);
+  const gross = roundAmount(rawGross, recordCurrency);
+  const netFee = -Math.abs(roundAmount(gross * rate + fixed, recordCurrency));
+  const feeAccount = window._t('fee.account');
 
   if (isNewForm && blockId) {
-    // Pattern A: Execute in new addition form
     const form = activeEl.closest('form');
     const memoInput = form.querySelector('.item-memo');
     const accountInput = form.querySelector('.item-account');
     const dateInput = form.querySelector('.item-date');
 
-    const grossMemo = memoInput.value.trim() || 'Sales';
-    const grossAccount = accountInput.value.trim() || 'Revenue';
+    const grossMemo = memoInput.value.trim() || window._t('fee.default_memo');
+    const grossAccount = accountInput.value.trim() || window._t('fee.revenue_account');
     const dateVal = dateInput.value;
 
-    // 1. Insert Gross
-    await insertRecord(
-      blockId,
-      grossMemo,
-      gross.toString(),
-      dateVal,
-      grossAccount,
-      '',
-      recordCurrency,
-    );
-    // 2. Insert Fee
-    await insertRecord(
-      blockId,
-      `${grossMemo} (${label})`,
-      netFee.toString(),
-      dateVal,
-      'Transaction Fees',
-      '',
-      recordCurrency,
-    );
+    // Insert gross and fee together or not at all
+    db.run('BEGIN TRANSACTION;');
+    try {
+      insertRecordRow(blockId, grossMemo, gross, dateVal, grossAccount, '', recordCurrency);
+      insertRecordRow(
+        blockId,
+        `${grossMemo} (${label})`,
+        netFee,
+        dateVal,
+        feeAccount,
+        '',
+        recordCurrency,
+      );
+      db.run('COMMIT;');
+    } catch (e) {
+      db.run('ROLLBACK;');
+      console.error('Fee split failed:', e);
+      await showAlert(window._t('error.split_failed'));
+      return;
+    }
 
-    // Clean up form
     memoInput.value = '';
     activeEl.value = '';
 
     setDirty(true);
     renderData();
-    let msg = (window._t('toast.split_added') || `Added Gross ({0}) & {1} ({2})`)
-      .replace('{0}', `${formatCurrencyAmount(gross, recordCurrency)}`)
-      .replace('{1}', label)
-      .replace('{2}', `${formatCurrencyAmount(netFee, recordCurrency)}`);
-    showToast(msg, '✨');
+    showToast(
+      window._t(
+        'toast.split_added',
+        formatCurrencyAmount(gross, recordCurrency),
+        label,
+        formatCurrencyAmount(netFee, recordCurrency),
+      ),
+      '✨',
+    );
   } else if (id) {
-    // Pattern B: Execute on existing row
-    let isExported = 0;
-    let stmtCheck;
-    try {
-      stmtCheck = db.prepare('SELECT is_exported FROM records WHERE id = ?');
-      stmtCheck.bind([id]);
-      if (stmtCheck.step()) isExported = stmtCheck.get()[0];
-    } finally {
-      if (stmtCheck) stmtCheck.free();
-    }
-
-    if (isExported === 1) {
-      // Fix: Multilingual support
-      await showAlert(
-        window._t('error.split_locked') ||
-          'Cannot apply split fees on a record that has already been exported and locked.',
-      );
-      return;
-    }
-
     let parentId = null;
     let createdAt = null;
     let memo = '';
@@ -5480,38 +5488,49 @@ async function applyFeeSplit(rate, fixed, label) {
     try {
       stmt = db.prepare('SELECT parent_id, created_at, memo FROM records WHERE id = ?');
       stmt.bind([id]);
-      if (stmt.step()) {
-        const row = stmt.get();
-        parentId = row[0];
-        createdAt = row[1];
-        memo = row[2] || '';
-      }
+      if (stmt.step()) [parentId, createdAt, memo] = stmt.get();
     } finally {
       if (stmt) stmt.free();
     }
+    if (!parentId) return;
 
-    if (parentId) {
-      // 1. Update original amount to Gross
-      updateRecord(id, 'amount', gross.toString(), activeEl);
-      // 2. Insert new fee row
-      const dateStr = createdAt ? createdAt.split(' ')[0] : null;
-      await insertRecord(
+    // Check the row and its block in SQL; the disabled input is not a lock
+    if (isRecordLocked(id)) {
+      await showAlert(window._t('error.split_locked'));
+      return;
+    }
+
+    const dateStr = createdAt ? createdAt.split(' ')[0] : null;
+    db.run('BEGIN TRANSACTION;');
+    try {
+      db.run('UPDATE records SET amount = ? WHERE id = ?', [gross, id]);
+      insertRecordRow(
         parentId,
-        `${memo} (${label})`,
-        netFee.toString(),
+        `${memo || ''} (${label})`,
+        netFee,
         dateStr,
-        'Transaction Fees',
+        feeAccount,
         '',
         recordCurrency,
       );
-
-      setDirty(true);
-      renderData();
-      let msg = (window._t('toast.split_applied') || `Split applied: Gross {0} & Fee {1}`)
-        .replace('{0}', `${formatCurrencyAmount(gross, recordCurrency)}`)
-        .replace('{1}', `${formatCurrencyAmount(netFee, recordCurrency)}`);
-      showToast(msg, '✨');
+      db.run('COMMIT;');
+    } catch (e) {
+      db.run('ROLLBACK;');
+      console.error('Fee split failed:', e);
+      await showAlert(window._t('error.split_failed'));
+      return;
     }
+
+    setDirty(true);
+    renderData();
+    showToast(
+      window._t(
+        'toast.split_applied',
+        formatCurrencyAmount(gross, recordCurrency),
+        formatCurrencyAmount(netFee, recordCurrency),
+      ),
+      '✨',
+    );
   }
 }
 
@@ -5819,18 +5838,9 @@ document.addEventListener('submit', (e) => {
       const date = target.querySelector('.item-date').value;
       const account = target.querySelector('.item-account').value;
 
-      let blockCurrency =
-        typeof getDbSetting === 'function' ? getDbSetting('baseCurrency', 'USD') : 'USD';
-      if (db) {
-        try {
-          const stmt = db.prepare('SELECT currency FROM records WHERE id = ?');
-          stmt.bind([blockId]);
-          if (stmt.step()) {
-            blockCurrency = stmt.get()[0] || blockCurrency;
-          }
-          stmt.free();
-        } catch (e) {}
-      }
+      const blockCurrency = db
+        ? getRecordCurrency(blockId, getDbSetting('baseCurrency', 'USD'))
+        : 'USD';
       addItem(blockId, memo, amount, date, account, '', blockCurrency);
     }
   }

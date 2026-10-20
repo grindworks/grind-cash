@@ -319,6 +319,10 @@ export default {
   'toast.unlocked': '{0} registro(s) desbloqueado(s)',
   'cmd.unlock_title': 'Desbloquear registros exportados',
   'cmd.calc_hint': '(Intro para aplicar / copiar)',
+  'fee.account': 'Comisiones de transacción',
+  'fee.default_memo': 'Ventas',
+  'fee.revenue_account': 'Ingresos',
+  'error.split_failed': 'La división de comisiones falló. No se cambió nada.',
   'confirm.delete_block': '¿Eliminar este bloque y sus {0} elemento(s)?',
   'confirm.restore_draft':
     'Se encontraron datos de copia de seguridad no guardados de su última sesión.\n\n¿Restaurarlos?',
