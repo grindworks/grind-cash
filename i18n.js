@@ -77,6 +77,9 @@ window.I18n = (() => {
       document.querySelectorAll('[data-i18n-title]').forEach((el) => {
         el.setAttribute('title', this.get(el.getAttribute('data-i18n-title')));
       });
+      document.querySelectorAll('[data-i18n-aria-label]').forEach((el) => {
+        el.setAttribute('aria-label', this.get(el.getAttribute('data-i18n-aria-label')));
+      });
     },
 
     getLang: () => currentLang,
