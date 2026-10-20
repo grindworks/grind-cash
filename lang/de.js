@@ -78,7 +78,8 @@ export default {
     '⚠️ Wiederherstellung fehlgeschlagen, da das vorherige Backup beschädigt ist.',
   'confirm.discard_changes':
     'Sie haben ungespeicherte Änderungen. Verwerfen und andere Datei öffnen?',
-  'confirm.currency_round': 'Beim Wechsel zu {0} werden {1} Beträge in diesem Block auf die Nachkommastellen von {0} gerundet. Ein Zurückwechseln stellt sie nicht wieder her. Fortfahren?',
+  'confirm.currency_round':
+    'Beim Wechsel zu {0} werden {1} Beträge in diesem Block auf die Nachkommastellen von {0} gerundet. Ein Zurückwechseln stellt sie nicht wieder her. Fortfahren?',
   'confirm.pw_empty':
     '⚠️ WARNUNG ⚠️\nPasswort ist leer.\nWenn Sie jetzt speichern, wird die Verschlüsselung aufgehoben und die Datei im Klartext gespeichert.\n\nSind Sie sicher, dass Sie die Verschlüsselung aufheben möchten?',
   'alert.pw_empty_canceled': 'Speichern abgebrochen. Bitte legen Sie ein Passwort fest.',
@@ -161,7 +162,8 @@ export default {
     'Bitte klicken oder fokussieren Sie zuerst auf ein Betragsfeld, um die Gebührenaufteilung anzuwenden.',
   'error.split_no_amount': 'Bitte geben Sie zuerst einen Betrag ein.',
   'error.split_invalid': 'Ungültiger Betragswert.',
-  'error.split_usd_only': 'Diese Gebührenvorlage verwendet eine feste USD-Gebühr und kann nicht auf {0}-Einträge angewendet werden.',
+  'error.split_usd_only':
+    'Diese Gebührenvorlage verwendet eine feste USD-Gebühr und kann nicht auf {0}-Einträge angewendet werden.',
   'toast.privacy_toggled': 'Privatsphärenmodus umgeschaltet',
   'update.ready': 'Eine neue Version ist verfügbar.',
   'update.apply': 'Neu laden',

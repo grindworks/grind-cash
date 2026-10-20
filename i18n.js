@@ -8,16 +8,16 @@ window.I18n = (() => {
   return {
     /** Initialize language system (Async) */
     init: async function (lang = 'en') {
-      // PHP版と同じサニタイズ
+      // Allow only safe characters in the language code
       const validLang = lang.replace(/[^a-zA-Z0-9-]/g, '');
 
       try {
-        // PHPの require __DIR__ . "/lang/{$lang}.php" に相当！
+        // Load the language file as a module
         const module = await import(`./lang/${validLang}.js`);
         messages = module.default;
         currentLang = validLang;
       } catch (e) {
-        // ファイルが存在しない場合は en.js にフォールバック
+        // Fall back to en.js when the file is missing
         console.warn(`Language file [${validLang}.js] not found. Falling back to en.js`);
         try {
           const fallback = await import(`./lang/en.js`);
@@ -28,7 +28,7 @@ window.I18n = (() => {
         currentLang = 'en';
       }
 
-      // 状態の保存とHTMLの反映
+      // Persist the choice and update the page
       try {
         localStorage.setItem('app_lang', currentLang);
       } catch (e) {
@@ -40,7 +40,7 @@ window.I18n = (() => {
 
     /** Retrieve translated string. */
     get: function (key, params = []) {
-      // 💡 既存のフラットキー完全一致を優先し、なければドット記法でネストを解決するハイブリッドアプローチ
+      // Prefer an exact flat key; otherwise resolve dot notation as a nested path
       let text = messages[key];
       if (text === undefined) {
         text = key
@@ -64,7 +64,7 @@ window.I18n = (() => {
     /** Update all DOM elements with data-i18n attributes. */
     updateDOM: function () {
       document.querySelectorAll('[data-i18n]').forEach((el) => {
-        // option要素はtextContentを使用（innerHTMLはoption要素では機能しない）
+        // Use textContent for <option>; innerHTML does not apply there
         if (el.tagName === 'OPTION') {
           el.textContent = this.get(el.getAttribute('data-i18n'));
         } else {

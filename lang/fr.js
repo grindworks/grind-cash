@@ -161,7 +161,8 @@ export default {
     'Veuillez cliquer ou vous concentrer sur un champ Montant en premier pour appliquer la division des frais.',
   'error.split_no_amount': 'Veuillez saisir un montant en premier.',
   'error.split_invalid': 'Valeur de montant non valide.',
-  'error.split_usd_only': 'Ce modèle de frais utilise un montant fixe en USD et ne peut pas être appliqué aux écritures en {0}.',
+  'error.split_usd_only':
+    'Ce modèle de frais utilise un montant fixe en USD et ne peut pas être appliqué aux écritures en {0}.',
   'toast.privacy_toggled': 'Mode confidentialité activé/désactivé',
   'update.ready': 'Une nouvelle version est disponible.',
   'update.apply': 'Recharger',

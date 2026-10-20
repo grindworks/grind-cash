@@ -1,10 +1,10 @@
-# 個人データ・エクスポートファイル
+# Personal data and exported files
 *.grind
 *.cash
 *.sqlite
 *.csv
 
-# 開発用スクリプト・ファイル
+# Local development scripts
 export_ai.md
 export_ai.sh
 build.sh

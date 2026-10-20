@@ -1,11 +1,11 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @custom-variant dark (&:where(.never-used));
 
 @theme {
   --font-sans: "Inter", "Noto Sans JP", "Helvetica Neue", Arial, sans-serif;
 
-  /* アニメーション定義 */
+  /* Animations */
   --animate-modal-in: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-modal-overlay: modalOverlay 0.2s ease-out forwards;
   --animate-toast-in: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -24,9 +24,9 @@
 @source "./main.js";
 @source "../footer.js";
 
-/* --- カスタムキーフレーム定義 --- */
+/* --- Keyframes --- */
 
-/* モーダルの出現アニメーション */
+/* Modal entrance */
 @keyframes modalIn {
   0% {
     opacity: 0;
@@ -38,7 +38,7 @@
   }
 }
 
-/* モーダル背景のフェードイン */
+/* Modal backdrop fade-in */
 @keyframes modalOverlay {
   0% {
     opacity: 0;
@@ -48,7 +48,7 @@
   }
 }
 
-/* トースト通知のスライドイン */
+/* Toast slide-in */
 @keyframes toastIn {
   0% {
     opacity: 0;
@@ -60,7 +60,7 @@
   }
 }
 
-/* トースト通知のフェードアウト */
+/* Toast fade-out */
 @keyframes toastOut {
   0% {
     opacity: 1;
@@ -72,7 +72,7 @@
   }
 }
 
-/* ブロック追加時のエントランスアニメーション */
+/* New block entrance */
 @keyframes blockEnter {
   0% {
     opacity: 0;
@@ -84,7 +84,7 @@
   }
 }
 
-/* グロウパルスエフェクト */
+/* Glow pulse */
 @keyframes glowPulse {
   0%,
   100% {
@@ -95,7 +95,7 @@
   }
 }
 
-/* フェードインアニメーション */
+/* Fade-in */
 @keyframes fadeIn {
   0% {
     opacity: 0;
@@ -105,7 +105,7 @@
   }
 }
 
-/* スライドアップアニメーション */
+/* Slide-up */
 @keyframes slideUp {
   0% {
     opacity: 0;
@@ -117,7 +117,7 @@
   }
 }
 
-/* フローティングアニメーション (空状態のアイコン用) */
+/* Floating icon for the empty state */
 @keyframes float {
   0%,
   100% {
@@ -128,7 +128,7 @@
   }
 }
 
-/* 成功フラッシュ (入力完了時) */
+/* Success flash after input */
 @keyframes successFlash {
   0% {
     background-color: rgba(16, 185, 129, 0.15);
@@ -138,7 +138,7 @@
   }
 }
 
-/* リップルエフェクト */
+/* Ripple */
 @keyframes ripple {
   0% {
     transform: scale(0);
@@ -150,7 +150,7 @@
   }
 }
 
-/* トーストのプログレスバー */
+/* Toast progress bar */
 @keyframes toastProgress {
   0% {
     width: 100%;
@@ -160,7 +160,7 @@
   }
 }
 
-/* --- ユーティリティレイヤー拡張 --- */
+/* --- Utility extensions --- */
 @utility scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -170,18 +170,23 @@
 }
 
 @utility csv-preview-scroll {
-  background: linear-gradient(to right, white 30%, rgba(255, 255, 255, 0)),
-              linear-gradient(to right, rgba(255, 255, 255, 0), white 70%) 0 100%,
-              radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, .2), rgba(0, 0, 0, 0)),
-              radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, .2), rgba(0, 0, 0, 0)) 0 100%;
+  background:
+    linear-gradient(to right, white 30%, rgba(255, 255, 255, 0)),
+    linear-gradient(to right, rgba(255, 255, 255, 0), white 70%) 0 100%,
+    radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0)),
+    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0)) 0 100%;
   background-repeat: no-repeat;
-  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-size:
+    40px 100%,
+    40px 100%,
+    14px 100%,
+    14px 100%;
   background-attachment: local, local, scroll, scroll;
 }
 
-/* --- カスタムスタイル --- */
+/* --- Custom styles --- */
 
-/* モーダルのアニメーション用ユーティリティ */
+/* Modal animation utilities */
 @utility animate-modal-in {
   animation: var(--animate-modal-in);
 }
@@ -219,14 +224,14 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* フォーカスリングの統一スタイル */
+  /* Consistent focus ring */
   :focus-visible {
     outline: 2px solid var(--color-blue-600);
     outline-offset: 2px;
     border-radius: 4px;
   }
 
-  /* View Transition の対象を明細リストに限定し、画面全体のモッサリ感を排除 */
+  /* Limit view transitions to the item list so the whole page does not cross-fade */
   :root {
     view-transition-name: none;
   }

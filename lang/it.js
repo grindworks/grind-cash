@@ -77,7 +77,8 @@ export default {
   'alert.restore_fail':
     '⚠️ Ripristino non riuscito perché i dati di backup precedenti sono corrotti.',
   'confirm.discard_changes': 'Hai modifiche non salvate. Eliminarle e aprire un altro file?',
-  'confirm.currency_round': 'Passando a {0}, {1} importi di questo blocco verranno arrotondati ai decimali di {0}. Tornare alla valuta precedente non li ripristinerà. Continuare?',
+  'confirm.currency_round':
+    'Passando a {0}, {1} importi di questo blocco verranno arrotondati ai decimali di {0}. Tornare alla valuta precedente non li ripristinerà. Continuare?',
   'confirm.pw_empty':
     '⚠️ AVVERTENZA ⚠️\nLa password è vuota.\nSalvare ora rimuoverà la crittografia e salverà in testo normale.\n\nSei sicuro di voler rimuovere la crittografia?',
   'alert.pw_empty_canceled': 'Salvataggio annullato. Imposta una password.',
@@ -159,7 +160,8 @@ export default {
     'Fai clic o posizionati prima su un campo Importo per applicare la suddivisione delle commissioni.',
   'error.split_no_amount': 'Inserisci prima un importo.',
   'error.split_invalid': "Valore dell'importo non valido.",
-  'error.split_usd_only': 'Questo modello di commissione usa una tariffa fissa in USD e non può essere applicato a voci in {0}.',
+  'error.split_usd_only':
+    'Questo modello di commissione usa una tariffa fissa in USD e non può essere applicato a voci in {0}.',
   'toast.privacy_toggled': 'Modalità privacy attivata/disattivata',
   'update.ready': 'È disponibile una nuova versione.',
   'update.apply': 'Ricarica',
