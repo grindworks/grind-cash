@@ -137,7 +137,9 @@ async function changeAppLanguage(lang) {
 
   rebuildDictSelectOptions();
 
-  document.title = window._t('app.title') + ' - Serverless Edition';
+  if (fileHandle || isDirty) updateFileIndicators();
+  else document.title = window._t('app.title') + ' - Serverless Edition';
+  applyShortcutHints();
 
   loadCustomDict();
 
@@ -304,18 +306,22 @@ function openDB() {
   return idbPromise;
 }
 
+// Resolve true when the draft is stored; the tab that does not own the data stores nothing
 async function saveDraft(uints) {
+  if (isFrozenByOtherTab) return true;
   try {
     const idb = await openDB();
     const tx = idb.transaction(STORE_NAME, 'readwrite');
     tx.objectStore(STORE_NAME).put(uints, 'latest_draft');
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
       tx.onabort = () => reject(tx.error);
     });
+    return true;
   } catch (e) {
     console.error('Draft save failed', e);
+    return false;
   }
 }
 
@@ -334,6 +340,7 @@ async function loadDraft() {
 }
 
 async function clearDraft() {
+  if (isFrozenByOtherTab) return;
   try {
     const idb = await openDB();
     const tx = idb.transaction(STORE_NAME, 'readwrite');
@@ -366,8 +373,7 @@ async function persistDraftSnapshot() {
       data = await encryptData(data, currentMasterKey);
     }
     if (!isDirty) return true;
-    await saveDraft(data);
-    return true;
+    return await saveDraft(data);
   } catch (e) {
     console.error('Draft save failed', e);
     return false;
@@ -424,9 +430,14 @@ function setDirty(state) {
     }
   }
 
+  updateFileIndicators();
+}
+
+// File-name badge and tab title; the badge is not translated, so a language change keeps it
+function updateFileIndicators() {
   const fileName = fileHandle && fileHandle.name ? fileHandle.name : 'Unsaved.cash';
   const titleBase = `${fileName} - GrindCash`;
-  document.title = state ? `* ${titleBase}` : titleBase;
+  document.title = isDirty ? `* ${titleBase}` : titleBase;
   const filenameBadge = document.getElementById('current-filename');
   if (filenameBadge) {
     filenameBadge.textContent = fileName;
@@ -580,7 +591,7 @@ function requestPasswordPrompt(message) {
       resolve(null);
     };
     const onKeyDown = (e) => {
-      if (e.key !== 'Enter' && e.key !== 'Escape') return;
+      if (e.isComposing || (e.key !== 'Enter' && e.key !== 'Escape')) return;
       // Keep the global Escape handler from also closing the modal underneath
       e.stopPropagation();
       if (e.key === 'Enter') onSubmit();
@@ -834,8 +845,8 @@ async function initSQLite() {
     SQL = await initSqlJs(config);
 
     let initialData = null;
-    const draft = await loadDraft();
-    if (draft) {
+    const draft = isFrozenByOtherTab ? null : await loadDraft();
+    if (draft && !isFrozenByOtherTab) {
       if (await appConfirm(window._t('confirm.restore_draft'))) {
         initialData = draft;
         let Uints = draft;
@@ -1772,6 +1783,9 @@ async function updateRecord(id, field, newValue, element) {
         }
       }
 
+      // #Payment and #Receipt change the totals, and tags feed the tag list
+      updateTotalsOnly();
+      updateTagsOnly();
       renderMemoSuggestions();
     }
   }
@@ -3623,6 +3637,10 @@ async function processFileHandle(handle, isDummy = false) {
     try {
       newDb = new SQL.Database(Uints);
       newDb.exec('SELECT count(*) FROM sqlite_master');
+      // A valid SQLite file without our table must not replace the open data
+      if (newDb.exec("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'records'").length === 0) {
+        throw new Error('Missing records table');
+      }
     } catch (e) {
       if (newDb) {
         try {
@@ -3632,15 +3650,23 @@ async function processFileHandle(handle, isDummy = false) {
       throw new Error('Invalid SQLite database file.');
     }
 
-    if (db) {
-      try {
-        db.close();
-      } catch (e) {}
-      db = null;
-    }
+    const previousDb = db;
     db = newDb;
+    try {
+      migrateDatabase();
+    } catch (migrateErr) {
+      db = previousDb;
+      try {
+        newDb.close();
+      } catch (_) {}
+      throw migrateErr;
+    }
+    if (previousDb) {
+      try {
+        previousDb.close();
+      } catch (e) {}
+    }
     applyMasterKey(fileKey, fileKeyHash);
-    migrateDatabase();
     loadSettingsFromDb();
 
     lastUsedDates = {};
@@ -4033,7 +4059,8 @@ function updateCSVPreview() {
       `<option value="-1">${window._t('label.do_not_select')}</option>`;
     const previewHead = document.getElementById('csv-preview-head');
     if (previewHead) previewHead.innerHTML = '';
-    const errMsg = e.message || window._t('csv.decode_fail', encoding);
+    console.error('CSV decode failed:', e);
+    const errMsg = window._t('csv.decode_fail', encoding);
     previewBody.innerHTML = `<tr><td colspan="99" class="p-4 text-center text-red-500">${escapeHtml(errMsg)}</td></tr>`;
     return;
   }
@@ -4064,7 +4091,7 @@ function updateCSVPreview() {
 
   if (selectedPreset === 'default') {
     if (maxCols >= 1) {
-      const dateIdx = firstRow.findIndex((c) => c && c.match(/日|date|datum|fecha/i));
+      const dateIdx = firstRow.findIndex((c) => c && c.match(/日|date|datum|fecha|data\b/i));
       defaultDate = dateIdx !== -1 ? dateIdx.toString() : '0';
     }
     if (mapAccount && maxCols >= 4) {
@@ -4073,13 +4100,13 @@ function updateCSVPreview() {
     }
     if (maxCols >= 2) {
       const memoIdx = firstRow.findIndex(
-        (c) => c && c.match(/摘要|メモ|内容|店名|利用先|memo|description|beschreibung|libell/i),
+        (c) => c && c.match(/摘要|メモ|内容|店名|利用先|memo|description|beschreibung|libell|descrizione|descripci|concepto/i),
       );
       defaultMemo = memoIdx !== -1 ? memoIdx.toString() : '1';
     }
     if (maxCols >= 3) {
       const amountIdx = firstRow.findIndex(
-        (c) => c && c.match(/金額|支払|出金|入金|利用額|amount|betrag|montant|importe/i),
+        (c) => c && c.match(/金額|支払|出金|入金|利用額|amount|betrag|montant|importe|importo/i),
       );
       defaultAmount = amountIdx !== -1 ? amountIdx.toString() : '2';
     }
@@ -4296,8 +4323,11 @@ async function executeCSVImport() {
       const trimmedAmount = normalizedAmount.trim();
       if (/^\([\d,.]+\)$/.test(trimmedAmount))
         normalizedAmount = '-' + trimmedAmount.replace(/[()]/g, '');
-      // Same locale-aware separator rules as typed amounts
-      const amountStr = normalizeNumberSeparators(normalizedAmount).replace(/[^\d.\-]/g, '');
+      // Same locale-aware separator rules as typed amounts; stray text means a wrong column, so skip the row
+      const unmarkedAmount = normalizeNumberSeparators(normalizedAmount)
+        .replace(AMOUNT_CURRENCY_TOKENS, '')
+        .replace(/\s+/g, '');
+      const amountStr = /[^\d.\-]/.test(unmarkedAmount) ? '' : unmarkedAmount;
       const isInvalidHyphen =
         (amountStr.match(/-/g) || []).length > 1 ||
         (amountStr.includes('-') && !amountStr.startsWith('-') && !amountStr.endsWith('-'));
@@ -4873,6 +4903,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (tocFilter) tocFilter.addEventListener('input', (e) => applyTocFilter(e.target.value));
 });
 
+// Resolves once the UI language is loaded, so the multi-tab warning is not a raw key
+let resolveLanguageReady;
+const languageReady = new Promise((resolve) => {
+  resolveLanguageReady = resolve;
+});
+
 if (typeof BroadcastChannel !== 'undefined') {
   try {
     const bc = new BroadcastChannel('grindcash_app_channel');
@@ -4884,6 +4920,7 @@ if (typeof BroadcastChannel !== 'undefined') {
         if (!hasAlerted) {
           hasAlerted = true;
           isFrozenByOtherTab = true;
+          await languageReady;
           await appAlert(window._t('alert.multi_tab'));
           document.body.style.opacity = '0.5';
           document.body.style.pointerEvents = 'none';
@@ -5294,6 +5331,7 @@ async function initApp() {
     console.warn('localStorage is not available:', e);
   }
   await changeAppLanguage(SUPPORTED_LANGS.includes(savedLang) ? savedLang : detectBrowserLang());
+  resolveLanguageReady();
 
   if (!window.isSecureContext) {
     await appAlert(window._t('alert.http_desc'));
@@ -5422,12 +5460,16 @@ document.addEventListener('drop', async (e) => {
   } else await appAlert(window._t('alert.unsupported_file_type'));
 });
 
-const shortcutEl = document.getElementById('cmd-shortcut-key');
-if (shortcutEl) shortcutEl.textContent = isMac ? '⌘K' : 'Ctrl+K';
-const btnSaveTooltip = document.getElementById('btn-save');
-if (btnSaveTooltip) btnSaveTooltip.title = `${window._t('btn.save')} (${isMac ? '⌘S' : 'Ctrl+S'})`;
-const btnOpenTooltip = document.querySelector('button[data-action="loadGrindFile"]');
-if (btnOpenTooltip) btnOpenTooltip.title = `${window._t('btn.open')} (${isMac ? '⌘O' : 'Ctrl+O'})`;
+// Called after every language change: updateDOM resets the translated titles
+function applyShortcutHints() {
+  const shortcutEl = document.getElementById('cmd-shortcut-key');
+  if (shortcutEl) shortcutEl.textContent = isMac ? '⌘K' : 'Ctrl+K';
+  const btnSaveTooltip = document.getElementById('btn-save');
+  if (btnSaveTooltip) btnSaveTooltip.title = `${window._t('btn.save')} (${isMac ? '⌘S' : 'Ctrl+S'})`;
+  const btnOpenTooltip = document.querySelector('button[data-action="loadGrindFile"]');
+  if (btnOpenTooltip) btnOpenTooltip.title = `${window._t('btn.open')} (${isMac ? '⌘O' : 'Ctrl+O'})`;
+}
+applyShortcutHints();
 
 async function applyFeeSplit(rate, fixed, label) {
   if (!db) return;
