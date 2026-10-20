@@ -717,7 +717,11 @@ async function decryptData(encryptedData, keyMaterial) {
       return new Uint8Array(decrypted);
     } else {
       const legacyKey = await deriveKey(keyMaterial, salt, 100000);
-      const decrypted = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, legacyKey, data);
+      const decrypted = await window.crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: iv },
+        legacyKey,
+        data,
+      );
       return new Uint8Array(decrypted);
     }
   } catch (e) {
@@ -2150,9 +2154,11 @@ function updatePeriodDropdown() {
   let months = [];
   if (res.length > 0) {
     res[0].values.forEach((row) => {
-      if (row[0]) {
+      // Skip malformed dates so the list never shows "undefined garbage"
+      const match = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(row[0] || '');
+      if (match) {
         months.push(row[0]);
-        years.add(row[0].split('-')[0]);
+        years.add(match[1]);
       }
     });
   }
@@ -2494,7 +2500,7 @@ function renderData(focusBlockId = null) {
     if (isFilterActive) {
       emptyHtml = `
         <div id="empty-state" class="flex flex-col items-center justify-center py-20 px-6 text-center border border-slate-200 rounded-3xl bg-slate-50 relative overflow-hidden transition-colors">
-           <div class="absolute inset-0 pointer-events-none" style="background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px); background-size: 24px 24px; opacity: 0.6;"></div>
+           <div class="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,var(--color-slate-200)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-slate-200)_1px,transparent_1px)] bg-[size:24px_24px] opacity-60"></div>
            <div class="absolute inset-0 pointer-events-none bg-gradient-to-b from-slate-50 via-transparent to-slate-50 opacity-80"></div>
            <div class="relative z-10 flex flex-col items-center">
               <div class="relative flex items-center justify-center mb-6">
@@ -4473,7 +4479,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
       installBtn.classList.add('hidden');
       if (!deferredPrompt) return;
       deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
+      await deferredPrompt.userChoice;
       deferredPrompt = null;
     };
   }
@@ -4663,7 +4669,9 @@ function getDynamicCommands() {
           });
         });
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('Failed to load templates for the command palette:', e);
+    }
   }
   return dynamicCommands;
 }
@@ -4722,7 +4730,9 @@ function getFilteredCommands(query) {
           },
         });
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('Calculator command failed:', e);
+    }
   }
   return filtered;
 }
@@ -5380,12 +5390,6 @@ document.addEventListener('drop', async (e) => {
   closeTagModal();
   closeAccountDictEditor();
 
-  const pwModal = document.getElementById('password-prompt-modal');
-  if (pwModal && !pwModal.classList.contains('hidden')) {
-    pwModal.classList.add('hidden');
-    pwModal.classList.remove('flex');
-  }
-
   const lowerName = file.name.toLowerCase();
   if (
     lowerName.endsWith('.cash') ||
@@ -5720,7 +5724,7 @@ function getCurrencyOptionsHtml(selected) {
     { value: 'GBP', symbol: '£', flag: '🇬🇧' },
     { value: 'JPY', symbol: '¥', flag: '🇯🇵' },
     { value: 'CAD', symbol: 'CA$', flag: '🇨🇦' },
-    { value: 'AUD', symbol: 'A$', flag: '🇦🇺' },
+    { value: 'AUD', symbol: 'AU$', flag: '🇦🇺' },
   ];
   return currencies
     .map(
@@ -6253,7 +6257,3 @@ document.addEventListener('mousedown', (e) => {
     }
   }
 });
-
-// The visibilitychange autosave has been removed because async Web Worker encryption
-// gets killed by the browser before completion, leading to data loss.
-// We rely on the 15-second draftTimer instead.
