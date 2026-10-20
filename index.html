@@ -123,15 +123,7 @@
     <!-- Content Security Policy (CSP) -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://grindsite.com; worker-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://grindsite.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self';"
-    />
-
-    <!-- Google Fonts (Inter + Noto Sans JP) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+JP:wght@300;400;500;700;800;900&display=swap"
-      rel="stylesheet"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self';"
     />
 
     <link rel="stylesheet" href="styles.css" />
@@ -149,9 +141,6 @@
 
     <!-- iOS Home Screen Icon -->
     <link rel="apple-touch-icon" href="icon-192.png" />
-
-    <!-- Global Footer Script -->
-    <script src="https://grindsite.com/tools/footer.js" defer></script>
   </head>
 
   <body

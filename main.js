@@ -512,11 +512,9 @@ function setAppInert(state) {
   const appUi = document.getElementById('app-ui');
   const tocContainer = document.getElementById('toc-container');
   const header = document.querySelector('header');
-  const footer = document.getElementById('grind-global-footer');
   if (appUi) appUi.inert = state;
   if (tocContainer) tocContainer.inert = state;
   if (header) header.inert = state;
-  if (footer) footer.inert = state;
 }
 
 function requestPasswordPrompt(message) {

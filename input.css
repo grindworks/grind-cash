@@ -3,7 +3,7 @@
 @custom-variant dark (&:where(.never-used));
 
 @theme {
-  --font-sans: "Inter", "Noto Sans JP", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: 'Helvetica Neue', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Arial, sans-serif;
 
   /* Animations */
   --animate-modal-in: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -19,10 +19,9 @@
   --animate-ripple: ripple 0.6s ease-out;
 }
 
-/* 1. クラス名の抽出対象ファイルを明示的に指定 */
-@source "./index.html";
-@source "./main.js";
-@source "../footer.js";
+/* Files scanned for class names */
+@source './index.html';
+@source './main.js';
 
 /* --- Keyframes --- */
 
