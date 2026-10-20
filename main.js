@@ -12,6 +12,7 @@ let collapsedBlocks = new Set();
 let draftTimer = null;
 let statusTimeoutId = null;
 let isSaving = false;
+let dirtyEpoch = 0;
 let draftPausedNotified = false;
 let currentMasterKey = null; // CryptoKey (extractable: false)
 let currentMasterKeyHash = '';
@@ -377,6 +378,7 @@ async function flushDraftNow() {
 }
 
 function setDirty(state) {
+  if (state) dirtyEpoch++;
   if (state && db) {
     // Debounce: save the draft 15 seconds after the last change
     if (draftTimer) clearTimeout(draftTimer);
@@ -3141,6 +3143,7 @@ async function saveGrindFile(isSaveAs = false) {
       console.warn('SQLite VACUUM skipped due to active statements:', vacuumError);
     }
     let data = db.export();
+    const epochAtExport = dirtyEpoch;
 
     // Apply a newly entered password after confirmation
     const pwInput = document.getElementById('file-password');
@@ -3227,11 +3230,16 @@ async function saveGrindFile(isSaveAs = false) {
             ? targetFileHandle.name
             : `GrindCash_${getTodayString().replace(/-/g, '')}.cash`;
         triggerDownload(blob, fileName);
-        setDirty(false);
         showToast(
           window._t('toast.downloaded', fileName),
           '<span class="text-green-400">💾</span>',
         );
+        if (
+          dirtyEpoch === epochAtExport &&
+          (await requestConfirm(window._t('confirm.mark_downloaded_saved')))
+        ) {
+          setDirty(false);
+        }
         showSaveSuccessFeedback();
         return;
       }
@@ -3253,7 +3261,7 @@ async function saveGrindFile(isSaveAs = false) {
     const writable = await targetFileHandle.createWritable();
     await writable.write(data);
     await writable.close();
-    setDirty(false);
+    if (dirtyEpoch === epochAtExport) setDirty(false);
 
     showToast(
       window._t('toast.saved_to', targetFileHandle.name),

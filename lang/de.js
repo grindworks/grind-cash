@@ -278,6 +278,8 @@ export default {
   'alert.cannot_delete_locked':
     'Löschen nicht möglich. Dieser Block enthält bereits exportierte und gesperrte Datensätze.',
   'prompt.ios_install': 'Installation: Tippen Sie auf Teilen und wählen Sie „Zum Home-Bildschirm“.',
+  'confirm.mark_downloaded_saved':
+    'Download gestartet. Wenn die Datei erfolgreich gespeichert wurde, ungespeicherte Änderungen-Anzeige löschen?',
   'toast.draft_paused':
     'Die automatische Sicherung ist pausiert, bis Sie ein Passwort festlegen oder die Datei speichern.',
   'confirm.discard_draft':

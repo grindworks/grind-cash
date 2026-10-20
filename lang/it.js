@@ -278,6 +278,8 @@ export default {
   'alert.cannot_delete_locked':
     'Impossibile eliminare. Questo blocco contiene record già esportati e bloccati.',
   'prompt.ios_install': 'Per installare: tocca Condividi, poi scegli «Aggiungi a Home».',
+  'confirm.mark_downloaded_saved':
+    'Download avviato. Se il file è stato salvato correttamente, cancellare l’indicatore di modifiche non salvate?',
   'toast.draft_paused':
     'Il backup automatico è in pausa finché non imposti una password o salvi il file.',
   'confirm.discard_draft':

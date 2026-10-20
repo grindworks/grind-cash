@@ -278,6 +278,8 @@ export default {
   'alert.cannot_delete_locked':
     'No se puede eliminar. Este bloque contiene registros ya exportados y bloqueados.',
   'prompt.ios_install': 'Para instalar: toca Compartir y elige «Añadir a pantalla de inicio».',
+  'confirm.mark_downloaded_saved':
+    'Descarga iniciada. Si el archivo se guardó correctamente, ¿borrar el indicador de cambios sin guardar?',
   'toast.draft_paused':
     'La copia de seguridad automática está en pausa hasta que establezca una contraseña o guarde el archivo.',
   'confirm.discard_draft':

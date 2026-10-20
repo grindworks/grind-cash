@@ -269,6 +269,8 @@ export default {
   'alert.cannot_delete_locked':
     'Cannot delete. This block contains records that have already been exported and locked.',
   'prompt.ios_install': 'To install: tap the Share button, then choose "Add to Home Screen".',
+  'confirm.mark_downloaded_saved':
+    'Download started. If the file saved successfully, clear the unsaved-changes indicator?',
   'toast.draft_paused': 'Auto-backup is paused until you set a password or save the file.',
   'confirm.discard_draft':
     'Delete the backup permanently?\n(Cancel keeps it until you make new changes)',
