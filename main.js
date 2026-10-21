@@ -1121,7 +1121,7 @@ function evaluateMath(expr, { raw = false } = {}) {
     // Reject anything that is not a number, operator or currency marker (1e3, 12abc, 1O0)
     const withoutCurrency = normalized.replace(AMOUNT_CURRENCY_TOKENS, '').replace(/\s+/g, '');
     if (/[^0-9+\-*/().]/.test(withoutCurrency)) return null;
-    const sanitized = withoutCurrency;
+    const sanitized = withoutCurrency.replace(/^\+/, '');
     if (!sanitized) return null;
     if (sanitized.includes('**')) return null;
 
@@ -1335,15 +1335,19 @@ function insertRecordRow(
   }
   const newSortOrder = maxSort + 1;
 
-  let query =
-    'INSERT INTO records (parent_id, memo, amount, account, sort_order, tax_rate, currency) VALUES (?, ?, ?, ?, ?, ?, ?)';
-  let params = [parentId, memo, finalAmount, accountStr, newSortOrder, taxRate, currency];
-
-  if (dateStr) {
-    query =
-      'INSERT INTO records (parent_id, memo, amount, account, sort_order, tax_rate, currency, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-    params.push(dateStr + ' 00:00:00');
-  }
+  // Fall back to the local date because CURRENT_TIMESTAMP is UTC and can land on the previous day
+  const query =
+    'INSERT INTO records (parent_id, memo, amount, account, sort_order, tax_rate, currency, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+  const params = [
+    parentId,
+    memo,
+    finalAmount,
+    accountStr,
+    newSortOrder,
+    taxRate,
+    currency,
+    `${dateStr || getTodayString()} 00:00:00`,
+  ];
 
   let stmt;
   try {
@@ -1860,7 +1864,7 @@ function updateTotalsOnly() {
           el.textContent = formatCurrency(Math.abs(blockTotal), safeCurr);
           const unitEl = el.previousElementSibling;
           if (unitEl && unitEl.tagName === 'SPAN') {
-            unitEl.textContent = `${blockTotal < 0 ? '-' : ''}${getCurrencySymbol(safeCurr)}`;
+            unitEl.textContent = `${roundAmount(blockTotal, safeCurr) < 0 ? '-' : ''}${getCurrencySymbol(safeCurr)}`;
           }
         }
       });
@@ -1968,7 +1972,7 @@ function updateTagsOnly() {
       tagDivider.className =
         'mt-8 font-bold text-slate-400 mb-2 px-2 uppercase text-[10px] tracking-widest flex items-center gap-1';
       tagDivider.innerHTML = `<svg aria-hidden="true" class="w-3 h-3"><use href="#icon-folder"></use></svg> ${projectsLabel}`;
-      tocContainer.appendChild(tagDivider);
+      (tocList || tocContainer).appendChild(tagDivider);
 
       sortedTags.forEach(([tag, data]) => {
         const amountHtml = Object.entries(data.totals)
@@ -2063,7 +2067,7 @@ function renderMultiTotals(totalsMap) {
   const entries = Object.entries(totalsMap).sort((a, b) => b[1] - a[1]);
 
   entries.forEach(([currency, amount]) => {
-    const isNegative = amount < 0;
+    const isNegative = roundAmount(amount, currency) < 0;
     const absAmount = Math.abs(amount);
 
     const wrapper = document.createElement('div');
@@ -2692,16 +2696,16 @@ function generateBlockFormHtml(blockId, defaultDate, defaultAccount) {
         <button type="submit" class="text-primary bg-primary/10 hover:bg-primary/20 rounded-full w-8 h-8 flex items-center justify-center text-xl leading-none font-light sm:hidden transition-colors outline-none focus:ring-2 focus:ring-primary/50 shrink-0">+</button>
         <div class="flex items-center bg-slate-50 rounded-md px-1 py-1 border border-slate-200 transition-colors">
           <button type="button" data-action="adjustDate" data-delta="-1" class="text-slate-400 hover:text-slate-800 w-8 h-8 hidden sm:flex items-center justify-center font-bold cursor-pointer outline-none transition-colors touch-manipulation">-</button>
-          <input type="date" class="${dateInputClass}" value="${defaultDate}" aria-label="${escapeHtml(window._t('label.date'))}" data-action-input="setDirtyAndCheckFutureDate">
+          <input type="date" class="${dateInputClass}" value="${defaultDate}" aria-label="${escapeHtml(window._t('label.date'))}" data-i18n-aria-label="label.date" data-action-input="setDirtyAndCheckFutureDate">
           <button type="button" data-action="adjustDate" data-delta="1" class="text-slate-400 hover:text-slate-800 w-8 h-8 hidden sm:flex items-center justify-center font-bold cursor-pointer outline-none transition-colors touch-manipulation">+</button>
         </div>
-        <input type="text" placeholder="${escapeHtml(window._t('placeholder.account'))}" aria-label="${escapeHtml(window._t('placeholder.account'))}" value="${escapeHtml(defaultAccount)}" spellcheck="false" autocomplete="off" list="account-suggestions" data-action-input="setDirty" data-action-focus="select" data-action-keydown="focusNextMemo" class="item-account bg-transparent border-0 focus:ring-2 focus:ring-primary-100 focus:bg-primary-50/50 p-0 text-slate-600 placeholder-slate-400 w-20 shrink-0 text-sm outline-none text-center" style="min-width: 60px;">
+        <input type="text" placeholder="${escapeHtml(window._t('placeholder.account'))}" aria-label="${escapeHtml(window._t('placeholder.account'))}" data-i18n-placeholder="placeholder.account" data-i18n-aria-label="placeholder.account" value="${escapeHtml(defaultAccount)}" spellcheck="false" autocomplete="off" list="account-suggestions" data-action-input="setDirty" data-action-focus="select" data-action-keydown="focusNextMemo" class="item-account bg-transparent border-0 focus:ring-2 focus:ring-primary-100 focus:bg-primary-50/50 p-0 text-slate-600 placeholder-slate-400 w-20 shrink-0 text-sm outline-none text-center" style="min-width: 60px;">
       </div>
       <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:flex-1 pl-6 sm:pl-0 mt-2 sm:mt-0">
-        <input type="text" placeholder="${escapeHtml(window._t('placeholder.add_entry'))}" aria-label="${escapeHtml(window._t('placeholder.add_entry'))}" list="memo-suggestions" data-action-input="setDirty" data-action-blur="autoSuggestAccount" data-action-focus="scrollIntoView" data-action-keydown="focusNextAmount" class="item-memo bg-transparent border-0 focus:ring-2 focus:ring-primary-100 focus:bg-primary-50/50 px-1 rounded-sm p-0 text-slate-900 placeholder-slate-400 flex-1 text-sm font-medium outline-none min-w-[100px]">
-        <input type="text" inputmode="decimal" placeholder="${escapeHtml(window._t('placeholder.amount'))}" aria-label="${escapeHtml(window._t('placeholder.amount'))}" spellcheck="false" autocomplete="off" title="${escapeHtml(window._t('tooltip.amount_math'))}" class="item-amount bg-transparent border-0 focus:ring-2 focus:ring-primary-100 focus:bg-primary-50/50 px-1 rounded-sm p-0 text-right tabular-nums tracking-tight text-slate-900 placeholder-slate-400 w-24 sm:w-32 shrink-0 text-sm outline-none" style="min-width: 104px;" data-action-input="setDirty" data-action-focus="scrollIntoView" data-action-keydown="submitOnTab">
+        <input type="text" placeholder="${escapeHtml(window._t('placeholder.add_entry'))}" aria-label="${escapeHtml(window._t('placeholder.add_entry'))}" data-i18n-placeholder="placeholder.add_entry" data-i18n-aria-label="placeholder.add_entry" list="memo-suggestions" data-action-input="setDirty" data-action-blur="autoSuggestAccount" data-action-focus="scrollIntoView" data-action-keydown="focusNextAmount" class="item-memo bg-transparent border-0 focus:ring-2 focus:ring-primary-100 focus:bg-primary-50/50 px-1 rounded-sm p-0 text-slate-900 placeholder-slate-400 flex-1 text-sm font-medium outline-none min-w-[100px]">
+        <input type="text" inputmode="decimal" placeholder="${escapeHtml(window._t('placeholder.amount'))}" aria-label="${escapeHtml(window._t('placeholder.amount'))}" data-i18n-placeholder="placeholder.amount" data-i18n-aria-label="placeholder.amount" spellcheck="false" autocomplete="off" title="${escapeHtml(window._t('tooltip.amount_math'))}" data-i18n-title="tooltip.amount_math" class="item-amount bg-transparent border-0 focus:ring-2 focus:ring-primary-100 focus:bg-primary-50/50 px-1 rounded-sm p-0 text-right tabular-nums tracking-tight text-slate-900 placeholder-slate-400 w-24 sm:w-32 shrink-0 text-sm outline-none" style="min-width: 104px;" data-action-input="setDirty" data-action-focus="scrollIntoView" data-action-keydown="submitOnTab">
       </div>
-      <button type="submit" class="hidden">${escapeHtml(window._t('btn.add'))}</button>
+      <button type="submit" class="hidden" data-i18n="btn.add">${escapeHtml(window._t('btn.add'))}</button>
     </form>
   `;
 }
@@ -2791,7 +2795,7 @@ function updateOrCreateBlockElement(block, existingEl = null) {
       </div>
       <div class="flex items-center shrink-0">
         <div class="font-bold tabular-nums tracking-tight text-slate-900 text-lg flex flex-wrap justify-end items-baseline gap-x-2">
-          <span class="text-slate-400 text-sm font-sans mr-0.5">${blockTotal < 0 ? '-' : ''}${getCurrencySymbol(block.currency || 'USD')}</span>
+          <span class="text-slate-400 text-sm font-sans mr-0.5">${roundAmount(blockTotal, block.currency || 'USD') < 0 ? '-' : ''}${getCurrencySymbol(block.currency || 'USD')}</span>
           <span id="block-total-${block.id}" class="flex flex-wrap justify-end gap-x-3">${formatCurrency(Math.abs(blockTotal), block.currency || 'USD')}</span>
         </div>
         <div class="flex items-center pl-4 border-l border-slate-200/50 ml-4 shrink-0 h-8">
@@ -2944,7 +2948,7 @@ function updateOrCreateBlockElement(block, existingEl = null) {
 
   if (isNew) {
     blockEl.innerHTML = `
-      <button data-stop-propagation="true" data-action="saveTemplate" data-id="${block.id}" class="absolute -top-3 -left-3 opacity-100 md:opacity-0 group-hover/block:opacity-100 bg-white border border-slate-200 text-slate-400 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:scale-110 p-2 rounded-xl transition-all duration-300 cursor-pointer flex items-center justify-center z-10" title="${escapeHtml(window._t('title.save_template'))}" aria-label="${escapeHtml(window._t('title.save_template'))}">
+      <button data-stop-propagation="true" data-action="saveTemplate" data-id="${block.id}" class="absolute -top-3 -left-3 opacity-100 md:opacity-0 group-hover/block:opacity-100 bg-white border border-slate-200 text-slate-400 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:scale-110 p-2 rounded-xl transition-all duration-300 cursor-pointer flex items-center justify-center z-10" title="${escapeHtml(window._t('title.save_template'))}" aria-label="${escapeHtml(window._t('title.save_template'))}" data-i18n-title="title.save_template" data-i18n-aria-label="title.save_template">
         <svg aria-hidden="true" class="w-5 h-5"><use href="#icon-squares-plus"></use></svg>
       </button>
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all hover:border-slate-300 hover:shadow-md">
@@ -3195,12 +3199,6 @@ async function deleteRecord(id) {
     if (metaStmt) metaStmt.free();
   }
 
-  const confirmMsg =
-    isBlock && childCount > 0
-      ? window._t('confirm.delete_block', childCount)
-      : window._t('confirm.delete_record');
-  if (!(await appConfirm(confirmMsg))) return;
-
   let checkStmt;
   try {
     checkStmt = db.prepare(
@@ -3214,6 +3212,12 @@ async function deleteRecord(id) {
   } finally {
     if (checkStmt) checkStmt.free();
   }
+
+  const confirmMsg =
+    isBlock && childCount > 0
+      ? window._t('confirm.delete_block', childCount)
+      : window._t('confirm.delete_record');
+  if (!(await appConfirm(confirmMsg))) return;
 
   const snapshot = snapshotRecords(recordId);
   let stmt;
@@ -3243,13 +3247,17 @@ const UNDO_TOAST_MS = 8000;
 let lastDeletedSnapshot = null;
 
 // Copy every column of a record and its children so a delete can be undone with the same ids
+function quoteIdentifier(name) {
+  return `"${String(name).replace(/"/g, '""')}"`;
+}
+
 function snapshotRecords(recordId) {
   const columns = db.exec('PRAGMA table_info(records)')[0].values.map((col) => col[1]);
   const rows = [];
   let stmt;
   try {
     stmt = db.prepare(
-      `SELECT ${columns.map((c) => `"${c}"`).join(', ')} FROM records WHERE id = ? OR parent_id = ? ORDER BY parent_id IS NOT NULL, id`,
+      `SELECT ${columns.map(quoteIdentifier).join(', ')} FROM records WHERE id = ? OR parent_id = ? ORDER BY parent_id IS NOT NULL, id`,
     );
     stmt.bind([recordId, recordId]);
     while (stmt.step()) rows.push(stmt.get());
@@ -3265,7 +3273,7 @@ function undoLastDelete() {
   if (!db || !snapshot || snapshot.rows.length === 0) return;
 
   const placeholders = snapshot.columns.map(() => '?').join(', ');
-  const columnList = snapshot.columns.map((c) => `"${c}"`).join(', ');
+  const columnList = snapshot.columns.map(quoteIdentifier).join(', ');
   let stmt;
   db.run('BEGIN TRANSACTION;');
   try {
@@ -4032,7 +4040,8 @@ function updateCSVPreview() {
       const char = text[i];
       const nextChar = text[i + 1];
       if (i === 0 && char.charCodeAt(0) === 0xfeff) continue;
-      if (char === '"' && nextChar === '"') {
+      // Read a doubled quote as a literal only inside a quoted cell; outside it is an empty quoted cell
+      if (char === '"' && inQuotes && nextChar === '"') {
         currentCellStr += '"';
         i++;
       } else if (char === '"') {
@@ -4343,7 +4352,8 @@ async function executeCSVImport() {
       // Same locale-aware separator rules as typed amounts; stray text means a wrong column, so skip the row
       const unmarkedAmount = normalizeNumberSeparators(normalizedAmount)
         .replace(AMOUNT_CURRENCY_TOKENS, '')
-        .replace(/\s+/g, '');
+        .replace(/\s+/g, '')
+        .replace(/^\+/, '');
       const hasStrayText = /[^\d.\-]/.test(unmarkedAmount) || (unmarkedAmount.match(/\./g) || []).length > 1;
       const amountStr = hasStrayText ? '' : unmarkedAmount;
       const isInvalidHyphen =
@@ -4751,11 +4761,12 @@ function getFilteredCommands(query) {
           title: `= ${formatCurrencyAmount(calcResult, baseCurrency)} <span class="text-xs text-slate-400 ml-2">${escapeHtml(window._t('cmd.calc_hint'))}</span>`,
           action: () => {
             const resultStr = calcResult.toString();
-            navigator.clipboard.writeText(resultStr);
+            navigator.clipboard?.writeText(resultStr)?.catch(() => {});
             if (prePaletteActiveElement) {
               if (
                 prePaletteActiveElement.tagName === 'INPUT' &&
                 (prePaletteActiveElement.getAttribute('data-field') === 'amount' ||
+                  prePaletteActiveElement.classList.contains('item-amount') ||
                   prePaletteActiveElement.id.includes('amount'))
               ) {
                 prePaletteActiveElement.value = resultStr;
