@@ -1,6 +1,6 @@
 # GrindCash AI Rules
 
-> Product type: PWA. Shared rules: [`../AGENTS.md`](../AGENTS.md) §1, §2, §4, §6 and §7, and the PWA rules in [`../PWA.md`](../PWA.md). This file adds GrindCash rules and wins where the two differ.
+> Product type: PWA. Shared rules: [`../AGENTS.md`](../AGENTS.md), then the PWA rules in [`../platforms/pwa.md`](../platforms/pwa.md). This file adds GrindCash rules and wins where the two differ.
 
 ## 1. Stack
 
@@ -13,13 +13,13 @@
 - Files: SQLite databases opened as `.cash` or `.grind` (`manifest.json` file handlers).
 - SQL: ALWAYS use parameterized queries (`db.prepare("... WHERE id = ?")`). Never interpolate variables into SQL strings.
 - **Zero-trust UI:** The SQLite database is the source of truth. Do not rely only on HTML attributes (`disabled`, `contenteditable="false"`) to lock records. Check the record's state (e.g., `is_exported`) in SQL before every `UPDATE` or `DELETE`.
-- `sql.js` does not auto-persist. Every INSERT, UPDATE or DELETE must call `setDirty(true)` so the user is warned before closing the tab. Drafts are saved on `draftTimer` while the app is active (see `../PWA.md`, Data and files).
+- `sql.js` does not auto-persist. Every INSERT, UPDATE or DELETE must call `setDirty(true)` so the user is warned before closing the tab. Drafts are saved on `draftTimer` while the app is active (see `../platforms/pwa.md`, Data and files).
 - **Precision:** Never let display formatters (e.g., `Intl.NumberFormat`) hide floating-point error. For currencies without decimals (such as JPY), round with `Math.round()` _before_ saving to the database.
 - **DOM guardrails:** Cap options, tags and search results in the SQL query (e.g., `LIMIT 100`). Rendering thousands of DOM nodes at once stalls the UI on large datasets.
 
 ## 3. UI
 
-- Look, top bar, shortcuts, toasts, dialogs, wording and languages follow `../PWA.md` UI. Do not restate them here; add only what differs.
+- Look, top bar, shortcuts, toasts, dialogs, wording and languages follow `../platforms/pwa.md` UI. Do not restate them here; add only what differs.
 - Product-specific top-bar controls: UI language, dictionary and base currency selectors, placed before the file password field.
 - UI languages: English, Japanese, German, French, Spanish and Italian, in `lang/`, for overseas users. Do not add or drop a language without asking.
 
@@ -27,6 +27,6 @@
 
 - Stricter than shared §5: write comments as concise Git-style English in the imperative mood ("Fix data validation", not "This fixes data validation").
 
-## 5. Known gaps against `../PWA.md`
+## 5. Known gaps against `../platforms/pwa.md`
 
 - Japanese outside `lang/`: the default Japanese account dictionaries and CSV header/date patterns in `main.js` (data, not UI strings), and the `lang="ja"` SEO text in the `<noscript>` block of `index.html`.
